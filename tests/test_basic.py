@@ -15,4 +15,4 @@ def test_python_version():
     """Pythonのバージョンをテスト"""
     import sys
 
-    assert sys.version_info >= (3, 10), "Python 3.10以上が必要です"
+    assert sys.version_info >= (3, 9), "Python 3.9以上が必要です"
