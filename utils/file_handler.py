@@ -27,7 +27,7 @@ def load_yaml(file_path: str) -> Any:
         PermissionError: ファイルへのアクセス権限がない場合
         yaml.YAMLError: YAMLのパースに失敗した場合
     """
-    with open(file_path, 'r', encoding='utf-8') as file:
+    with open(file_path, "r", encoding="utf-8") as file:
         return yaml.safe_load(file)
 
 
@@ -45,8 +45,8 @@ def save_yaml(data: Any, file_path: str) -> None:
     """
     # 必要に応じてディレクトリを作成
     os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
-    
-    with open(file_path, 'w', encoding='utf-8') as file:
+
+    with open(file_path, "w", encoding="utf-8") as file:
         yaml.dump(data, file, allow_unicode=True, sort_keys=False)
 
 
@@ -65,7 +65,7 @@ def load_json(file_path: str) -> Any:
         PermissionError: ファイルへのアクセス権限がない場合
         json.JSONDecodeError: JSONのパースに失敗した場合
     """
-    with open(file_path, 'r', encoding='utf-8') as file:
+    with open(file_path, "r", encoding="utf-8") as file:
         return json.load(file)
 
 
@@ -85,6 +85,6 @@ def save_json(data: Any, file_path: str, indent: Optional[int] = 4) -> None:
     """
     # 必要に応じてディレクトリを作成
     os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
-    
-    with open(file_path, 'w', encoding='utf-8') as file:
-        json.dump(data, file, ensure_ascii=False, indent=indent) 
+
+    with open(file_path, "w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=indent)

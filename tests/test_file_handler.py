@@ -36,7 +36,7 @@ settings:
         try:
             # ファイルを読み込み
             data = load_yaml(temp_path)
-            
+
             # 読み込んだデータの検証
             assert data["name"] == "Project Anima"
             assert data["version"] == "0.1.0"
@@ -49,22 +49,18 @@ settings:
     def test_save_yaml(self):
         """YAMLファイルの書き込みテスト"""
         # テストデータ
-        test_data = {
-            "key": "value",
-            "numbers": [1, 2, 3],
-            "nested": {"a": True}
-        }
-        
+        test_data = {"key": "value", "numbers": [1, 2, 3], "nested": {"a": True}}
+
         # 一時ディレクトリに保存
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = os.path.join(temp_dir, "output.yaml")
-            
+
             # データをYAMLファイルとして保存
             save_yaml(test_data, file_path)
-            
+
             # ファイルが作成されたか確認
             assert os.path.exists(file_path)
-            
+
             # 読み込んでデータが一致するか確認
             loaded_data = load_yaml(file_path)
             assert loaded_data == test_data
@@ -114,7 +110,7 @@ class TestJsonHandler:
         try:
             # ファイルを読み込み
             data = load_json(temp_path)
-            
+
             # 読み込んだデータの検証
             assert data["name"] == "Project Anima"
             assert data["version"] == "0.1.0"
@@ -127,30 +123,28 @@ class TestJsonHandler:
     def test_save_json(self):
         """JSONファイルの書き込みテスト"""
         # テストデータ
-        test_data = {
-            "key": "value",
-            "numbers": [1, 2, 3],
-            "nested": {"a": True}
-        }
-        
+        test_data = {"key": "value", "numbers": [1, 2, 3], "nested": {"a": True}}
+
         # 一時ディレクトリに保存
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = os.path.join(temp_dir, "output.json")
-            
+
             # データをJSONファイルとして保存（インデント設定テスト）
             save_json(test_data, file_path, indent=2)
-            
+
             # ファイルが作成されたか確認
             assert os.path.exists(file_path)
-            
+
             # 読み込んでデータが一致するか確認
             loaded_data = load_json(file_path)
             assert loaded_data == test_data
-            
+
             # インデントが適用されているか確認（ファイル内容チェック）
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-                assert "  " in content  # インデントが2スペースで適用されていることを確認
+                assert (
+                    "  " in content
+                )  # インデントが2スペースで適用されていることを確認
 
     def test_load_json_file_not_found(self):
         """存在しないJSONファイルの読み込みテスト"""
@@ -175,17 +169,17 @@ class TestJsonHandler:
     def test_save_json_nested_dir(self):
         """ネストされたディレクトリにJSONファイルを保存するテスト"""
         test_data = {"test": "data"}
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
             # ネストされたパスを作成
             nested_path = os.path.join(temp_dir, "nested", "dirs", "output.json")
-            
+
             # ファイル保存（自動的にディレクトリが作成されることを期待）
             save_json(test_data, nested_path)
-            
+
             # ファイルが作成されたか確認
             assert os.path.exists(nested_path)
-            
+
             # データが正しく保存されているか確認
             loaded_data = load_json(nested_path)
-            assert loaded_data == test_data 
+            assert loaded_data == test_data
