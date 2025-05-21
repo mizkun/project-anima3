@@ -33,4 +33,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["core", "characters", "scenes", "logs", "prompts", "utils"] 
+packages = ["core", "characters", "scenes", "logs", "prompts", "utils"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."] 
