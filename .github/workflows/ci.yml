@@ -1,0 +1,71 @@
+# .github/workflows/ci.yml
+# GitHub Actions workflow for Project Anima
+
+name: Project Anima CI
+
+# Controls when the workflow will run
+on:
+  push:
+    branches: [ main, develop ] # mainブランチとdevelopブランチへのpush時に実行
+  pull_request:
+    branches: [ main, develop ] # mainブランチとdevelopブランチへのpull request時に実行
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # 最新のUbuntu環境で実行
+
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11'] # テストするPythonのバージョン
+
+    steps:
+    - name: Checkout repository
+      # リポジトリのコードをチェックアウト
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      # 指定されたバージョンのPython環境をセットアップ
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip' # 依存関係のキャッシュを有効化
+
+    - name: Install dependencies
+      # 依存ライブラリをインストール
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # PoetryやPDMを使用する場合は以下のように変更
+        # if [ -f poetry.lock ]; then pip install poetry && poetry install --no-interaction --no-ansi; fi
+        # if [ -f pdm.lock ]; then pip install pdm && pdm install --no-editable --no-self; fi
+        pip install flake8 pytest black # リンターとテストフレームワークをインストール
+
+    - name: Lint with flake8
+      # flake8でコードスタイルをチェック
+      run: |
+        # flake8の設定ファイル (.flake8) があればそれを使用
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # 厳格にする場合は以下のようなオプションも検討
+        # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Format with black (check only)
+      # blackでコードフォーマットをチェック (実際には変更しない)
+      run: |
+        black --check .
+
+    - name: Test with pytest
+      # pytestでユニットテストを実行
+      run: |
+        pytest
+        # カバレッジレポートを生成する場合は以下のように変更
+        # pytest --cov=./core --cov-report=xml
+
+    # (オプション) カバレッジレポートをCodecovなどにアップロードする場合
+    # - name: Upload coverage to Codecov
+    #   uses: codecov/codecov-action@v3
+    #   with:
+    #     token: ${{ secrets.CODECOV_TOKEN }} # CodecovのトークンをリポジトリのSecretsに設定
+    #     file: ./coverage.xml
+    #     flags: unittests
+    #     name: codecov-umbrella
+    #     fail_ci_if_error: true
