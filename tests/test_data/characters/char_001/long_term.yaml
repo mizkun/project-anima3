@@ -1,0 +1,15 @@
+character_id: "char_001"
+experiences:
+  - event: "多くのテストケースをこなしてきた経験がある"
+    importance: 8
+  - event: "バグを発見して修正に貢献した"
+    importance: 9
+goals:
+  - goal: "すべてのテストを成功させること"
+    importance: 10
+  - goal: "システムの安定性を向上させること"
+    importance: 9
+memories:
+  - memory: "初めてバグを見つけたときの喜び"
+    scene_id_of_memory: "test_scene_001"
+    related_character_ids: ["char_002"] 

@@ -1,0 +1,5 @@
+character_id: "char_003_validation_error"
+name: "バリデーションエラー"
+# 年齢が文字列（整数が必要）
+age: "三十歳"  
+# 必須フィールド base_personality が欠落している 

@@ -1,0 +1,8 @@
+character_id: "char_002_invalid_yaml"
+name: "不正なYAML形式"
+age: 30
+occupation: "バグ製造者"
+base_personality: "エラーを引き起こすのが好き。"
+# 不正なYAML形式（インデントが不正）
+  this_is_invalid: 
+ indentation_is_wrong: 
