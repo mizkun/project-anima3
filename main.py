@@ -27,11 +27,15 @@ logger = logging.getLogger(__name__)
 
 def main():
     """メイン関数"""
-    parser = argparse.ArgumentParser(description="Project Anima - AIキャラクターシミュレーター")
+    parser = argparse.ArgumentParser(
+        description="Project Anima - AIキャラクターシミュレーター"
+    )
     parser.add_argument(
         "--scene", type=str, help="場面設定ファイルのパス (例: scenes/S001.yaml)"
     )
-    parser.add_argument("--debug", action="store_true", help="デバッグモードを有効にする")
+    parser.add_argument(
+        "--debug", action="store_true", help="デバッグモードを有効にする"
+    )
 
     args = parser.parse_args()
 
@@ -50,11 +54,13 @@ def main():
     if args.scene:
         logger.info("場面設定ファイル %s を読み込みます（未実装）", args.scene)
     else:
-        logger.info("場面設定ファイルが指定されていません。--scene オプションで指定してください。")
+        logger.info(
+            "場面設定ファイルが指定されていません。--scene オプションで指定してください。"
+        )
 
     logger.info("Project Animaを終了します")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())
