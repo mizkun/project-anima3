@@ -131,7 +131,7 @@
 
 ## **フェーズ3: シミュレーションエンジンの基本ループと情報更新**
 
-### **[ ] 3.1. 情報更新モジュール基本実装 (core/information_updater.py)**
+### **[x] 3.1. 情報更新モジュール基本実装 (core/information_updater.py)**
 
 * **タスク内容**: InformationUpdaterクラスの基本メソッドを実装する。短期ログへのターン記録、介入記録機能。  
 * **クラス**: InformationUpdater  
