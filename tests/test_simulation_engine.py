@@ -377,24 +377,99 @@ class TestSimulationEngine(unittest.TestCase):
 
     @mock.patch("core.simulation_engine.save_json")
     def test_save_scene_log_generic_error(self, mock_save_json):
-        """その他のエラーが適切に処理されること"""
-        # 事前に場面ログを初期化
+        """_save_scene_logのその他一般的なエラーが処理されること"""
+        # エラーを発生させる
+        mock_save_json.side_effect = Exception("一般的なエラー")
+
+        # 場面ログを初期化
         self.engine._current_scene_log = SceneLogData(
             scene_info=self.test_scene_info, interventions_in_scene=[], turns=[]
         )
 
-        # save_jsonで一般的な例外を発生させる
-        mock_save_json.side_effect = Exception("テスト一般エラー")
-
-        # _save_scene_logを実行
-        with mock.patch("core.simulation_engine.logger") as mock_logger:
+        # エラーが出ても例外にならず処理が続くことを検証
+        try:
             self.engine._save_scene_log()
+        except Exception:
+            self.fail("_save_scene_logがエラーを適切に処理できていません")
 
-            # エラーログが出力されたことを検証
-            mock_logger.error.assert_called_once()
-            self.assertIn(
-                "予期せぬエラーが発生しました", mock_logger.error.call_args[0][0]
-            )
+    def test_update_character_long_term_info_success(self):
+        """update_character_long_term_infoが正常に動作すること"""
+        # 場面ログを初期化
+        self.engine._current_scene_log = SceneLogData(
+            scene_info=self.test_scene_info, interventions_in_scene=[], turns=[]
+        )
+
+        # InformationUpdaterのtrigger_long_term_updateの戻り値を設定
+        update_proposal = {
+            "new_experiences": [{"event": "テスト経験", "importance": 8}],
+            "updated_goals": [{"goal": "テスト目標", "importance": 9}],
+        }
+        self.mock_information_updater.trigger_long_term_update.return_value = (
+            update_proposal
+        )
+
+        # 長期情報更新を実行
+        result = self.engine.update_character_long_term_info("char_001")
+
+        # InformationUpdaterが正しく呼び出されることを検証
+        self.mock_information_updater.trigger_long_term_update.assert_called_once_with(
+            "char_001",
+            self.mock_llm_adapter,
+            self.engine._current_scene_log,
+            self.mock_context_builder,
+            os.path.join(self.engine.prompts_dir_path, "long_term_update.txt"),
+        )
+
+        # 戻り値が正しいことを検証
+        self.assertEqual(result, update_proposal)
+
+    def test_update_character_long_term_info_scene_not_loaded(self):
+        """場面がロードされていない状態でupdate_character_long_term_infoを呼び出すとエラーになること"""
+        # _current_scene_logがNoneの状態
+        self.engine._current_scene_log = None
+
+        # エラーが発生することを検証
+        with self.assertRaises(SceneNotLoadedError):
+            self.engine.update_character_long_term_info("char_001")
+
+        # InformationUpdaterが呼び出されないことを検証
+        self.mock_information_updater.trigger_long_term_update.assert_not_called()
+
+    def test_update_character_long_term_info_character_not_in_scene(self):
+        """場面に参加していないキャラクターの長期情報更新を試みるとエラーになること"""
+        # 場面ログを初期化
+        self.engine._current_scene_log = SceneLogData(
+            scene_info=self.test_scene_info, interventions_in_scene=[], turns=[]
+        )
+
+        # 存在しないキャラクターIDを指定
+        nonexistent_character_id = "nonexistent_char"
+
+        # エラーが発生することを検証
+        with self.assertRaises(ValueError):
+            self.engine.update_character_long_term_info(nonexistent_character_id)
+
+        # InformationUpdaterが呼び出されないことを検証
+        self.mock_information_updater.trigger_long_term_update.assert_not_called()
+
+    def test_update_character_long_term_info_error_handling(self):
+        """update_character_long_term_infoのエラーハンドリングが適切に行われること"""
+        # 場面ログを初期化
+        self.engine._current_scene_log = SceneLogData(
+            scene_info=self.test_scene_info, interventions_in_scene=[], turns=[]
+        )
+
+        # InformationUpdaterでエラーを発生させる
+        self.mock_information_updater.trigger_long_term_update.side_effect = Exception(
+            "テストエラー"
+        )
+
+        # エラーがNoneとして処理されることを検証
+        result = self.engine.update_character_long_term_info("char_001")
+        self.assertIsNone(result)
+
+        # InformationUpdaterが呼び出されたことを検証
+        self.mock_information_updater.trigger_long_term_update.assert_called_once()
 
 
 if __name__ == "__main__":

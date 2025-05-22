@@ -405,3 +405,59 @@ class SimulationEngine:
             logger.error(
                 f"ログファイルの保存中に予期せぬエラーが発生しました: {output_file_path}. Error: {e}"
             )
+
+    def update_character_long_term_info(
+        self, character_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        キャラクターの長期情報を更新する
+
+        指定されたキャラクターの長期情報をLLMによる更新提案に基づいて更新します。
+        シミュレーション実行中に任意のタイミングで呼び出すことができます。
+
+        Args:
+            character_id: 更新対象のキャラクターID
+
+        Returns:
+            更新提案の内容を格納した辞書、またはエラー時にはNone
+
+        Raises:
+            SceneNotLoadedError: 場面がロードされていない場合
+            ValueError: 指定されたキャラクターが現在の場面に参加していない場合
+        """
+        # 場面ログの存在確認
+        if self._current_scene_log is None:
+            raise SceneNotLoadedError()
+
+        # 指定されたキャラクターが現在の場面に参加しているか確認
+        participants = self._current_scene_log.scene_info.participant_character_ids
+        if character_id not in participants:
+            error_msg = f"キャラクター '{character_id}' は現在の場面に参加していません"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        logger.info(f"キャラクター '{character_id}' の長期情報更新を実行します")
+
+        try:
+            # 長期情報更新用プロンプトテンプレートのパスを設定
+            prompt_template_path = os.path.join(
+                self.prompts_dir_path, "long_term_update.txt"
+            )
+
+            # InformationUpdaterを使って長期情報を更新
+            update_proposal = self._information_updater.trigger_long_term_update(
+                character_id,
+                self._llm_adapter,
+                self._current_scene_log,
+                self._context_builder,
+                prompt_template_path,
+            )
+
+            logger.info(f"キャラクター '{character_id}' の長期情報を更新しました")
+            return update_proposal
+
+        except Exception as e:
+            error_msg = f"キャラクター '{character_id}' の長期情報更新中にエラーが発生しました: {str(e)}"
+            logger.error(error_msg)
+            # ユーザーインターフェースでのハンドリングを容易にするためにNoneを返す
+            return None

@@ -16,6 +16,10 @@ from core.data_models import (
     InterventionData,
     SceneUpdateDetails,
     RevelationDetails,
+    LongTermCharacterData,
+    ExperienceData,
+    GoalData,
+    MemoryData,
 )
 
 
@@ -226,6 +230,169 @@ class TestInformationUpdater(unittest.TestCase):
             )
         except Exception as e:
             self.fail(f"trigger_long_term_updateが例外を発生させました: {e}")
+
+    def test_apply_update_proposal(self):
+        """_apply_update_proposalメソッドが更新提案を正しく適用すること"""
+        # 現在の長期情報を準備
+        current_data = LongTermCharacterData(
+            character_id="test_char",
+            experiences=[
+                ExperienceData(event="既存の経験1", importance=7),
+                ExperienceData(event="既存の経験2", importance=5),
+            ],
+            goals=[
+                GoalData(goal="既存の目標1", importance=8),
+                GoalData(goal="既存の目標2", importance=6),
+            ],
+            memories=[
+                MemoryData(
+                    memory="既存の記憶1",
+                    scene_id_of_memory="scene_001",
+                    related_character_ids=["char_001"],
+                )
+            ],
+        )
+
+        # LLMからの更新提案を模擬
+        update_proposal = {
+            "new_experiences": [
+                {"event": "新しい経験1", "importance": 9},
+                {"event": "新しい経験2", "importance": 6},
+            ],
+            "updated_goals": [
+                {"goal": "既存の目標1", "importance": 10},  # 既存の目標の重要度を更新
+                {"goal": "新しい目標1", "importance": 7},  # 新しい目標を追加
+            ],
+            "new_memories": [
+                {
+                    "memory": "新しい記憶1",
+                    "scene_id_of_memory": "scene_002",
+                    "related_character_ids": ["char_002", "char_003"],
+                }
+            ],
+        }
+
+        # 更新提案を適用
+        updated_data = self.updater._apply_update_proposal(
+            "test_char", current_data, update_proposal
+        )
+
+        # 結果を検証
+        # 経験の検証
+        self.assertEqual(len(updated_data.experiences), 4)  # 既存2つ + 新規2つ
+        new_exp_events = [exp.event for exp in updated_data.experiences]
+        self.assertIn("既存の経験1", new_exp_events)
+        self.assertIn("既存の経験2", new_exp_events)
+        self.assertIn("新しい経験1", new_exp_events)
+        self.assertIn("新しい経験2", new_exp_events)
+
+        # 目標の検証
+        self.assertEqual(len(updated_data.goals), 3)  # 既存2つ + 新規1つ、既存1つは更新
+
+        # 既存の目標1の重要度が更新されていることを確認
+        updated_goal1 = next(g for g in updated_data.goals if g.goal == "既存の目標1")
+        self.assertEqual(updated_goal1.importance, 10)  # 重要度が8から10に更新
+
+        # 新しい目標が追加されていることを確認
+        new_goal = next(g for g in updated_data.goals if g.goal == "新しい目標1")
+        self.assertEqual(new_goal.importance, 7)
+
+        # 記憶の検証
+        self.assertEqual(len(updated_data.memories), 2)  # 既存1つ + 新規1つ
+        new_memory = updated_data.memories[1]  # 2番目が新しい記憶
+        self.assertEqual(new_memory.memory, "新しい記憶1")
+        self.assertEqual(new_memory.scene_id_of_memory, "scene_002")
+        self.assertEqual(new_memory.related_character_ids, ["char_002", "char_003"])
+
+    def test_apply_update_proposal_empty_updates(self):
+        """空の更新提案が正しく処理されること"""
+        # 現在の長期情報を準備
+        current_data = LongTermCharacterData(
+            character_id="test_char",
+            experiences=[ExperienceData(event="既存の経験", importance=7)],
+            goals=[GoalData(goal="既存の目標", importance=8)],
+            memories=[],
+        )
+
+        # 空の更新提案
+        empty_update = {}
+
+        # 更新提案を適用
+        updated_data = self.updater._apply_update_proposal(
+            "test_char", current_data, empty_update
+        )
+
+        # 何も変更されていないことを確認
+        self.assertEqual(len(updated_data.experiences), 1)
+        self.assertEqual(updated_data.experiences[0].event, "既存の経験")
+        self.assertEqual(len(updated_data.goals), 1)
+        self.assertEqual(updated_data.goals[0].goal, "既存の目標")
+        self.assertEqual(len(updated_data.memories), 0)
+
+    def test_trigger_long_term_update_integration(self):
+        """trigger_long_term_updateメソッドの統合テスト"""
+        # モックの準備
+        mock_llm_adapter = mock.MagicMock()
+        mock_context_builder = mock.MagicMock()
+
+        # LLMの応答をモックで設定
+        mock_llm_adapter.update_character_long_term_info.return_value = {
+            "new_experiences": [
+                {"event": "テスト中に新たな気づきを得た", "importance": 8}
+            ],
+            "updated_goals": [{"goal": "テストをもっと効率的に行う", "importance": 9}],
+        }
+
+        # 既存のキャラクター情報を準備
+        mock_long_term_data = LongTermCharacterData(
+            character_id="test_char", experiences=[], goals=[], memories=[]
+        )
+
+        # CharacterManagerのモックが既存データを返すように設定
+        self.mock_character_manager.get_long_term_context.return_value = (
+            mock_long_term_data
+        )
+
+        # ContextBuilderのモックがコンテキストを返すように設定
+        mock_context_builder.build_context_for_long_term_update.return_value = {
+            "character_name": "テストキャラクター",
+            "existing_long_term_context_str": "既存の長期情報",
+            "recent_significant_events_or_thoughts_str": "重要な出来事",
+        }
+
+        # 長期情報更新を実行
+        result = self.updater.trigger_long_term_update(
+            "test_char",
+            mock_llm_adapter,
+            self.scene_log_data,
+            mock_context_builder,
+            "test_prompt_path",
+        )
+
+        # 各モックが正しく呼ばれたことを確認
+        mock_context_builder.build_context_for_long_term_update.assert_called_once_with(
+            "test_char", self.scene_log_data
+        )
+
+        mock_llm_adapter.update_character_long_term_info.assert_called_once_with(
+            "test_char",
+            {
+                "character_name": "テストキャラクター",
+                "existing_long_term_context_str": "既存の長期情報",
+                "recent_significant_events_or_thoughts_str": "重要な出来事",
+            },
+            "test_prompt_path",
+        )
+
+        self.mock_character_manager.get_long_term_context.assert_called_once_with(
+            "test_char"
+        )
+        self.mock_character_manager.update_long_term_context.assert_called_once()
+
+        # 結果が正しく返されることを確認
+        self.assertEqual(
+            result, mock_llm_adapter.update_character_long_term_info.return_value
+        )
 
 
 if __name__ == "__main__":

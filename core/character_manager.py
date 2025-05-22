@@ -6,6 +6,7 @@
 """
 
 import os
+import logging
 from typing import Dict, Optional
 
 import yaml
@@ -13,6 +14,9 @@ from pydantic import ValidationError
 
 from .data_models import ImmutableCharacterData, LongTermCharacterData
 from utils.file_handler import load_yaml, save_yaml
+
+# ロガーの設定
+logger = logging.getLogger(__name__)
 
 
 # カスタム例外の定義
@@ -165,12 +169,44 @@ class CharacterManager:
         """
         キャラクターの長期情報を更新する
 
-        注: このメソッドの本格的な実装はタスク5.2で行われます。
-        現時点では、インメモリのキャッシュだけを更新します。
+        キャッシュとファイル（long_term.yaml）の両方を更新します。
 
         Args:
             character_id: 更新するキャラクターのID
             new_long_term_data: 新しい長期情報
+
+        Raises:
+            CharacterNotFoundError: キャラクターが見つからない場合
+            OSError: ファイルの書き込みに失敗した場合
         """
-        # タスク5.2で本格実装予定
+        # キャラクターの存在確認
+        if character_id not in self._long_term_cache:
+            # load_character_dataを呼び出して存在確認
+            try:
+                self.load_character_data(character_id)
+            except CharacterNotFoundError:
+                # キャラクターが存在しない場合はそのまま例外を再発生
+                raise
+
+        # メモリキャッシュを更新
         self._long_term_cache[character_id] = new_long_term_data
+
+        # ファイルにも保存
+        try:
+            character_dir_path = self._get_character_dir_path(character_id)
+            long_term_file_path = os.path.join(character_dir_path, "long_term.yaml")
+
+            # キャラクターディレクトリが存在しない場合は作成
+            os.makedirs(character_dir_path, exist_ok=True)
+
+            # Pydanticモデルからdictに変換してYAMLに保存
+            long_term_dict = new_long_term_data.model_dump()
+            save_yaml(long_term_dict, long_term_file_path)
+
+            logger.info(
+                f"キャラクター '{character_id}' の長期情報をファイルに保存しました: {long_term_file_path}"
+            )
+        except OSError as e:
+            error_msg = f"キャラクター '{character_id}' の長期情報のファイル保存に失敗しました: {str(e)}"
+            logger.error(error_msg)
+            raise OSError(error_msg) from e

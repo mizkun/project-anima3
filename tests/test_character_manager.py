@@ -6,6 +6,8 @@ CharacterManagerクラスの各機能が正しく動作することを確認す�
 
 import os
 import pytest
+import tempfile
+import shutil
 from pydantic import ValidationError
 import yaml
 
@@ -14,7 +16,14 @@ from core.character_manager import (
     CharacterNotFoundError,
     InvalidCharacterDataError,
 )
-from core.data_models import ImmutableCharacterData, LongTermCharacterData, GoalData
+from core.data_models import (
+    ImmutableCharacterData,
+    LongTermCharacterData,
+    GoalData,
+    ExperienceData,
+    MemoryData,
+)
+from utils.file_handler import load_yaml
 
 
 # フィクスチャ: テスト用CharacterManagerのインスタンス
@@ -136,3 +145,96 @@ def test_update_long_term_context(character_manager):
     assert len(updated_data.goals) == len(original_data.goals) + 1
     assert updated_data.goals[-1].goal == "新しいテスト手法を開発すること"
     assert updated_data.goals[-1].importance == 7
+
+
+def test_update_long_term_context_with_file_save(tmp_path):
+    """update_long_term_contextメソッドがファイルに保存することを確認"""
+    # 一時ディレクトリに基本的なキャラクターファイル構造を作成
+    char_dir = tmp_path / "test_char"
+    char_dir.mkdir()
+
+    # 初期データを作成して保存
+    immutable_data = {
+        "character_id": "test_char",
+        "name": "テスト太郎",
+        "age": 30,
+        "occupation": "テスト担当",
+        "base_personality": "真面目で几帳面",
+    }
+
+    long_term_data = {
+        "character_id": "test_char",
+        "experiences": [{"event": "テストの経験1", "importance": 5}],
+        "goals": [{"goal": "テストの目標1", "importance": 6}],
+        "memories": [],
+    }
+
+    with open(char_dir / "immutable.yaml", "w", encoding="utf-8") as f:
+        yaml.dump(immutable_data, f, allow_unicode=True)
+
+    with open(char_dir / "long_term.yaml", "w", encoding="utf-8") as f:
+        yaml.dump(long_term_data, f, allow_unicode=True)
+
+    # CharacterManagerを作成
+    character_manager = CharacterManager(str(tmp_path))
+
+    # 既存のデータをロード
+    original_data = character_manager.get_long_term_context("test_char")
+
+    # 更新用の新しいデータを作成
+    new_data = LongTermCharacterData(**original_data.model_dump())
+
+    # 新しい経験を追加
+    new_exp = ExperienceData(event="新しいテストの経験", importance=8)
+    new_data.experiences.append(new_exp)
+
+    # 新しい目標を追加
+    new_goal = GoalData(goal="新しいテスト目標", importance=9)
+    new_data.goals.append(new_goal)
+
+    # 新しい記憶を追加
+    new_memory = MemoryData(
+        memory="テストの記憶",
+        scene_id_of_memory="test_scene_001",
+        related_character_ids=["other_char"],
+    )
+    new_data.memories.append(new_memory)
+
+    # 長期情報を更新
+    character_manager.update_long_term_context("test_char", new_data)
+
+    # ファイルから直接読み込んで内容を確認
+    yaml_path = char_dir / "long_term.yaml"
+    assert yaml_path.exists(), "YAMLファイルが作成されていません"
+
+    # ファイルから読み込んだデータを確認
+    saved_data = load_yaml(str(yaml_path))
+
+    # 各項目が正しく保存されているか確認
+    assert saved_data["character_id"] == "test_char"
+
+    # 経験が正しく保存されていることを確認
+    assert len(saved_data["experiences"]) == 2  # 元の1つ + 新しい1つ
+    assert any(
+        exp["event"] == "新しいテストの経験" and exp["importance"] == 8
+        for exp in saved_data["experiences"]
+    )
+
+    # 目標が正しく保存されていることを確認
+    assert len(saved_data["goals"]) == 2  # 元の1つ + 新しい1つ
+    assert any(
+        goal["goal"] == "新しいテスト目標" and goal["importance"] == 9
+        for goal in saved_data["goals"]
+    )
+
+    # 記憶が正しく保存されていることを確認
+    assert len(saved_data["memories"]) == 1
+    assert saved_data["memories"][0]["memory"] == "テストの記憶"
+    assert saved_data["memories"][0]["scene_id_of_memory"] == "test_scene_001"
+    assert saved_data["memories"][0]["related_character_ids"] == ["other_char"]
+
+    # メモリ上のデータも確認
+    updated_data = character_manager.get_long_term_context("test_char")
+    assert len(updated_data.experiences) == 2
+    assert len(updated_data.goals) == 2
+    assert len(updated_data.memories) == 1
