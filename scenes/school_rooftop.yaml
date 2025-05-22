@@ -1,0 +1,7 @@
+scene_id: "school_rooftop_001"
+location: "女子高校の屋上"
+time: "昼休み"
+situation: "晴れた日の昼休み、城月燐子は一人で屋上で過ごしていたところ、木下芽依がやってきた。周囲には誰もおらず、二人きりの空間。屋上からは学校の全景と遠くの街並みが見える。軽い風が吹き、心地よい。"
+participant_character_ids:
+  - "rinko_kizuki_002"
+  - "mei_kinoshita_001" 
