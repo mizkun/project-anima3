@@ -4,6 +4,7 @@ SimulationEngineクラスのユニットテスト
 
 import os
 import unittest
+import shutil
 from unittest import mock
 from typing import Dict, List, Any, Optional
 
@@ -298,6 +299,102 @@ class TestSimulationEngine(unittest.TestCase):
         self.engine._current_turn_index = 2
         character_id = self.engine._determine_next_character()
         self.assertIsNone(character_id)
+
+    @mock.patch("core.simulation_engine.datetime")
+    @mock.patch("core.simulation_engine.save_json")
+    def test_save_scene_log_success(self, mock_save_json, mock_datetime):
+        """場面ログが正常に保存されること"""
+        # 固定のタイムスタンプを設定
+        mock_datetime.datetime.now.return_value.strftime.return_value = (
+            "20240101_120000"
+        )
+
+        # 事前に場面ログを初期化
+        self.engine._current_scene_log = SceneLogData(
+            scene_info=self.test_scene_info, interventions_in_scene=[], turns=[]
+        )
+
+        # テスト用のログディレクトリ
+        test_log_dir = os.path.join("logs", "sim_20240101_120000")
+
+        # 念のためテスト用ディレクトリを事前にクリーンアップ
+        if os.path.exists(test_log_dir):
+            shutil.rmtree(test_log_dir)
+
+        try:
+            # _save_scene_logを実行
+            self.engine._save_scene_log()
+
+            # save_jsonが正しく呼び出されたことを検証
+            expected_file_path = os.path.join(
+                test_log_dir, f"scene_{self.test_scene_info.scene_id}.json"
+            )
+            mock_save_json.assert_called_once()
+
+            # 引数を検証
+            args, kwargs = mock_save_json.call_args
+            self.assertEqual(args[0], self.engine._current_scene_log.model_dump())
+            self.assertEqual(args[1], expected_file_path)
+            self.assertEqual(kwargs["indent"], 2)
+
+        finally:
+            # テスト後にテスト用ディレクトリを削除
+            if os.path.exists(test_log_dir):
+                shutil.rmtree(test_log_dir)
+
+    def test_save_scene_log_no_data(self):
+        """保存すべき場面ログがない場合、警告が出力されること"""
+        # 場面ログをNoneに設定
+        self.engine._current_scene_log = None
+
+        # _save_scene_logを実行
+        with mock.patch("core.simulation_engine.logger") as mock_logger:
+            self.engine._save_scene_log()
+
+            # 警告ログが出力されたことを検証
+            mock_logger.warning.assert_called_once_with(
+                "保存すべき場面ログが存在しません。"
+            )
+
+    @mock.patch("core.simulation_engine.save_json")
+    def test_save_scene_log_permission_error(self, mock_save_json):
+        """ファイル書き込み権限エラーが適切に処理されること"""
+        # 事前に場面ログを初期化
+        self.engine._current_scene_log = SceneLogData(
+            scene_info=self.test_scene_info, interventions_in_scene=[], turns=[]
+        )
+
+        # save_jsonでPermissionErrorを発生させる
+        mock_save_json.side_effect = PermissionError("テスト権限エラー")
+
+        # _save_scene_logを実行
+        with mock.patch("core.simulation_engine.logger") as mock_logger:
+            self.engine._save_scene_log()
+
+            # エラーログが出力されたことを検証
+            mock_logger.error.assert_called_once()
+            self.assertIn("書き込み権限がありません", mock_logger.error.call_args[0][0])
+
+    @mock.patch("core.simulation_engine.save_json")
+    def test_save_scene_log_generic_error(self, mock_save_json):
+        """その他のエラーが適切に処理されること"""
+        # 事前に場面ログを初期化
+        self.engine._current_scene_log = SceneLogData(
+            scene_info=self.test_scene_info, interventions_in_scene=[], turns=[]
+        )
+
+        # save_jsonで一般的な例外を発生させる
+        mock_save_json.side_effect = Exception("テスト一般エラー")
+
+        # _save_scene_logを実行
+        with mock.patch("core.simulation_engine.logger") as mock_logger:
+            self.engine._save_scene_log()
+
+            # エラーログが出力されたことを検証
+            mock_logger.error.assert_called_once()
+            self.assertIn(
+                "予期せぬエラーが発生しました", mock_logger.error.call_args[0][0]
+            )
 
 
 if __name__ == "__main__":

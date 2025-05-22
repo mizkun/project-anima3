@@ -28,6 +28,10 @@ class TestLLMAdapter(TestCase):
         # テスト用の環境変数を設定
         os.environ["GOOGLE_API_KEY"] = "dummy_api_key_for_testing"
 
+        # load_dotenvのモックを作成（.envファイルをモック）
+        self.dotenv_patcher = mock.patch("dotenv.load_dotenv")
+        self.mock_load_dotenv = self.dotenv_patcher.start()
+
         # LLM APIのモックを作成
         self.genai_patcher = mock.patch("google.generativeai.GenerativeModel")
         self.mock_genai = self.genai_patcher.start()
@@ -87,6 +91,7 @@ class TestLLMAdapter(TestCase):
         """テスト後の後片付け"""
         # モックパッチを停止
         self.genai_patcher.stop()
+        self.dotenv_patcher.stop()
 
         # テスト用の環境変数をクリア
         if "GOOGLE_API_KEY" in os.environ:
@@ -97,11 +102,32 @@ class TestLLMAdapter(TestCase):
         adapter = LLMAdapter()
         self.assertEqual(adapter.api_key, "dummy_api_key_for_testing")
         self.assertEqual(adapter.model_name, "gemini-1.5-flash-latest")
+        # load_dotenvが呼ばれたことを確認
+        self.mock_load_dotenv.assert_called_once()
 
     def test_init_with_api_key_parameter(self):
         """パラメータで指定されたAPIキーを使用して初期化できること"""
         adapter = LLMAdapter(api_key="custom_api_key")
         self.assertEqual(adapter.api_key, "custom_api_key")
+        # 引数で指定した場合もload_dotenvは呼ばれる
+        self.mock_load_dotenv.assert_called_once()
+
+    def test_init_with_dotenv_api_key(self):
+        """環境変数とパラメータがない場合、.envファイルからAPIキーを読み込むこと"""
+        # 環境変数をクリア
+        if "GOOGLE_API_KEY" in os.environ:
+            del os.environ["GOOGLE_API_KEY"]
+
+        # load_dotenvが.envファイルからAPIキーを設定する動作をモック
+        def mock_load_dotenv_effect():
+            os.environ["GOOGLE_API_KEY"] = "api_key_from_dotenv"
+            return True
+
+        self.mock_load_dotenv.side_effect = mock_load_dotenv_effect
+
+        adapter = LLMAdapter()
+        self.assertEqual(adapter.api_key, "api_key_from_dotenv")
+        self.mock_load_dotenv.assert_called_once()
 
     def test_init_with_missing_api_key(self):
         """APIキーが設定されていない場合にエラーを発生させること"""
@@ -109,8 +135,14 @@ class TestLLMAdapter(TestCase):
         if "GOOGLE_API_KEY" in os.environ:
             del os.environ["GOOGLE_API_KEY"]
 
-        with self.assertRaises(LLMAdapterError):
+        # load_dotenvが何もしない動作をモック
+        self.mock_load_dotenv.side_effect = None
+
+        with self.assertRaises(LLMAdapterError) as context:
             LLMAdapter(api_key=None)
+
+        # エラーメッセージに.envファイルの説明が含まれていることを確認
+        self.assertIn(".env", str(context.exception))
 
     def test_load_prompt_template(self):
         """プロンプトテンプレートを正しく読み込めること"""
@@ -144,6 +176,29 @@ class TestLLMAdapter(TestCase):
         for key, value in self.test_context_dict.items():
             self.assertIn(value, filled_prompt)
             self.assertNotIn(f"{{{{{key}}}}}", filled_prompt)
+
+    def test_fill_prompt_template_with_character_name_extraction(self):
+        """immutable_contextから名前を抽出してcharacter_nameプレースホルダーを埋められること"""
+        # character_nameを含まないコンテクスト辞書
+        context_without_name = {
+            "immutable_context": "【キャラクター基本情報】\n鈴木一郎は、28歳のサラリーマンです。",
+            "long_term_context": "テスト用の長期情報",
+            "scene_context": "テスト用の場面情報",
+            "short_term_context": "テスト用の短期情報",
+        }
+
+        template_with_name = (
+            "あなたは{{character_name}}です。以下の情報を参考にしてください。"
+        )
+
+        adapter = LLMAdapter()
+        filled_prompt = adapter._fill_prompt_template(
+            template_with_name, context_without_name
+        )
+
+        # 名前が抽出されてプレースホルダーが置換されていることを確認
+        self.assertIn("あなたは鈴木一郎です。", filled_prompt)
+        self.assertNotIn("{{character_name}}", filled_prompt)
 
     def test_generate_character_thought_success(self):
         """キャラクターの思考生成が正常に動作すること"""
@@ -234,26 +289,203 @@ class TestLLMAdapter(TestCase):
             os.unlink(temp_path)
 
     def test_update_character_long_term_info_dummy(self):
-        """長期情報更新メソッドがダミーデータを返すこと（将来的な実装用）"""
-        # 一時ファイルを作成
+        """update_character_long_term_infoメソッドのダミー実装をテスト（後で本実装に置き換える）"""
+        # このテストはタスク5.1で本実装に置き換えるため、削除または更新する
+        pass
+
+    def test_update_character_long_term_info_success(self):
+        """update_character_long_term_infoメソッドが正常に動作することをテスト"""
+        # テスト用の長期情報更新コンテキスト
+        test_lt_update_context = {
+            "character_name": "テストキャラクター",
+            "existing_long_term_context_str": "テスト用の長期情報",
+            "recent_significant_events_or_thoughts_str": "テスト用の重要な出来事や思考",
+        }
+
+        # LLMからの応答をモック
+        lt_update_response = {
+            "new_experiences": [
+                {"event": "友人と初めてカフェに行った", "importance": 6}
+            ],
+            "updated_goals": [{"goal": "カフェ巡りを趣味にする", "importance": 5}],
+            "new_memories": [
+                {
+                    "memory": "テスト花子とカフェで会話して楽しかった",
+                    "scene_id_of_memory": "test_scene_001",
+                    "related_character_ids": ["test_char_2"],
+                }
+            ],
+        }
+
+        # モックレスポンスの設定
+        self.mock_response.text = json.dumps(lt_update_response)
+
+        # テスト用のテンプレートパス
         with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
-            temp_file.write(self.test_template_content)
-            temp_path = temp_file.name
+            temp_file.write(
+                "テスト用の長期情報更新プロンプト{{character_name}}{{existing_long_term_context_str}}{{recent_significant_events_or_thoughts_str}}"
+            )
+            template_path = temp_file.name
 
         try:
             adapter = LLMAdapter()
             result = adapter.update_character_long_term_info(
-                "test_character", self.test_context_dict, temp_path
+                "test_char_1", test_lt_update_context, template_path
             )
 
-            # ダミーデータの構造を検証
-            self.assertIsInstance(result, dict)
-            self.assertIn("experiences", result)
-            self.assertIn("goals", result)
-            self.assertIn("memories", result)
+            # 結果の検証
+            self.assertEqual(result, lt_update_response)
+
+            # テンプレート読み込みと埋め込みが行われたことを確認
+            # APIが呼び出されたことを確認
+            self.mock_model.generate_content.assert_called_once()
+
         finally:
             # 一時ファイルを削除
-            os.unlink(temp_path)
+            os.unlink(template_path)
+
+    def test_update_character_long_term_info_api_error(self):
+        """update_character_long_term_infoメソッドがAPI呼び出しエラーを適切に処理することをテスト"""
+        # テスト用の長期情報更新コンテキスト
+        test_lt_update_context = {
+            "character_name": "テストキャラクター",
+            "existing_long_term_context_str": "テスト用の長期情報",
+            "recent_significant_events_or_thoughts_str": "テスト用の重要な出来事や思考",
+        }
+
+        # APIエラーをシミュレート
+        self.mock_model.generate_content.side_effect = Exception("API error simulation")
+
+        # テスト用のテンプレートパス
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
+            temp_file.write("テスト用のプロンプト")
+            template_path = temp_file.name
+
+        try:
+            adapter = LLMAdapter()
+
+            with self.assertRaises(LLMGenerationError) as context:
+                adapter.update_character_long_term_info(
+                    "test_char_1", test_lt_update_context, template_path
+                )
+
+            # エラーメッセージが適切であることを確認
+            self.assertIn("API", str(context.exception))
+
+        finally:
+            # 一時ファイルを削除
+            os.unlink(template_path)
+
+    def test_update_character_long_term_info_invalid_json(self):
+        """update_character_long_term_infoメソッドが不正なJSON応答を適切に処理することをテスト"""
+        # テスト用の長期情報更新コンテキスト
+        test_lt_update_context = {
+            "character_name": "テストキャラクター",
+            "existing_long_term_context_str": "テスト用の長期情報",
+            "recent_significant_events_or_thoughts_str": "テスト用の重要な出来事や思考",
+        }
+
+        # 不正なJSON応答をシミュレート
+        self.mock_response.text = "これはJSONではありません"
+
+        # テスト用のテンプレートパス
+        with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
+            temp_file.write("テスト用のプロンプト")
+            template_path = temp_file.name
+
+        try:
+            adapter = LLMAdapter()
+
+            with self.assertRaises(InvalidLLMResponseError) as context:
+                adapter.update_character_long_term_info(
+                    "test_char_1", test_lt_update_context, template_path
+                )
+
+            # エラーメッセージが適切であることを確認
+            self.assertIn("JSONとしてパース", str(context.exception))
+
+        finally:
+            # 一時ファイルを削除
+            os.unlink(template_path)
+
+    def test_validate_long_term_update_response_valid(self):
+        """_validate_long_term_update_responseメソッドが有効な応答を受け入れることをテスト"""
+        # 有効な応答辞書
+        valid_response = {
+            "new_experiences": [
+                {"event": "友人と初めてカフェに行った", "importance": 6}
+            ],
+            "updated_goals": [{"goal": "カフェ巡りを趣味にする", "importance": 5}],
+            "new_memories": [
+                {
+                    "memory": "テスト花子とカフェで会話して楽しかった",
+                    "scene_id_of_memory": "test_scene_001",
+                    "related_character_ids": ["test_char_2"],
+                }
+            ],
+        }
+
+        adapter = LLMAdapter()
+        # 例外が発生しないことを確認
+        adapter._validate_long_term_update_response(valid_response)
+
+        # 一部のキーが欠けていても有効
+        valid_response_partial = {
+            "new_experiences": [
+                {"event": "友人と初めてカフェに行った", "importance": 6}
+            ],
+        }
+
+        # 例外が発生しないことを確認
+        adapter._validate_long_term_update_response(valid_response_partial)
+
+    def test_validate_long_term_update_response_invalid_keys(self):
+        """_validate_long_term_update_responseメソッドが必要なキーが無い場合にエラーを発生させることをテスト"""
+        # 必要なキーが1つもない応答辞書
+        invalid_response = {"unknown_key": "値"}
+
+        adapter = LLMAdapter()
+
+        with self.assertRaises(InvalidLLMResponseError) as context:
+            adapter._validate_long_term_update_response(invalid_response)
+
+        # エラーメッセージが適切であることを確認
+        self.assertIn("必要なキー", str(context.exception))
+
+    def test_validate_long_term_update_response_invalid_structure(self):
+        """_validate_long_term_update_responseメソッドが不正な構造の応答に対してエラーを発生させることをテスト"""
+        # new_experiencesがリストでない
+        invalid_response_1 = {"new_experiences": "これはリストではありません"}
+
+        # new_experiencesの要素にeventキーがない
+        invalid_response_2 = {
+            "new_experiences": [{"not_event": "イベント", "importance": 6}]
+        }
+
+        # importanceが整数でない
+        invalid_response_3 = {
+            "new_experiences": [{"event": "イベント", "importance": "高い"}]
+        }
+
+        # importanceが範囲外
+        invalid_response_4 = {
+            "new_experiences": [{"event": "イベント", "importance": 11}]
+        }
+
+        adapter = LLMAdapter()
+
+        # それぞれのケースでエラーが発生することを確認
+        with self.assertRaises(InvalidLLMResponseError):
+            adapter._validate_long_term_update_response(invalid_response_1)
+
+        with self.assertRaises(InvalidLLMResponseError):
+            adapter._validate_long_term_update_response(invalid_response_2)
+
+        with self.assertRaises(InvalidLLMResponseError):
+            adapter._validate_long_term_update_response(invalid_response_3)
+
+        with self.assertRaises(InvalidLLMResponseError):
+            adapter._validate_long_term_update_response(invalid_response_4)
 
 
 if __name__ == "__main__":

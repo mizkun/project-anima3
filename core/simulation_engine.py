@@ -9,6 +9,7 @@
 import os
 import logging
 import json
+import datetime
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
 
 # 循環参照を避けるための型チェック時のみのインポート
@@ -16,12 +17,20 @@ if TYPE_CHECKING:
     from .character_manager import CharacterManager, CharacterNotFoundError
     from .scene_manager import SceneManager, SceneFileNotFoundError, SceneNotLoadedError
     from .context_builder import ContextBuilder
-    from .llm_adapter import LLMAdapter, LLMGenerationError
+    from .llm_adapter import (
+        LLMAdapter,
+        LLMGenerationError,
+        InvalidLLMResponseError,
+        PromptTemplateNotFoundError,
+    )
     from .information_updater import InformationUpdater
     from .data_models import SceneLogData, InterventionData, SceneInfoData
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
+
+# ファイルハンドラーモジュールをインポート
+from utils.file_handler import save_json
 
 
 class SimulationEngineError(Exception):
@@ -211,7 +220,7 @@ class SimulationEngine:
         """
         指定されたキャラクターのターンを実行する
 
-        コンテクスト構築、LLM思考生成（ダミー応答）、短期ログへの記録という
+        コンテクスト構築、LLM思考生成、短期ログへの記録という
         一連の処理を実行します。
 
         Args:
@@ -240,41 +249,81 @@ class SimulationEngine:
                 character_id, self._current_scene_log.turns
             )
 
-            # LLM思考生成（このタスクではダミー応答）
-            # 本来は以下のコードを使用する:
-            # llm_response = self._llm_adapter.generate_character_thought(
-            #    context_dict,
-            #    os.path.join(self.prompts_dir_path, "think_generate.txt")
-            # )
+            # プロンプトテンプレートのパスを設定
+            prompt_file_path = os.path.join(self.prompts_dir_path, "think_generate.txt")
 
-            # ダミーのLLM応答
-            dummy_llm_response = {
-                "think": f"{character_name}は状況を観察し、次にどうするか考えています。",
-                "act": f"{character_name}は周囲を見回しながら、静かに立っています。",
-                "talk": f"{character_name}「こんにちは、素敵な天気ですね。」",
-            }
+            # LLM思考生成
+            try:
+                # LLMAdapterを使って思考を生成
+                from .llm_adapter import (
+                    LLMGenerationError,
+                    InvalidLLMResponseError,
+                    PromptTemplateNotFoundError,
+                )
+
+                llm_response = self._llm_adapter.generate_character_thought(
+                    context_dict, prompt_file_path
+                )
+
+                think_content = llm_response.get(
+                    "think", "（思考の生成に失敗しました）"
+                )
+                act_content = llm_response.get(
+                    "act", ""
+                )  # エラー時やキーがない場合は空文字
+                talk_content = llm_response.get("talk", "")  # 同上
+
+            except (
+                LLMGenerationError,
+                InvalidLLMResponseError,
+                PromptTemplateNotFoundError,
+            ) as e:
+                logger.error(
+                    f"キャラクター '{character_name}' ({character_id}) の思考生成中にエラーが発生しました: {str(e)}"
+                )
+                # エラーが発生した場合のフォールバック動作
+                think_content = (
+                    f"（エラーにより思考できませんでした: {type(e).__name__}）"
+                )
+                act_content = ""  # または "（エラーにより行動できません）" など
+                talk_content = ""  # または "（エラーにより発言できません）" など
+            except Exception as e:  # その他の予期せぬLLMAdapter関連エラー
+                logger.error(
+                    f"キャラクター '{character_name}' ({character_id}) の思考生成中に予期せぬLLMAdapterエラー: {str(e)}"
+                )
+                think_content = f"（予期せぬエラーにより思考停止: {type(e).__name__}）"
+                act_content = ""
+                talk_content = ""
 
             # 短期ログへの記録
             self._information_updater.record_turn_to_short_term_log(
                 self._current_scene_log,
                 character_id,
                 character_name,
-                dummy_llm_response["think"],
-                dummy_llm_response["act"],
-                dummy_llm_response["talk"],
+                think_content,
+                act_content,
+                talk_content,
             )
 
             # 現在のターンの情報をログに出力
             turn_number = len(self._current_scene_log.turns)
             logger.info(f"ターン {turn_number}: {character_name}")
-            logger.info(f"  思考: {dummy_llm_response['think']}")
-            logger.info(f"  行動: {dummy_llm_response['act']}")
-            logger.info(f"  発言: {dummy_llm_response['talk']}")
+            logger.info(f"  思考: {think_content}")
+            if act_content:
+                logger.info(f"  行動: {act_content}")
+            if talk_content:
+                logger.info(f"  発言: 「{talk_content}」")  # 発言を括弧で囲む
+            if (
+                not act_content and not talk_content and "エラー" not in think_content
+            ):  # エラーでない場合で行動も発言もない場合
+                logger.info(f"  (何も行動せず、何も話さなかった)")
 
         except Exception as e:
             error_msg = f"ターン実行中にエラーが発生しました: {str(e)}"
             logger.error(error_msg)
-            raise SimulationEngineError(error_msg) from e
+            # SimulationEngineErrorとしてラップせず、そのままログに出力して継続する
+            # これにより、start_simulationのループ内でキャッチされて処理が継続する
+            pass  # ターン全体のエラーがあっても次のキャラクターのターンに進む
 
     def process_user_intervention(self, intervention_data: "InterventionData") -> None:
         """
@@ -304,9 +353,55 @@ class SimulationEngine:
         """
         場面ログをファイルに保存する
 
-        注: このメソッドはタスク3.3で本格的に実装予定です。
-        現時点では雛形のみが提供されています。
+        シミュレーション終了時に、メモリ上の場面ログデータをJSONファイルとして
+        logsディレクトリに保存します。ファイル名は「scene_<scene_id>.json」の
+        形式で、人間が読みやすいように整形されたJSONで保存されます。
+
+        Raises:
+            PermissionError: ファイルへの書き込み権限がない場合
+            OSError: その他のファイル書き込みエラー
         """
-        # タスク3.3で本格的に実装予定
-        logger.info("場面ログの保存は未実装です（タスク3.3で実装予定）")
-        pass
+        # 場面ログが存在しない場合は処理を中断
+        if (
+            self._current_scene_log is None
+            or self._current_scene_log.scene_info is None
+        ):
+            logger.warning("保存すべき場面ログが存在しません。")
+            return
+
+        # 場面IDを取得
+        scene_id = self._current_scene_log.scene_info.scene_id
+
+        # タイムスタンプを含むシミュレーションIDを生成
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        simulation_id = f"sim_{timestamp}"
+
+        # ログディレクトリのパスを作成
+        log_directory = os.path.join("logs", simulation_id)
+
+        # ファイル名を決定
+        file_name = f"scene_{scene_id}.json"
+
+        # 出力ファイルの完全パスを作成
+        output_file_path = os.path.join(log_directory, file_name)
+
+        try:
+            # ディレクトリを作成（存在しない場合）
+            os.makedirs(log_directory, exist_ok=True)
+
+            # 場面ログデータをPydanticモデルから辞書に変換
+            log_data_dict = self._current_scene_log.model_dump()
+
+            # ファイルに保存（インデント=2で見やすく整形）
+            save_json(log_data_dict, output_file_path, indent=2)
+
+            logger.info(f"場面ログをファイルに保存しました: {output_file_path}")
+
+        except PermissionError as e:
+            logger.error(
+                f"ログファイルへの書き込み権限がありません: {output_file_path}. Error: {e}"
+            )
+        except Exception as e:
+            logger.error(
+                f"ログファイルの保存中に予期せぬエラーが発生しました: {output_file_path}. Error: {e}"
+            )

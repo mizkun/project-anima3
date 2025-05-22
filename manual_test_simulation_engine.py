@@ -8,6 +8,7 @@ SimulationEngineクラスの手動テスト用スクリプト
 import os
 import sys
 import logging
+import argparse
 from unittest import mock
 from pprint import pprint
 
@@ -50,8 +51,28 @@ def create_dummy_llm_adapter(character_id, character_name):
     return mock_llm
 
 
+def parse_arguments():
+    """コマンドライン引数をパースする"""
+    parser = argparse.ArgumentParser(description="SimulationEngineの手動テスト")
+    parser.add_argument(
+        "--use-real-llm",
+        action="store_true",
+        help="実際のLLMAdapterを使用する（デフォルトはモック）",
+    )
+    parser.add_argument(
+        "--max-turns",
+        type=int,
+        default=3,
+        help="実行するターン数（デフォルト: 3）",
+    )
+    return parser.parse_args()
+
+
 def main():
     """SimulationEngineの手動テスト"""
+    # コマンドライン引数のパース
+    args = parse_arguments()
+
     try:
         display_header("シミュレーションエンジンの手動テスト")
 
@@ -62,56 +83,65 @@ def main():
 
         logger.info("SimulationEngineを初期化しています...")
 
-        # LLMAdapterクラスをモック化
-        with mock.patch("core.llm_adapter.LLMAdapter") as mock_llm_adapter_class:
-            # LLMAdapterのインスタンスが呼び出されたとき、ダミーのモックを返すように設定
-            mock_llm_adapter_class.return_value = create_dummy_llm_adapter(
-                "rinko_kizuki_002", "城月燐子"
-            )
-
-            # SimulationEngineのインスタンス化
+        if args.use_real_llm:
+            # 実際のLLMAdapterを使用
+            logger.info("実際のLLMAdapterを使用します")
             engine = SimulationEngine(
                 scene_file_path=scene_file_path,
                 characters_base_path=characters_base_path,
             )
+        else:
+            # LLMAdapterクラスをモック化
+            logger.info("モック化されたLLMAdapterを使用します")
+            with mock.patch("core.llm_adapter.LLMAdapter") as mock_llm_adapter_class:
+                # LLMAdapterのインスタンスが呼び出されたとき、ダミーのモックを返すように設定
+                mock_llm_adapter_class.return_value = create_dummy_llm_adapter(
+                    "rinko_kizuki_002", "城月燐子"
+                )
 
-            # モック化に成功していることを確認
-            if mock_llm_adapter_class.called:
-                logger.info("LLMAdapterのモック化に成功しました")
+                # SimulationEngineのインスタンス化
+                engine = SimulationEngine(
+                    scene_file_path=scene_file_path,
+                    characters_base_path=characters_base_path,
+                )
 
-            # シミュレーションの実行（3ターン）
-            logger.info(
-                f"シーンファイル '{scene_file_path}' を使用してシミュレーションを開始します..."
+                # モック化に成功していることを確認
+                if mock_llm_adapter_class.called:
+                    logger.info("LLMAdapterのモック化に成功しました")
+
+        # シミュレーションの実行
+        logger.info(
+            f"シーンファイル '{scene_file_path}' を使用してシミュレーションを開始します... （最大ターン数: {args.max_turns}）"
+        )
+        engine.start_simulation(max_turns=args.max_turns)
+
+        # 結果の表示
+        if engine._current_scene_log:
+            display_header("シミュレーション結果")
+
+            print(f"場面ID: {engine._current_scene_log.scene_info.scene_id}")
+            print(f"場所: {engine._current_scene_log.scene_info.location}")
+            print(f"時間: {engine._current_scene_log.scene_info.time}")
+            print(f"状況: {engine._current_scene_log.scene_info.situation}")
+            print(
+                f"参加キャラクター: {', '.join(engine._current_scene_log.scene_info.participant_character_ids)}"
             )
-            engine.start_simulation(max_turns=3)
 
-            # 結果の表示
-            if engine._current_scene_log:
-                display_header("シミュレーション結果")
-
-                print(f"場面ID: {engine._current_scene_log.scene_info.scene_id}")
-                print(f"場所: {engine._current_scene_log.scene_info.location}")
-                print(f"時間: {engine._current_scene_log.scene_info.time}")
-                print(f"状況: {engine._current_scene_log.scene_info.situation}")
+            print("\n----- ターン履歴 -----")
+            for turn in engine._current_scene_log.turns:
                 print(
-                    f"参加キャラクター: {', '.join(engine._current_scene_log.scene_info.participant_character_ids)}"
+                    f"[ターン {turn.turn_number}] {turn.character_name} (ID: {turn.character_id})"
                 )
+                print(f"  思考: {turn.think}")
+                print(f"  行動: {turn.act if turn.act else '(なし)'}")
+                print(f"  発言: {turn.talk if turn.talk else '(なし)'}")
+                print()
 
-                print("\n----- ターン履歴 -----")
-                for turn in engine._current_scene_log.turns:
-                    print(
-                        f"[ターン {turn.turn_number}] {turn.character_name} (ID: {turn.character_id})"
-                    )
-                    print(f"  思考: {turn.think}")
-                    print(f"  行動: {turn.act if turn.act else '(なし)'}")
-                    print(f"  発言: {turn.talk if turn.talk else '(なし)'}")
-                    print()
-
-                display_footer()
-            else:
-                logger.warning(
-                    "シミュレーションが正常に実行されなかったため、結果を表示できません。"
-                )
+            display_footer()
+        else:
+            logger.warning(
+                "シミュレーションが正常に実行されなかったため、結果を表示できません。"
+            )
 
         logger.info("テストが完了しました。")
 
