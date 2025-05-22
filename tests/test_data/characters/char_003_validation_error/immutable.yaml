@@ -1,0 +1,5 @@
+# 不正なデータ形式 (character_idフィールドが欠落している)
+name: "テストキャラクター"
+age: 25
+occupation: "テスター"
+base_personality: "バリデーションエラーを発生させるためのテスト用キャラクター" 
