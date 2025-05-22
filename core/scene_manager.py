@@ -5,12 +5,16 @@
 管理を行うSceneManagerクラスを提供します。
 """
 
+import logging
 from typing import List, Optional
 import yaml
 from pydantic import ValidationError
 
 from .data_models import SceneInfoData
 from utils.file_handler import load_yaml
+
+# ロガーの設定
+logger = logging.getLogger(__name__)
 
 
 class SceneManagerError(Exception):
@@ -116,7 +120,7 @@ class SceneManager:
 
     def update_scene_situation(self, new_situation_description: str) -> None:
         """
-        現在の場面の状況説明を更新します。(将来の実装用)
+        現在の場面の状況説明を更新します。
 
         Args:
             new_situation_description: 新しい状況説明
@@ -124,12 +128,24 @@ class SceneManager:
         Raises:
             SceneNotLoadedError: 場面がロードされていない場合
         """
-        # タスク5.3で本格実装予定
-        pass
+        if self._current_scene is None:
+            error_msg = "場面がロードされていないため、状況説明を更新できません。"
+            logger.error(error_msg)
+            raise SceneNotLoadedError()
+
+        # 変更前の状況説明を記録（ログ用）
+        old_situation = self._current_scene.situation
+
+        # 状況説明を更新
+        self._current_scene.situation = new_situation_description
+
+        logger.info(
+            f"場面の状況説明を更新しました。\n  変更前: {old_situation}\n  変更後: {new_situation_description}"
+        )
 
     def add_character_to_scene(self, character_id: str) -> None:
         """
-        現在の場面に新しいキャラクターを追加します。(将来の実装用)
+        現在の場面に新しいキャラクターを追加します。
 
         Args:
             character_id: 追加するキャラクターのID
@@ -137,12 +153,29 @@ class SceneManager:
         Raises:
             SceneNotLoadedError: 場面がロードされていない場合
         """
-        # タスク5.3で本格実装予定
-        pass
+        if self._current_scene is None:
+            error_msg = "場面がロードされていないため、キャラクターを追加できません。"
+            logger.error(error_msg)
+            raise SceneNotLoadedError()
+
+        # キャラクターが既に参加しているかチェック
+        if character_id in self._current_scene.participant_character_ids:
+            logger.warning(
+                f"キャラクター '{character_id}' は既に場面に参加しています。追加操作は無視されます。"
+            )
+            return
+
+        # キャラクターを参加者リストに追加
+        self._current_scene.participant_character_ids.append(character_id)
+
+        logger.info(
+            f"キャラクター '{character_id}' を場面に追加しました。"
+            f"現在の参加者: {self._current_scene.participant_character_ids}"
+        )
 
     def remove_character_from_scene(self, character_id: str) -> None:
         """
-        現在の場面から指定されたキャラクターを削除します。(将来の実装用)
+        現在の場面から指定されたキャラクターを削除します。
 
         Args:
             character_id: 削除するキャラクターのID
@@ -151,5 +184,21 @@ class SceneManager:
             SceneNotLoadedError: 場面がロードされていない場合
             ValueError: 指定されたキャラクターが場面に存在しない場合
         """
-        # タスク5.3で本格実装予定
-        pass
+        if self._current_scene is None:
+            error_msg = "場面がロードされていないため、キャラクターを削除できません。"
+            logger.error(error_msg)
+            raise SceneNotLoadedError()
+
+        # キャラクターが参加しているかチェック
+        if character_id not in self._current_scene.participant_character_ids:
+            error_msg = f"キャラクター '{character_id}' は場面に参加していないため、削除できません。"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        # キャラクターを参加者リストから削除
+        self._current_scene.participant_character_ids.remove(character_id)
+
+        logger.info(
+            f"キャラクター '{character_id}' を場面から削除しました。"
+            f"現在の参加者: {self._current_scene.participant_character_ids}"
+        )

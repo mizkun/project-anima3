@@ -211,7 +211,7 @@
   * LLMが、入力情報に基づいて長期情報の更新案（例: 新しい経験の記述、更新された目標リストなど）を構造化データ（JSONなど）で提案できるようになること。  
 * **テスト**: ユニットテストで、サンプルデータから長期情報更新プロンプトが生成され、LLM（モックまたは実API）から期待される形式の更新案が返ってくることを確認。
 
-### **[ ] 5.2. 長期情報更新の実行と保存 (core/information_updater.py, core/character_manager.py)**
+### **[x] 5.2. 長期情報更新の実行と保存 (core/information_updater.py, core/character_manager.py)**
 
 * **タスク内容**: InformationUpdater に trigger_long_term_update メソッドを実装。ユーザーからの指示に基づき、LLMAdapter を使って長期情報の更新案を取得し、CharacterManager を介して該当キャラクターの long_term.yaml ファイルに保存する。  
 * **完了条件**:  
@@ -220,7 +220,7 @@
 * **テスト**:  
   * シミュレーション中にユーザー指示で長期情報更新を実行し、対応するYAMLファイルが期待通りに更新されることを確認。
 
-### **[ ] 5.3. ユーザー介入機能の実装 (core/simulation_engine.py, core/scene_manager.py)**
+### **[x] 5.3. ユーザー介入機能の実装 (core/simulation_engine.py, core/scene_manager.py)**
 
 * **タスク内容**: 「詳細仕様書 3.2.3」に記載されたユーザー介入機能（場面状況介入、天啓付与など）を SimulationEngine および関連モジュールに実装する。介入内容はログに記録する。  
   * **ターン進行**: SimulationEngine のメインループで実装済み。  

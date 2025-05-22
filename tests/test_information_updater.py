@@ -223,11 +223,30 @@ class TestInformationUpdater(unittest.TestCase):
         """長期情報更新トリガーメソッドが例外を発生させずに実行できること（雛形実装の確認）"""
         mock_llm_adapter = mock.MagicMock()
 
+        # Mockオブジェクトの戻り値を設定
+        mock_update_proposal = {
+            "new_experiences": [{"event": "テスト経験", "importance": 8}],
+            "updated_goals": [{"goal": "テスト目標", "importance": 9}],
+        }
+        mock_llm_adapter.update_character_long_term_info.return_value = (
+            mock_update_proposal
+        )
+
+        # 適切なモックオブジェクトを準備
+        mock_long_term_data = LongTermCharacterData(
+            character_id="char_001", experiences=[], goals=[], memories=[]
+        )
+        self.mock_character_manager.get_long_term_context.return_value = (
+            mock_long_term_data
+        )
+
         # 例外が発生しないことを確認
         try:
-            self.updater.trigger_long_term_update(
+            result = self.updater.trigger_long_term_update(
                 "char_001", mock_llm_adapter, self.scene_log_data
             )
+            # 返り値も確認
+            self.assertEqual(result, mock_update_proposal)
         except Exception as e:
             self.fail(f"trigger_long_term_updateが例外を発生させました: {e}")
 
