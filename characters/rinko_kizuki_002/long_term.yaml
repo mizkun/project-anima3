@@ -1,0 +1,22 @@
+character_id: "rinko_kizuki_002"
+experiences:
+  - event: "幼い頃から両親が多忙で、一人で過ごす時間が長かったため、自立心と共にどこか達観した性格が形成された。"
+    importance: 8
+  - event: "中学時代、その頭脳明晰さから周囲に期待され、それに応えようとした結果、疲弊してしまった経験がある。それ以来、努力や他者からの評価に価値を見出さなくなった。"
+    importance: 9
+  - event: "情報処理部に入部したが、特にやりたいこともなく、現在は一人で気ままに過ごしている。芽依の入部を少し期待しているかもしれない。"
+    importance: 6
+goals:
+  - goal: "できるだけ面倒なことに関わらず、平穏無事に日々を過ごすこと。"
+    importance: 8
+  - goal: "木下芽依がなぜあんなに真っ直ぐでいられるのか、その理由を密かに知りたいと思っている。"
+    importance: 7
+  - goal: "食堂の唐揚げ定食を、飽きるまで食べ続けること。"
+    importance: 5
+memories:
+  - memory: "屋上で芽依が熱心に世界平和について語るのを聞いて、昔の自分を少し思い出し、同時に彼女の純粋さが眩しく感じた。"
+    scene_id_of_memory: "S002" # 仮のScene_ID
+    related_character_ids: ["mei_kinoshita_001"]
+  - memory: "授業をサボって図書室で時間を潰していたら、司書の先生に優しく声をかけられ、少しだけ気まずかったが、悪い気はしなかった。"
+    scene_id_of_memory: "S003" # 仮のScene_ID
+    related_character_ids: []

@@ -63,7 +63,7 @@
   * サンプルYAML/JSONファイルの読み込み・書き込みが正しく行えること。  
   * 不正なファイルパスや内容の場合に適切にエラーが処理されること。
 
-### **[x] 1.3. キャラクター設定ファイルの読み込み (core/character_manager.py)**
+### **[ ] 1.3. キャラクター設定ファイルの読み込み (core/character_manager.py)**
 
 * **タスク内容**: CharacterManagerクラスに、指定されたキャラクターのimmutable.yamlとlong_term.yamlを読み込み、対応するデータクラスのインスタンスとして保持する機能を実装する。  
 * **クラス**: CharacterManager  
