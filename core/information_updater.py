@@ -13,6 +13,7 @@ from typing import Optional, TYPE_CHECKING, Dict, Any
 if TYPE_CHECKING:
     from .character_manager import CharacterManager
     from .llm_adapter import LLMAdapter
+    from .context_builder import ContextBuilder
     from .data_models import (
         SceneLogData,
         TurnData,
