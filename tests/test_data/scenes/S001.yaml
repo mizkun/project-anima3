@@ -1,0 +1,5 @@
+scene_id: "S001"
+location: "放課後の教室"
+time: "夕方"
+situation: "夕日が窓から差し込み、机と椅子が整然と並んでいる。誰もいないように見える。"
+participant_character_ids: ["mei_kinoshita_001", "rinko_kizuki_002"] 
