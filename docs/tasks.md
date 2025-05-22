@@ -204,13 +204,12 @@
 
 ## **フェーズ5: 長期情報の更新とユーザー介入**
 
-### **[ ] 5.1. 長期情報更新プロンプトとLLM連携 (core/context_builder.py, core/llm_adapter.py, prompts/long_term_update.txt)**
+### **[x] 5.1. 長期情報更新プロンプトとLLM連携 (core/context_builder.py, core/llm_adapter.py, prompts/long_term_update.txt)**
 
 * **タスク内容**: 長期情報（経験、目標、記憶）を更新するためのLLMプロンプト (long_term_update.txt) を作成し、LLMAdapter に長期情報更新メソッド (update_character_long_term_info) を実装する。このメソッドは、現在の場面ログやキャラクターの既存の長期情報を元に、更新すべき長期情報（新しい経験、目標の変更、新しい記憶など）の案をLLMに生成させる。  
 * **完了条件**:  
   * LLMが、入力情報に基づいて長期情報の更新案（例: 新しい経験の記述、更新された目標リストなど）を構造化データ（JSONなど）で提案できるようになること。  
-* **テスト**:  
-  * ユニットテストで、サンプルデータから長期情報更新プロンプトが生成され、LLM（モックまたは実API）から期待される形式の更新案が返ってくることを確認。
+* **テスト**: ユニットテストで、サンプルデータから長期情報更新プロンプトが生成され、LLM（モックまたは実API）から期待される形式の更新案が返ってくることを確認。
 
 ### **[ ] 5.2. 長期情報更新の実行と保存 (core/information_updater.py, core/character_manager.py)**
 
