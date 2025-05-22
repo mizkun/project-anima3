@@ -1,174 +1,281 @@
 # Project Anima
 
-AIキャラクターシミュレーター
+AI Character Simulator
 
-## 概要
+## Overview
 
-Project Animaは、ユーザーが定義したAIキャラクターたちが、与えられたコンテクストに基づいて自律的に思考し、行動・発言する様子をシミュレートするシステムです。シミュレーション結果はテキストファイルとして出力され、ユーザーはこれを小説、シナリオ等のエンターテイメントコンテンツ制作の素材として活用することを目的としています。
+Project Anima is a system that simulates AI characters defined by users, thinking, acting, and speaking autonomously based on given contexts. Simulation results are output as text files, which users can use as material for creating entertainment content such as novels and scenarios.
 
-## 主な機能
+This project aims to provide creators with a powerful tool to create characters with depth and generate narratives driven by realistic interactions and dynamic story developments.
 
-- キャラクター定義：YAMLファイルで不変情報と長期情報を定義
-- 場面設定：YAMLファイルで場面の状況、場所、時間、参加キャラクターを定義
-- 思考生成：LLM（Gemini/OpenAI）を用いたキャラクターの思考・行動・発言の生成
-- ユーザー介入：シミュレーション中に場面状況の変更、キャラクターへの天啓付与などが可能
-- 長期情報更新：シミュレーション後にキャラクターの記憶や目標などの長期情報を更新
+## Design Philosophy
 
-## 技術スタック
+Project Anima is built on several core principles to ensure a flexible, extensible, and engaging simulation experience:
 
-- Python 3.9+
-- Pydantic：データ構造の定義・検証
-- LangGraph：LLM処理フロー制御
-- PyYAML：設定ファイルの読み込み
-- Google Generative AI / OpenAI API：LLMサービス連携
+* **Modularity**: The system is designed with clear separation of concerns, with separate modules for character management, scene management, context building, LLM integration, and information updates. This improves maintainability and extensibility.
+* **Data-Driven Characters**: Character personalities, backstories, and growth are driven by structured YAML data (immutable and long-term information), enabling rich and customizable character definitions.
+* **Context is King: The Foundation of Character Cognition**: The quality of AI-generated responses heavily depends on the context provided. Project Anima emphasizes building rich, multifaceted contexts for each character's turn. This context consists of four main pillars of information that shape a character's "mind":
+    * **Immutable Context**: The core identity of the character - forming immutable aspects like `character_id`, name, age, basic personality traits. This is the foundation upon which all other context layers are built.
+    * **Long-Term Context**: This layer represents the character's accumulated experiences, evolving goals, and significant memories, all tied to their `character_id`. It allows characters to learn, grow, and change over time, letting their personal history reflect in their current actions and thoughts.
+    * **Scene Context**: This defines the immediate environment and situation - `scene_id`, location, time, current situation, and other present characters (referenced by `character_id`). It acts as a dynamic filter affecting how a character's core traits and long-term information manifest in the current moment.
+    * **Short-Term Context**: Captures recent interactions within the current scene (dialogues, actions, etc., associated with `character_id`). It provides conversational memory, ensuring characters respond consistently to immediate previous events.
+    These four pillars are dynamically combined by the `ContextBuilder` module to create comprehensive prompts for the LLM, enabling nuanced and consistent character behavior.
+* **LLM as Core Engine**: Large Language Models (LLMs) are leveraged for core simulation logic, such as generating character thoughts, actions, speech, and suggesting long-term information updates, enabling dynamic and emergent behavior.
+* **User Intervention**: Simulations are not closed boxes. Users can dynamically influence the narrative by intervening in scene situations or providing "divine revelations" to characters. This adds a layer of interactivity and control.
+* **Extensibility**: The architecture is designed with future extensions in mind, such as integration with frameworks like LangGraph for more complex LLM flows, or adding new types of user interventions.
+* **Developer-Centric (Initial Focus)**: The initial version prioritizes robust backend logic and console-based interfaces, suitable for developers and creators familiar with this interaction model.
+* **Clear Logging**: Comprehensive logging of simulation events, character thoughts, and LLM interactions is implemented, aiding in debugging, analysis, and understanding simulation flow.
+* **YAML/JSON for Data**: Configuration files and logs primarily use YAML and JSON formats, balancing human readability and machine parseability.
 
-## インストール方法
+## Key Features
 
-### 前提条件
+* **Character Definition**: Define character immutable and long-term information using YAML files
+* **Scene Setting**: Define scene situation, location, time, and participating characters using YAML files
+* **Thought Generation**: Generate character thoughts, actions, and speech using LLM (Gemini/OpenAI)
+* **User Intervention**: Ability to change scene situations and provide "divine revelations" to characters during simulation
+* **Long-Term Information Updates**: Update character memories, goals, etc. based on events and LLM suggestions after simulation
 
-- Python 3.9以上
-- pip（Pythonパッケージマネージャー）
-- 仮想環境（venv, conda等）
-- Gemini API キー または OpenAI API キー
+## Technology Stack
 
-### 1. リポジトリのクローン
+* Python 3.9+
+* Pydantic: Data structure definition and validation
+* LangGraph: LLM processing flow control
+* PyYAML: Configuration file loading
+* Google Generative AI / OpenAI API: LLM service integration
+* python-dotenv: Environment variable management (API keys, etc.)
+
+## Installation
+
+### Prerequisites
+
+* Python 3.9 or higher
+* pip (Python package manager)
+* Virtual environment tool (venv, conda, etc.)
+* Gemini API key or OpenAI API key
+
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/project-anima.git
+git clone https://github.com/your-username/project-anima.git  # Replace with the actual repository URL
 cd project-anima
 ```
 
-### 2. 仮想環境の作成と有効化
+### 2. Create and Activate a Virtual Environment
 
 ```bash
-# venvを使用する場合
+# Using venv
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
 ```
 
-### 3. 依存パッケージのインストール
+### 3. Install Dependencies
+
+During development, installing the project in editable mode is recommended. This will also install all dependencies defined in pyproject.toml.
 
 ```bash
-# 開発モードでインストール
 pip install -e .
-
-# または依存パッケージのみをインストール
-pip install -r requirements.txt
 ```
 
-### 4. API キーの設定
+To install development dependencies (pytest, black, flake8, etc.):
 
-プロジェクトのルートディレクトリに `.env` ファイルを作成し、以下の内容を記述します：
+```bash
+pip install -e ".[dev]"
+```
+
+### 4. Set Up API Keys
+
+Create a `.env` file in the project root directory and add your API keys:
 
 ```
-# Gemini API キー
+# Gemini API Key
 GOOGLE_API_KEY=your_api_key_here
 
-# OpenAI API キー（必要な場合）
-OPENAI_API_KEY=your_api_key_here
+# OpenAI API Key (if needed)
+# OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-## 使用方法
+**Important**: Add the `.env` file to `.gitignore` to avoid committing your API keys.
 
-### 基本的な実行方法
+## Usage
+
+### Basic Execution
+
+The main way to run a simulation is through `main.py`.
 
 ```bash
-# デフォルト設定で実行（school_rooftop.yamlを使用、最大3ターン）
+# Run with default settings (default scene, limited number of turns, etc.)
 python main.py
 
-# 場面設定ファイルを指定して実行
-python main.py --scene scenes/your_scene.yaml
+# Specify a scene configuration file
+python main.py --scene scenes/your_scene_file.yaml
 
-# ターン数を指定して実行
-python main.py --max-turns 5
+# Specify maximum number of turns
+python main.py --max-turns 10
 
-# 使用するLLMモデルを指定
-python main.py --llm-model gemini-1.5-pro
+# Specify the LLM model to use
+python main.py --llm-model gemini-1.5-pro-latest
 ```
 
-### コマンドラインオプション
+### Command Line Options
 
-- `--scene`: 場面設定ファイルのパス（デフォルト: scenes/school_rooftop.yaml）
-- `--characters-dir`: キャラクター設定ファイルが格納されているディレクトリ（デフォルト: characters）
-- `--prompts-dir`: プロンプトテンプレートが格納されているディレクトリ（デフォルト: prompts）
-- `--max-turns`: 実行するターン数（デフォルト: 3）
-- `--debug`: デバッグモードを有効にする
-- `--llm-model`: 使用するLLMモデル名（デフォルト: gemini-1.5-flash-latest）
+* `--scene SCENE_FILE_PATH`: Path to the scene configuration YAML file (default: scenes/school_rooftop_001.yaml or similar, see main.py for specific defaults)
+* `--characters-dir CHARACTERS_DIR_PATH`: Path to the directory containing character configuration files (default: characters)
+* `--prompts-dir PROMPTS_DIR_PATH`: Path to the directory containing LLM prompt templates (default: prompts)
+* `--max-turns MAX_TURNS`: Maximum number of turns to run in the simulation (default: 3 or based on number of participants, see main.py)
+* `--llm-model LLM_MODEL_NAME`: Name of the LLM model to use (default: gemini-1.5-flash-latest)
+* `--debug`: Enable debug mode for more detailed logging (implementation-specific)
 
-### キャラクター設定ファイルの作成
+(Note: Exact default values and available options may be defined in main.py using libraries like argparse.)
 
-キャラクター設定は以下の2つのYAMLファイルで定義します：
+## Creating Character Configuration Files
 
-1. `characters/{character_id}/immutable.yaml`：不変情報（名前、年齢、性格など）
-2. `characters/{character_id}/long_term.yaml`：長期情報（経験、目標、記憶など）
+Character configurations are defined in two YAML files per character, typically placed in `characters/{character_id}/`.
 
-詳細なフォーマットは `characters/` ディレクトリ内のサンプルを参照してください。
+### 1. immutable.yaml (Immutable Information)
 
-### 場面設定ファイルの作成
+This file contains the core, unchanging aspects of a character.
 
-場面設定は `scenes/{scene_id}.yaml` ファイルで定義します。詳細なフォーマットは `scenes/` ディレクトリ内のサンプルを参照してください。
-
-### シミュレーション結果の確認
-
-シミュレーション結果は `logs/sim_{timestamp}/scene_{scene_id}.json` に保存されます。
-
-## 開発ガイド
-
-### テストの実行
-
-```bash
-# すべてのテストを実行
-python run_tests.py
-
-# 特定のテストファイルを実行
-python -m pytest tests/test_file_name.py
-
-# 特定のテストケースを実行
-python -m pytest tests/test_file_name.py::test_function_name
+```yaml
+# characters/{character_id}/immutable.yaml
+character_id: "unique_character_identifier_001"  # Unique ID for the character
+name: "Character Name"
+age: 25  # Optional
+occupation: "Character's Occupation"  # Optional
+base_personality: |
+  Detailed description of the character's basic personality traits,
+  core values, and general attitudes. This should have sufficient
+  richness for the LLM to understand the character's basic behavior.
+# Additional custom immutable fields can be added as needed
 ```
 
-### コードフォーマット
+### 2. long_term.yaml (Long-Term Information)
 
-コードのフォーマットには Black を使用しています。以下のコマンドで一括フォーマットできます：
+This file contains information that evolves as the character experiences simulations.
+
+```yaml
+# characters/{character_id}/long_term.yaml
+character_id: "unique_character_identifier_001"  # Must match immutable.yaml
+experiences:
+  - event: "A significant past event that shaped the character."
+    importance: 8  # Scale of 1-10
+  - event: "Another important experience."
+    importance: 6
+goals:  # Character's desires and wishes
+  - goal: "A major long-term ambition."
+    importance: 9
+  - goal: "A more immediate, everyday wish."
+    importance: 3
+memories:
+  - memory: "A specific memory of an event, including dialogue and sensory details."
+    scene_id_of_memory: "S00X"  # Scene_ID where this memory was formed or became significant
+    related_character_ids: ["other_char_id_002"]  # List of Character_IDs involved, if any
+# These lists will be updated by the system based on LLM suggestions
+```
+
+## Creating Scene Configuration Files
+
+Scene configurations are defined in YAML files, typically placed in `scenes/`. The filename itself serves as the scene_id (e.g., S001.yaml).
+
+```yaml
+# scenes/{scene_id}.yaml (e.g., scenes/S001.yaml)
+scene_id: "S001"  # Unique ID for the scene, should match the filename
+location: "Specific location, e.g., 'A busy downtown cafe' or 'A quiet corner of the library'"  # Optional
+time: "Time of day or specific date, e.g., 'Late afternoon' or '2025-05-22 15:00'"  # Optional
+situation: |
+  Detailed description of the current scene setting, atmosphere, ongoing events,
+  and relevant environmental details. This sets the stage for character interactions.
+participant_character_ids:
+  - "participant_1_character_id"
+  - "participant_2_character_id"
+  # Add more character_ids as needed
+previous_scene_log_reference: "scene_S000.json"  # Optional: filename of previous scene's log for context continuity
+```
+
+## Checking Simulation Results
+
+Simulation logs are stored in the `logs/` directory, typically in timestamp-named subfolders for each simulation run:
+`logs/sim_{timestamp}/scene_{scene_id}.json`
+
+## Development Guide
+
+### Running Tests
+
+This project uses pytest for unit testing.
 
 ```bash
+# Run all tests
+pytest
+
+# Run tests in a specific file
+pytest tests/test_your_module.py
+
+# Run a specific test case
+pytest tests/test_your_module.py::test_your_function
+```
+
+(Make sure pytest is installed, usually via `pip install -e ".[dev]"`)
+
+### Code Formatting
+
+This project uses Black for code formatting and isort for sorting imports.
+
+```bash
+# Format all files
 black .
+isort .
 ```
 
-## プロジェクト構造
+It's recommended to configure your editor to format on save using these tools.
+
+## Project Structure
 
 ```
 project-anima/
-├── characters/           # キャラクター設定ファイル
-├── core/                 # コア機能実装
-│   ├── character_manager.py  # キャラクター管理
-│   ├── context_builder.py    # コンテキスト構築
-│   ├── data_models.py        # データモデル定義
-│   ├── information_updater.py # 情報更新処理
-│   ├── llm_adapter.py        # LLM連携
-│   ├── scene_manager.py      # 場面管理
-│   └── simulation_engine.py  # シミュレーションエンジン
-├── docs/                 # ドキュメント
-├── issues/               # 課題管理
-├── logs/                 # シミュレーションログ
-├── prompts/              # プロンプトテンプレート
-├── scenes/               # 場面設定ファイル
-├── tests/                # テストコード
-├── utils/                # ユーティリティ
-├── main.py               # エントリーポイント
-├── requirements.txt      # 依存パッケージリスト
-└── README.md             # このファイル
+├── characters/           # Character configuration files (YAML)
+│   └── {character_id}/
+│       ├── immutable.yaml
+│       └── long_term.yaml
+├── core/                 # Core application logic
+│   ├── character_manager.py
+│   ├── context_builder.py
+│   ├── data_models.py
+│   ├── information_updater.py
+│   ├── llm_adapter.py
+│   ├── scene_manager.py
+│   └── simulation_engine.py
+├── docs/                 # Project documentation (this README, detailed specs, etc.)
+├── issues/               # Issue tracking files (when using local .md files)
+│   └── closed/
+├── logs/                 # Simulation output logs
+│   └── sim_{timestamp}/
+│       └── scene_{scene_id}.json
+├── prompts/              # LLM prompt templates (.txt)
+│   ├── think_generate.txt
+│   └── long_term_update.txt
+├── scenes/               # Scene configuration files (YAML)
+│   └── {scene_id}.yaml
+├── tests/                # Unit tests and integration tests
+│   ├── test_character_manager.py
+│   └── ...
+├── utils/                # Utility modules (e.g., file_handler.py)
+├── .env.example          # Example environment file (API keys)
+├── .gitignore
+├── main.py               # Main entry point for the application
+├── pyproject.toml        # Project metadata and dependencies
+└── README.md             # This file
 ```
 
-## 貢献方法
+## Contributing
 
-1. このリポジトリをフォークします
-2. 新しいブランチを作成します (`git checkout -b feature/amazing-feature`)
-3. 変更をコミットします (`git commit -m 'Add some amazing feature'`)
-4. ブランチにプッシュします (`git push origin feature/amazing-feature`)
-5. プルリクエストを作成します
+Contributions are welcome! Please follow these steps:
 
-## ライセンス
+1. Fork this repository.
+2. Create a new branch (`git checkout -b feature/your-amazing-feature`).
+3. Commit your changes (`git commit -m 'Add some amazing feature'`).
+4. Push to the branch (`git push origin feature/your-amazing-feature`).
+5. Create a new Pull Request.
 
-MIT License 
+## License
+
+This project is provided under the MIT License.
