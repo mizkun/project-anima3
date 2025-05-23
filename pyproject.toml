@@ -1,40 +1,34 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "project-anima"
+name = "project_anima"
 version = "0.1.0"
-authors = [
-    {name = "Project Anima Team"},
-]
-description = "AIキャラクターシミュレーター"
+description = "AI Character Simulator"
 readme = "README.md"
+authors = [
+    {name = "Project Anima Team"}
+]
 requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-license = {text = "MIT"}
-dependencies = [
-    "pydantic>=2.0.0",
-    "langgraph>=0.0.15",
-    "pyyaml>=6.0.1",
-    "google-generativeai>=0.3.0",
-    "openai>=1.0.0",
-    "python-dotenv>=0.20.0",
-]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
-    "black>=23.0.0",
-    "isort>=5.0.0",
-    "flake8>=6.0.0",
-]
+[project.urls]
+"Homepage" = "https://github.com/yourusername/project-anima"
+"Bug Tracker" = "https://github.com/yourusername/project-anima/issues"
 
-[tool.setuptools]
-packages = ["core", "characters", "scenes", "logs", "prompts", "utils"]
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
 
 [tool.pytest.ini_options]
-pythonpath = ["."] 
+testpaths = ["tests"]
+python_files = "test_*.py" 

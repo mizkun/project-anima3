@@ -1,0 +1,5 @@
+# scene_idが欠落しているためバリデーションエラーになる
+location: "カフェテリア"
+time: "昼食時"
+situation: "多くの学生が食事をしている賑やかな空間。テーブルや椅子がびっしりと並んでいる。"
+participant_character_ids: ["mei_kinoshita_001", "yuki_suzuki_004"] 

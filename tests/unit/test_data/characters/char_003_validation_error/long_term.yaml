@@ -1,0 +1,5 @@
+# このファイルはテストで使用されません（immutable.yamlのバリデーションエラーが先に発生するため）
+character_id: "char_003_validation_error"
+experiences: []
+goals: []
+memories: [] 

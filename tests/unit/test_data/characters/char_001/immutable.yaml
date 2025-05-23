@@ -1,0 +1,5 @@
+character_id: "char_001"
+name: "テストキャラクター"
+age: 25
+occupation: "テスト要員"
+base_personality: "真面目で、何事も緻密にテストする性格。" 

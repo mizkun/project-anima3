@@ -1,0 +1,5 @@
+scene_id: "S002"
+location: "学校の屋上"
+time: "昼休み"
+situation: "強い日差しが照りつける中、フェンスに囲まれた屋上には誰もいない。
+participant_character_ids: ["mei_kinoshita_001", "akira_takahashi_003"] 
