@@ -77,7 +77,7 @@ def main():
         display_header("シミュレーションエンジンの手動テスト")
 
         # テスト用のパス設定
-        current_dir = os.path.dirname(os.path.abspath(__file__))
+        current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         scene_file_path = os.path.join(current_dir, "scenes", "school_rooftop.yaml")
         characters_base_path = os.path.join(current_dir, "characters")
 

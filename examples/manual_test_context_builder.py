@@ -14,7 +14,7 @@ from core.data_models import TurnData
 
 def main():
     # 現在のディレクトリを取得
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     # CharacterManagerの初期化
     characters_dir = os.path.join(current_dir, "characters")

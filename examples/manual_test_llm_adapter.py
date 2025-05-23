@@ -48,7 +48,9 @@ def create_test_prompt_template() -> str:
 ```
 """
     # 一時ファイルに保存
-    temp_file_path = "temp_prompt_template.txt"
+    # シンプル化のため、examplesディレクトリに保存
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    temp_file_path = os.path.join(current_dir, "temp_prompt_template.txt")
     with open(temp_file_path, "w", encoding="utf-8") as f:
         f.write(template)
 
@@ -104,8 +106,10 @@ def main():
 
     finally:
         # 一時ファイルを削除
-        if os.path.exists("temp_prompt_template.txt"):
-            os.remove("temp_prompt_template.txt")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        temp_file_path = os.path.join(current_dir, "temp_prompt_template.txt")
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
             logger.info("一時ファイルを削除しました。")
 
 

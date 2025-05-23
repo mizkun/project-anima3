@@ -90,8 +90,11 @@ def display_scene_log(scene_log: SceneLogData) -> None:
 def main():
     """InformationUpdaterの手動テスト"""
     try:
-        # CharacterManagerのインスタンスを作成（ダミー）
-        character_manager = CharacterManager("./characters")
+        # 現在のディレクトリを取得
+        current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        # CharacterManagerのインスタンスを作成
+        character_manager = CharacterManager(os.path.join(current_dir, "characters"))
 
         # InformationUpdaterのインスタンスを作成
         logger.info("InformationUpdaterを初期化しています...")
@@ -196,12 +199,16 @@ def main():
         updater.trigger_long_term_update("alice", None, scene_log)
 
         # ログをJSONとして保存（サンプル出力）
-        log_dir = "logs"
+        log_dir = os.path.join(current_dir, "logs")
         os.makedirs(log_dir, exist_ok=True)
-        log_path = os.path.join(log_dir, "test_scene_log.json")
-        with open(log_path, "w", encoding="utf-8") as f:
-            f.write(scene_log.model_dump_json(indent=2, exclude_none=False))
-        logger.info(f"場面ログをJSONとして保存しました: {log_path}")
+        log_file = os.path.join(log_dir, "manual_test_information_updater_scene.json")
+
+        # 場面ログをJSON形式で保存
+        with open(log_file, "w", encoding="utf-8") as f:
+            # Pydanticモデルをdictに変換してからJSONに変換
+            json.dump(scene_log.dict(), f, ensure_ascii=False, indent=2)
+
+        logger.info(f"場面ログをJSONとして保存しました: {log_file}")
 
     except Exception as e:
         logger.error(f"テスト中にエラーが発生しました: {str(e)}", exc_info=True)
