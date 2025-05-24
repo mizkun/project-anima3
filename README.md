@@ -124,9 +124,43 @@ python main.py --llm-model gemini-1.5-pro-latest
 * `--prompts-dir PROMPTS_DIR_PATH`: Path to the directory containing LLM prompt templates (default: prompts)
 * `--max-turns MAX_TURNS`: Maximum number of turns to run in the simulation (default: 3 or based on number of participants, see main.py)
 * `--llm-model LLM_MODEL_NAME`: Name of the LLM model to use (default: gemini-1.5-flash-latest)
-* `--debug`: Enable debug mode for more detailed logging (implementation-specific)
+* `--debug`: Enable debug mode for more detailed logging and LLM prompt/response display
 
 (Note: Exact default values and available options may be defined in main.py using libraries like argparse.)
+
+### Interactive Mode
+
+Project Anima also provides an interactive command-line interface that allows you to step through the simulation one turn at a time and intervene as needed.
+
+```bash
+# Start the interactive CLI
+python -m project_anima.interactive_cli
+
+# Specify a scene configuration file
+python -m project_anima.interactive_cli --scene data/scenes/your_scene_file.yaml
+
+# Enable debug mode to display LLM prompts and responses
+python -m project_anima.interactive_cli --debug
+```
+
+In interactive mode, you can use the following commands:
+
+* `start` - Start the simulation
+* `next` or `n` - Execute the next turn
+* `status` or `s` - Display the current simulation status
+* `intervene` or `i` - Intervene in the simulation (update situation, add/remove characters, etc.)
+* `update_ltm` or `ultm` - Update a character's long-term memory
+* `help_interventions` - Display available intervention types
+* `quit` or `q` - End the simulation and exit
+
+Example of intervention commands:
+```
+intervene update_situation 突然、大きな音がした。全員が振り向いた。
+intervene give_revelation char_001 あなたは相手が嘘をついていることに気づいた。
+update_ltm char_001
+```
+
+When running in debug mode (`--debug`), the system will display the full prompts sent to the LLM and the raw responses received, which is useful for understanding how the system works and for troubleshooting.
 
 ## Creating Character Configuration Files
 
