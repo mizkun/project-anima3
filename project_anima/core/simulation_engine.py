@@ -98,7 +98,7 @@ class SimulationEngine:
 
         self.character_manager = CharacterManager(characters_dir)
         self.scene_manager = SceneManager()
-        self.information_updater = InformationUpdater(self.log_dir)
+        self.information_updater = InformationUpdater(self.character_manager)
 
         # LLMアダプターの初期化
         self.llm_adapter = LLMAdapter(model_name=llm_model)
