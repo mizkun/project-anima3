@@ -451,8 +451,45 @@ class SimulationEngine:
         シミュレーションを明示的に終了する
 
         現在の場面ログを保存し、シミュレーション状態をリセットします。
+        終了前に場面に参加している全キャラクターの長期情報も更新します。
         """
         if self._is_running and self._current_scene_log is not None:
+            # 参加キャラクターの長期情報を更新
+            logger.info(
+                "シミュレーション終了に伴い、参加キャラクターの長期情報を更新します..."
+            )
+            if self._current_scene_log and self._current_scene_log.scene_info:
+                # この時点での最終的な参加者リストを使用する
+                final_participants = list(
+                    self._current_scene_log.scene_info.participant_character_ids
+                )
+                for char_id_to_update in final_participants:
+                    logger.info(
+                        f"キャラクター '{char_id_to_update}' の長期情報更新を試みます..."
+                    )
+                    try:
+                        update_result = self.update_character_long_term_info(
+                            char_id_to_update
+                        )
+                        if update_result:
+                            logger.info(
+                                f"キャラクター '{char_id_to_update}' の長期情報更新に成功しました。"
+                            )
+                        else:  # Noneが返ってきた場合など
+                            logger.warning(
+                                f"キャラクター '{char_id_to_update}' の長期情報更新は行われませんでした、または結果が不明です。"
+                            )
+                    except Exception as e:
+                        logger.error(
+                            f"キャラクター '{char_id_to_update}' の長期情報更新中に予期せぬエラーが発生しました: {str(e)}",
+                            exc_info=True,
+                        )
+            else:
+                logger.warning(
+                    "場面ログが存在しないため、長期情報更新はスキップされました。"
+                )
+
+            # 場面ログを保存
             self._save_scene_log()
             logger.info("シミュレーションを手動で終了しました")
 

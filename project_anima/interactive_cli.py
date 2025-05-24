@@ -230,7 +230,9 @@ class ProjectAnimaShell(cmd.Cmd):
         """
         if self.simulation_running:
             print("シミュレーションを終了しています...")
+            print("参加した全キャラクターの長期情報を更新しています...")
             self.engine.end_simulation()
+            print("キャラクターの長期情報が更新されました。")
 
         print("Project Animaを終了します。お疲れ様でした！")
         return True
