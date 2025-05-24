@@ -172,6 +172,55 @@ class ProjectAnimaShell(cmd.Cmd):
         except Exception as e:
             print(f"介入処理エラー: {str(e)}")
 
+    def do_update_ltm(self, arg):
+        """
+        キャラクターの長期情報を更新する
+
+        使用法: update_ltm <キャラID>
+        または短縮形: ultm <キャラID>
+
+        例:
+          - update_ltm char_001
+        """
+        if not self.simulation_running:
+            print(
+                "シミュレーションが開始されていません。'start'コマンドで開始してください。"
+            )
+            return
+
+        if not arg:
+            print("更新対象のキャラクターIDを指定してください。")
+            return
+
+        # 引数をパース
+        args = shlex.split(arg)
+        if len(args) < 1:
+            print("更新対象のキャラクターIDを指定してください。")
+            return
+
+        target_char_id = args[0]
+
+        try:
+            # 現在のターン情報を取得（介入ログ用）
+            current_turn_for_intervention_log = (
+                len(self.engine._current_scene_log.turns) + 1
+            )
+
+            # 介入コマンドを生成
+            intervention_command = f"trigger_ltm_update {target_char_id}"
+            success, message = self.engine.process_intervention_command(
+                intervention_command
+            )
+
+            if success:
+                print(f"キャラクター '{target_char_id}' の長期情報更新を開始しました。")
+            else:
+                print(
+                    f"キャラクター '{target_char_id}' の長期情報更新に失敗しました: {message}"
+                )
+        except Exception as e:
+            print(f"長期情報更新処理エラー: {str(e)}")
+
     def do_quit(self, arg):
         """
         シミュレーションを終了してシェルを閉じる
@@ -214,6 +263,10 @@ class ProjectAnimaShell(cmd.Cmd):
 
 5. 場面の終了 (end_scene または end)
    - 形式: intervene end_scene
+
+6. キャラクターの長期情報更新 (update_ltm または ultm)
+   - 形式: update_ltm <キャラID>
+   - 例: update_ltm char_001
         """
         )
 
@@ -222,6 +275,7 @@ class ProjectAnimaShell(cmd.Cmd):
     do_s = do_status
     do_i = do_intervene
     do_q = do_quit
+    do_ultm = do_update_ltm
 
 
 def parse_args():

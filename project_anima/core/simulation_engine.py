@@ -247,7 +247,7 @@ class SimulationEngine:
 
     def start_simulation(self, max_turns: Optional[int] = None) -> None:
         """
-        シミュレーションを開始する（自動実行モード）
+        シミュレーションを開始する
 
         指定された場面設定をロードし、シミュレーションループを開始します。
         各ターンで、参加キャラクターが順番に行動します。
@@ -259,25 +259,143 @@ class SimulationEngine:
             FileNotFoundError: 場面設定ファイルが見つからない場合
             ValueError: 場面設定ファイルの形式が不正な場合
         """
-        if not self.start_simulation_setup():
-            return
+        logger.info(
+            f"シミュレーションを開始します。場面ファイル: {self.scene_file_path}"
+        )
 
-        self._max_turns = max_turns
+        try:
+            # 場面設定をロード
+            self.scene_manager.load_scene_from_file(self.scene_file_path)
+            scene_info = self.scene_manager.get_current_scene_info()
 
-        # メインループ
-        while True:
-            # 最大ターン数のチェック
-            if max_turns is not None and self._turn_count >= max_turns:
-                logger.info(
-                    f"最大ターン数 ({max_turns}) に達しました。シミュレーションを終了します。"
+            if scene_info is None:
+                raise ValueError("場面情報の取得に失敗しました")
+
+            # 参加キャラクターを確認
+            participant_ids = scene_info.participant_character_ids
+            if not participant_ids:
+                logger.warning(
+                    "参加キャラクターが存在しません。シミュレーションを終了します。"
                 )
-                break
+                return
 
-            if not self.execute_one_turn():
-                break
+            # 参加キャラクターの情報をロード
+            for character_id in participant_ids:
+                try:
+                    self.character_manager.load_character_data(character_id)
+                except Exception as e:
+                    logger.error(
+                        f"キャラクター '{character_id}' の読み込みに失敗しました: {str(e)}"
+                    )
 
-        # シミュレーション終了時の処理
-        logger.info("シミュレーションを終了します")
+            # 場面ログの初期化（インメモリ）
+            from .data_models import SceneLogData
+
+            self._current_scene_log = SceneLogData(
+                scene_info=scene_info, interventions_in_scene=[], turns=[]
+            )
+
+            # 場面終了フラグを初期化
+            self._end_scene_requested = False
+
+            # ターンカウンターとインデックスの初期化
+            self._turn_count = 0
+            self._current_turn = 0
+            self._is_running = True
+
+            logger.info(
+                f"場面 '{scene_info.scene_id}' のセットアップが完了しました。参加キャラクター: {participant_ids}"
+            )
+
+            # メインループ
+            while True:
+                # 最大ターン数のチェック
+                if max_turns is not None and self._turn_count >= max_turns:
+                    logger.info(
+                        f"最大ターン数 ({max_turns}) に達しました。シミュレーションを終了します。"
+                    )
+                    break
+
+                # 場面終了フラグのチェック
+                if self._end_scene_requested:
+                    logger.info(
+                        "場面終了が要求されたため、シミュレーションを終了します。"
+                    )
+                    break
+
+                # 次の行動キャラクターを決定
+                character_id = self._determine_next_character()
+
+                # 全キャラクターが行動済みなら一巡完了
+                if character_id is None:
+                    self._current_turn = 0
+                    self._turn_count += len(
+                        self._current_scene_log.scene_info.participant_character_ids
+                    )
+                    logger.info(
+                        f"全キャラクターの行動が完了しました（計 {self._turn_count} ターン）"
+                    )
+
+                    # 再度次のキャラクターを取得
+                    character_id = self._determine_next_character()
+                    if character_id is None:  # 参加者がいなくなった場合
+                        logger.warning(
+                            "参加キャラクターがいなくなりました。シミュレーションを終了します。"
+                        )
+                        break
+
+                # キャラクターのターンを実行
+                try:
+                    self.next_turn(character_id)
+                    self._current_turn += 1
+                except Exception as e:
+                    logger.error(f"ターン実行中にエラーが発生しました: {str(e)}")
+                    # エラーが発生しても次のキャラクターに進む
+                    self._current_turn += 1
+
+            # シミュレーション終了時の処理
+            logger.info("シミュレーションを終了します")
+
+            # 参加キャラクターの長期情報を更新
+            logger.info("場面終了に伴い、参加キャラクターの長期情報を更新します...")
+            if self._current_scene_log and self._current_scene_log.scene_info:
+                # この時点での最終的な参加者リストを使用する
+                final_participants = list(
+                    self._current_scene_log.scene_info.participant_character_ids
+                )
+                for char_id_to_update in final_participants:
+                    logger.info(
+                        f"キャラクター '{char_id_to_update}' の長期情報更新を試みます..."
+                    )
+                    try:
+                        update_result = self.update_character_long_term_info(
+                            char_id_to_update
+                        )
+                        if update_result:
+                            logger.info(
+                                f"キャラクター '{char_id_to_update}' の長期情報更新に成功しました。"
+                            )
+                        else:  # Noneが返ってきた場合など
+                            logger.warning(
+                                f"キャラクター '{char_id_to_update}' の長期情報更新は行われませんでした、または結果が不明です。"
+                            )
+                    except Exception as e:
+                        logger.error(
+                            f"キャラクター '{char_id_to_update}' の長期情報更新中に予期せぬエラーが発生しました: {str(e)}",
+                            exc_info=True,
+                        )
+            else:
+                logger.warning(
+                    "場面ログが存在しないため、長期情報更新はスキップされました。"
+                )
+
+            # 場面ログをファイルに保存
+            self._save_scene_log()
+
+        except Exception as e:
+            error_msg = f"シミュレーション実行中にエラーが発生しました: {str(e)}"
+            logger.error(error_msg)
+            raise SimulationEngineError(error_msg) from e
 
     def get_simulation_status(self) -> Dict[str, Any]:
         """
@@ -608,6 +726,37 @@ class SimulationEngine:
                 self._end_scene_requested = True
                 logger.info("場面終了が要求されました")
 
+            elif intervention_data.intervention_type == "TRIGGER_LONG_TERM_UPDATE":
+                # 長期情報更新のトリガー
+                if intervention_data.target_character_id is None:
+                    logger.error(
+                        "TRIGGER_LONG_TERM_UPDATE 介入には対象キャラクターIDが必要です。"
+                    )
+                    return
+
+                target_character_id = intervention_data.target_character_id
+                logger.info(
+                    f"ユーザー指示により、キャラクター '{target_character_id}' の長期情報更新を試みます..."
+                )
+
+                try:
+                    update_result = self.update_character_long_term_info(
+                        target_character_id
+                    )
+                    if update_result:
+                        logger.info(
+                            f"キャラクター '{target_character_id}' の長期情報更新コマンド成功。"
+                        )
+                    else:
+                        logger.warning(
+                            f"キャラクター '{target_character_id}' の長期情報更新コマンドは実行されませんでした、または結果が不明です。"
+                        )
+                except Exception as e:
+                    logger.error(
+                        f"ユーザー指示によるキャラクター '{target_character_id}' の長期情報更新中にエラー: {e}",
+                        exc_info=True,
+                    )
+
             else:
                 # 未定義の介入タイプ
                 logger.warning(
@@ -748,6 +897,7 @@ class SimulationEngine:
                 - "add_character <キャラID>"
                 - "remove_character <キャラID>"
                 - "end_scene"
+                - "trigger_ltm_update <キャラID>"
 
         Returns:
             Tuple[bool, str]: (成功したかどうか, メッセージ)
@@ -924,6 +1074,61 @@ class SimulationEngine:
 
                 self.process_user_intervention(intervention)
                 return True, "場面を終了します"
+
+            elif intervention_type == "trigger_ltm_update":
+                if len(parts) < 2:
+                    return False, "更新対象のキャラクターIDが指定されていません"
+
+                target_character_id = parts[1]
+
+                # キャラクターの存在確認
+                try:
+                    self.character_manager.get_immutable_context(target_character_id)
+                except:
+                    return (
+                        False,
+                        f"キャラクター '{target_character_id}' が見つかりません",
+                    )
+
+                # 場面に参加しているか確認
+                if (
+                    target_character_id
+                    not in self._current_scene_log.scene_info.participant_character_ids
+                ):
+                    return (
+                        False,
+                        f"キャラクター '{target_character_id}' は現在の場面に参加していません",
+                    )
+
+                intervention = InterventionData(
+                    applied_before_turn_number=current_turn_number + 1,
+                    intervention_type="TRIGGER_LONG_TERM_UPDATE",
+                    intervention=GenericInterventionDetails(
+                        description=f"ユーザーによるキャラクター '{target_character_id}' の長期情報更新",
+                        extra_data={},
+                    ),
+                    target_character_id=target_character_id,
+                )
+
+                self.process_user_intervention(intervention)
+
+                # 直接長期情報更新処理を呼び出す
+                try:
+                    update_result = self.update_character_long_term_info(
+                        target_character_id
+                    )
+                    if update_result:
+                        return (
+                            True,
+                            f"キャラクター '{target_character_id}' の長期情報を更新しました",
+                        )
+                    else:
+                        return (
+                            False,
+                            f"キャラクター '{target_character_id}' の長期情報更新に失敗しました",
+                        )
+                except Exception as e:
+                    return False, f"長期情報更新中にエラーが発生しました: {str(e)}"
 
             else:
                 return False, f"未知の介入タイプです: {intervention_type}"
