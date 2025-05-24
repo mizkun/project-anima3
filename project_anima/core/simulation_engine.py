@@ -101,7 +101,7 @@ class SimulationEngine:
         self.information_updater = InformationUpdater(self.log_dir)
 
         # LLMアダプターの初期化
-        self.llm_adapter = LLMAdapter(model_name=llm_model, prompts_dir=prompts_dir)
+        self.llm_adapter = LLMAdapter(model_name=llm_model)
 
         # コンテキストビルダーの初期化
         self.context_builder = ContextBuilder(
