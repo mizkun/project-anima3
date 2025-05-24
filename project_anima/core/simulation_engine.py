@@ -10,7 +10,7 @@ import os
 import logging
 import json
 import datetime
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from typing import Optional, List, Dict, Any, TYPE_CHECKING, Tuple
 
 # 循環参照を避けるための型チェック時のみのインポート
 if TYPE_CHECKING:
@@ -87,8 +87,15 @@ class SimulationEngine:
 
         self.scene_file_path = scene_file_path
         self.log_dir = log_dir
+        self.prompts_dir_path = prompts_dir
 
         # 各マネージャ・モジュールの初期化
+        from .character_manager import CharacterManager
+        from .scene_manager import SceneManager
+        from .information_updater import InformationUpdater
+        from .llm_adapter import LLMAdapter
+        from .context_builder import ContextBuilder
+
         self.character_manager = CharacterManager(characters_dir)
         self.scene_manager = SceneManager()
         self.information_updater = InformationUpdater(self.log_dir)
@@ -107,28 +114,29 @@ class SimulationEngine:
         self._max_turns = None
         self._current_scene_log = None
         self._divine_revelation = None
+        self._end_scene_requested = False
+        self._turn_count = 0
 
         # 天啓情報を保持する辞書 (キャラクターID -> 天啓内容のリスト)
         self._pending_revelations: Dict[str, List[str]] = {}
 
         logger.info("SimulationEngineを初期化しました")
 
-    def start_simulation(self, max_turns: Optional[int] = None) -> None:
+    def start_simulation_setup(self) -> bool:
         """
-        シミュレーションを開始する
+        シミュレーションの初期セットアップを行う
 
-        指定された場面設定をロードし、シミュレーションループを開始します。
-        各ターンで、参加キャラクターが順番に行動します。
+        指定された場面設定をロードし、参加キャラクターの情報を読み込みます。
 
-        Args:
-            max_turns: 最大ターン数（Noneの場合は無制限）
+        Returns:
+            bool: セットアップが成功したかどうか
 
         Raises:
             FileNotFoundError: 場面設定ファイルが見つからない場合
             ValueError: 場面設定ファイルの形式が不正な場合
         """
         logger.info(
-            f"シミュレーションを開始します。場面ファイル: {self.scene_file_path}"
+            f"シミュレーションのセットアップを開始します。場面ファイル: {self.scene_file_path}"
         )
 
         try:
@@ -145,7 +153,7 @@ class SimulationEngine:
                 logger.warning(
                     "参加キャラクターが存在しません。シミュレーションを終了します。"
                 )
-                return
+                return False
 
             # 参加キャラクターの情報をロード
             for character_id in participant_ids:
@@ -167,72 +175,171 @@ class SimulationEngine:
             self._end_scene_requested = False
 
             # ターンカウンターとインデックスの初期化
-            turn_count = 0
+            self._turn_count = 0
             self._current_turn = 0
+            self._is_running = True
 
             logger.info(
-                f"場面 '{scene_info.scene_id}' を開始します。参加キャラクター: {participant_ids}"
+                f"場面 '{scene_info.scene_id}' のセットアップが完了しました。参加キャラクター: {participant_ids}"
             )
-
-            # メインループ
-            while True:
-                # 最大ターン数のチェック
-                if max_turns is not None and turn_count >= max_turns:
-                    logger.info(
-                        f"最大ターン数 ({max_turns}) に達しました。シミュレーションを終了します。"
-                    )
-                    break
-
-                # 場面終了フラグのチェック
-                if hasattr(self, "_end_scene_requested") and self._end_scene_requested:
-                    logger.info(
-                        "場面終了が要求されたため、シミュレーションを終了します。"
-                    )
-                    break
-
-                # 次の行動キャラクターを決定
-                character_id = self._determine_next_character()
-
-                # 全キャラクターが行動済みなら一巡完了
-                if character_id is None:
-                    self._current_turn = 0
-                    turn_count += len(
-                        participant_ids
-                    )  # 参加キャラクター数分のターンが経過
-                    logger.info(
-                        f"全キャラクターの行動が完了しました（計 {turn_count} ターン）"
-                    )
-
-                    # 各ターン完了後に介入チェックを行う場所（将来の拡張ポイント）
-                    # ここでユーザーからの介入を受け付けるキューを確認するロジックを追加可能
-
-                    # 再度次のキャラクターを取得
-                    character_id = self._determine_next_character()
-                    if character_id is None:  # 参加者がいなくなった場合
-                        logger.warning(
-                            "参加キャラクターがいなくなりました。シミュレーションを終了します。"
-                        )
-                        break
-
-                # キャラクターのターンを実行
-                try:
-                    self.next_turn(character_id)
-                    self._current_turn += 1
-                except Exception as e:
-                    logger.error(f"ターン実行中にエラーが発生しました: {str(e)}")
-                    # エラーが発生しても次のキャラクターに進む
-                    self._current_turn += 1
-
-            # シミュレーション終了時の処理
-            logger.info("シミュレーションを終了します")
-
-            # 場面ログをファイルに保存
-            self._save_scene_log()
+            return True
 
         except Exception as e:
-            error_msg = f"シミュレーション実行中にエラーが発生しました: {str(e)}"
+            error_msg = (
+                f"シミュレーションのセットアップ中にエラーが発生しました: {str(e)}"
+            )
             logger.error(error_msg)
             raise SimulationEngineError(error_msg) from e
+
+    def execute_one_turn(self) -> bool:
+        """
+        シミュレーションの1ターンを実行する
+
+        現在のターンインデックスに基づいて次のキャラクターを決定し、
+        そのキャラクターのターンを実行します。
+
+        Returns:
+            bool: シミュレーションが続行可能かどうか（Falseの場合は終了）
+        """
+        if not self._is_running or self._current_scene_log is None:
+            raise SceneNotLoadedError()
+
+        # 場面終了フラグのチェック
+        if self._end_scene_requested:
+            logger.info("場面終了が要求されたため、シミュレーションを終了します。")
+            self._save_scene_log()
+            self._is_running = False
+            return False
+
+        # 次の行動キャラクターを決定
+        character_id = self._determine_next_character()
+
+        # 全キャラクターが行動済みなら一巡完了
+        if character_id is None:
+            self._current_turn = 0
+            self._turn_count += len(
+                self._current_scene_log.scene_info.participant_character_ids
+            )
+            logger.info(
+                f"全キャラクターの行動が完了しました（計 {self._turn_count} ターン）"
+            )
+
+            # 再度次のキャラクターを取得
+            character_id = self._determine_next_character()
+            if character_id is None:  # 参加者がいなくなった場合
+                logger.warning(
+                    "参加キャラクターがいなくなりました。シミュレーションを終了します。"
+                )
+                self._save_scene_log()
+                self._is_running = False
+                return False
+
+        # キャラクターのターンを実行
+        try:
+            self.next_turn(character_id)
+            self._current_turn += 1
+            return True
+        except Exception as e:
+            logger.error(f"ターン実行中にエラーが発生しました: {str(e)}")
+            # エラーが発生しても次のキャラクターに進む
+            self._current_turn += 1
+            return True
+
+    def start_simulation(self, max_turns: Optional[int] = None) -> None:
+        """
+        シミュレーションを開始する（自動実行モード）
+
+        指定された場面設定をロードし、シミュレーションループを開始します。
+        各ターンで、参加キャラクターが順番に行動します。
+
+        Args:
+            max_turns: 最大ターン数（Noneの場合は無制限）
+
+        Raises:
+            FileNotFoundError: 場面設定ファイルが見つからない場合
+            ValueError: 場面設定ファイルの形式が不正な場合
+        """
+        if not self.start_simulation_setup():
+            return
+
+        self._max_turns = max_turns
+
+        # メインループ
+        while True:
+            # 最大ターン数のチェック
+            if max_turns is not None and self._turn_count >= max_turns:
+                logger.info(
+                    f"最大ターン数 ({max_turns}) に達しました。シミュレーションを終了します。"
+                )
+                break
+
+            if not self.execute_one_turn():
+                break
+
+        # シミュレーション終了時の処理
+        logger.info("シミュレーションを終了します")
+
+    def get_simulation_status(self) -> Dict[str, Any]:
+        """
+        現在のシミュレーション状態を取得する
+
+        シミュレーションの現在の状態（ターン数、場面情報、参加キャラクターなど）を
+        整形して返します。
+
+        Returns:
+            Dict[str, Any]: シミュレーション状態を表す辞書
+        """
+        if not self._is_running or self._current_scene_log is None:
+            return {
+                "is_running": False,
+                "error": "シミュレーションが開始されていないか、場面がロードされていません",
+            }
+
+        scene_info = self._current_scene_log.scene_info
+        status = {
+            "is_running": self._is_running,
+            "current_turn": self._current_turn,
+            "turn_count": self._turn_count,
+            "scene_id": scene_info.scene_id,
+            "location": scene_info.location,
+            "time": scene_info.time,
+            "situation": scene_info.situation,
+            "participants": scene_info.participant_character_ids,
+            "turns_completed": len(self._current_scene_log.turns),
+            "interventions_applied": len(
+                self._current_scene_log.interventions_in_scene
+            ),
+            "end_requested": self._end_scene_requested,
+        }
+
+        # 次のターンで行動するキャラクターを表示
+        next_character_id = self._determine_next_character()
+        if next_character_id:
+            try:
+                char_info = self.character_manager.get_immutable_context(
+                    next_character_id
+                )
+                status["next_character"] = {
+                    "id": next_character_id,
+                    "name": char_info.name,
+                }
+            except:
+                status["next_character"] = {"id": next_character_id, "name": "不明"}
+
+        return status
+
+    def end_simulation(self) -> None:
+        """
+        シミュレーションを明示的に終了する
+
+        現在の場面ログを保存し、シミュレーション状態をリセットします。
+        """
+        if self._is_running and self._current_scene_log is not None:
+            self._save_scene_log()
+            logger.info("シミュレーションを手動で終了しました")
+
+        self._is_running = False
+        self._end_scene_requested = True
 
     def _determine_next_character(self) -> Optional[str]:
         """
@@ -625,3 +732,202 @@ class SimulationEngine:
             logger.error(error_msg)
             # ユーザーインターフェースでのハンドリングを容易にするためにNoneを返す
             return None
+
+    def process_intervention_command(self, command_str: str) -> Tuple[bool, str]:
+        """
+        ユーザーからの介入コマンドを処理する
+
+        コマンド文字列をパースして適切な介入データを生成し、process_user_interventionを呼び出します。
+
+        Args:
+            command_str: 処理する介入コマンド文字列
+              - 形式: "<介入タイプ> [追加パラメータ...]"
+              - 例:
+                - "update_situation 新しい状況説明文"
+                - "give_revelation <キャラID> <天啓内容>"
+                - "add_character <キャラID>"
+                - "remove_character <キャラID>"
+                - "end_scene"
+
+        Returns:
+            Tuple[bool, str]: (成功したかどうか, メッセージ)
+        """
+        if not self._is_running or self._current_scene_log is None:
+            return (
+                False,
+                "シミュレーションが開始されていないか、場面がロードされていません",
+            )
+
+        # 現在のターン情報を取得
+        current_turn_number = len(self._current_scene_log.turns)
+
+        # コマンドをパース
+        parts = command_str.strip().split()
+        if not parts:
+            return False, "介入コマンドが指定されていません"
+
+        intervention_type = parts[0].lower()
+
+        from .data_models import (
+            InterventionData,
+            SceneUpdateDetails,
+            RevelationDetails,
+            GenericInterventionDetails,
+        )
+
+        try:
+            if intervention_type == "update_situation" or intervention_type == "update":
+                if len(parts) < 2:
+                    return False, "新しい状況説明文が指定されていません"
+
+                # 状況説明文を結合（スペースを含む文章に対応）
+                new_situation = " ".join(parts[1:])
+
+                intervention = InterventionData(
+                    applied_before_turn_number=current_turn_number + 1,
+                    intervention_type="SCENE_SITUATION_UPDATE",
+                    intervention=SceneUpdateDetails(
+                        description=f"ユーザーによる場面状況の更新",
+                        updated_situation_element=new_situation,
+                    ),
+                )
+
+                self.process_user_intervention(intervention)
+                return True, f"場面状況を更新しました: {new_situation}"
+
+            elif (
+                intervention_type == "give_revelation"
+                or intervention_type == "revelation"
+            ):
+                if len(parts) < 3:
+                    return False, "対象キャラクターIDと天啓内容が必要です"
+
+                target_character_id = parts[1]
+                revelation_content = " ".join(parts[2:])
+
+                # キャラクターの存在確認
+                try:
+                    self.character_manager.get_immutable_context(target_character_id)
+                except:
+                    return (
+                        False,
+                        f"キャラクター '{target_character_id}' が見つかりません",
+                    )
+
+                # 場面に参加しているか確認
+                if (
+                    target_character_id
+                    not in self._current_scene_log.scene_info.participant_character_ids
+                ):
+                    return (
+                        False,
+                        f"キャラクター '{target_character_id}' は現在の場面に参加していません",
+                    )
+
+                intervention = InterventionData(
+                    applied_before_turn_number=current_turn_number + 1,
+                    intervention_type="REVELATION",
+                    intervention=RevelationDetails(
+                        description=f"ユーザーからキャラクター '{target_character_id}' への天啓",
+                        revelation_content=revelation_content,
+                    ),
+                    target_character_id=target_character_id,
+                )
+
+                self.process_user_intervention(intervention)
+                return (
+                    True,
+                    f"キャラクター '{target_character_id}' に天啓を付与しました: {revelation_content}",
+                )
+
+            elif intervention_type == "add_character" or intervention_type == "add":
+                if len(parts) < 2:
+                    return False, "追加するキャラクターIDが指定されていません"
+
+                character_id_to_add = parts[1]
+
+                # キャラクターの存在確認とデータのロード
+                try:
+                    self.character_manager.load_character_data(character_id_to_add)
+                except Exception as e:
+                    return (
+                        False,
+                        f"キャラクター '{character_id_to_add}' のロードに失敗しました: {str(e)}",
+                    )
+
+                # 既に場面に参加しているか確認
+                if (
+                    character_id_to_add
+                    in self._current_scene_log.scene_info.participant_character_ids
+                ):
+                    return (
+                        False,
+                        f"キャラクター '{character_id_to_add}' は既に場面に参加しています",
+                    )
+
+                intervention = InterventionData(
+                    applied_before_turn_number=current_turn_number + 1,
+                    intervention_type="ADD_CHARACTER_TO_SCENE",
+                    intervention=GenericInterventionDetails(
+                        description=f"ユーザーによるキャラクター '{character_id_to_add}' の追加",
+                        extra_data={"character_id_to_add": character_id_to_add},
+                    ),
+                )
+
+                self.process_user_intervention(intervention)
+                return (
+                    True,
+                    f"キャラクター '{character_id_to_add}' を場面に追加しました",
+                )
+
+            elif (
+                intervention_type == "remove_character" or intervention_type == "remove"
+            ):
+                if len(parts) < 2:
+                    return False, "削除するキャラクターIDが指定されていません"
+
+                character_id_to_remove = parts[1]
+
+                # 場面に参加しているか確認
+                if (
+                    character_id_to_remove
+                    not in self._current_scene_log.scene_info.participant_character_ids
+                ):
+                    return (
+                        False,
+                        f"キャラクター '{character_id_to_remove}' は現在の場面に参加していません",
+                    )
+
+                intervention = InterventionData(
+                    applied_before_turn_number=current_turn_number + 1,
+                    intervention_type="REMOVE_CHARACTER_FROM_SCENE",
+                    intervention=GenericInterventionDetails(
+                        description=f"ユーザーによるキャラクター '{character_id_to_remove}' の削除",
+                        extra_data={"character_id_to_remove": character_id_to_remove},
+                    ),
+                )
+
+                self.process_user_intervention(intervention)
+                return (
+                    True,
+                    f"キャラクター '{character_id_to_remove}' を場面から削除しました",
+                )
+
+            elif intervention_type == "end_scene" or intervention_type == "end":
+                intervention = InterventionData(
+                    applied_before_turn_number=current_turn_number + 1,
+                    intervention_type="END_SCENE",
+                    intervention=GenericInterventionDetails(
+                        description="ユーザーによる場面終了", extra_data={}
+                    ),
+                )
+
+                self.process_user_intervention(intervention)
+                return True, "場面を終了します"
+
+            else:
+                return False, f"未知の介入タイプです: {intervention_type}"
+
+        except Exception as e:
+            logger.error(f"介入コマンド処理中にエラーが発生しました: {str(e)}")
+            return False, f"介入コマンド処理中にエラーが発生しました: {str(e)}"
