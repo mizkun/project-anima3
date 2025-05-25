@@ -13,7 +13,7 @@ import yaml
 from pydantic import ValidationError
 
 from .data_models import ImmutableCharacterData, LongTermCharacterData
-from utils.file_handler import load_yaml, save_yaml
+from ..utils.file_handler import load_yaml, save_yaml
 
 # ロガーの設定
 logger = logging.getLogger(__name__)

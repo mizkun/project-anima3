@@ -10,13 +10,13 @@ import yaml
 import logging
 from pydantic import ValidationError
 
-from core.scene_manager import (
+from src.project_anima.core.scene_manager import (
     SceneManager,
     SceneFileNotFoundError,
     InvalidSceneDataError,
     SceneNotLoadedError,
 )
-from core.data_models import SceneInfoData
+from src.project_anima.core.data_models import SceneInfoData
 
 
 @pytest.fixture

@@ -97,6 +97,33 @@ GOOGLE_API_KEY=your_api_key_here
 
 **Important**: Add the `.env` file to `.gitignore` to avoid committing your API keys.
 
+## Quick Start
+
+### 1. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Run a Simulation
+
+```bash
+# Basic simulation
+python scripts/run_simulation.py
+
+# With custom parameters
+python scripts/run_simulation.py --scene data/scenes/school_rooftop.yaml --max-turns 5 --debug
+
+# Interactive mode
+python scripts/run_interactive.py
+```
+
+### 3. Run Tests
+
+```bash
+python run_tests.py
+```
+
 ## Usage
 
 ### Basic Execution

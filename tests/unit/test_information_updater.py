@@ -8,8 +8,8 @@ from typing import List, Dict, Any
 
 import pytest
 
-from core.information_updater import InformationUpdater
-from core.data_models import (
+from src.project_anima.core.information_updater import InformationUpdater
+from src.project_anima.core.data_models import (
     SceneLogData,
     SceneInfoData,
     TurnData,

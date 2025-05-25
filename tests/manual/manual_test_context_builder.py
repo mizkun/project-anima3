@@ -6,10 +6,10 @@ ContextBuilderの機能を手動でテストするスクリプト
 
 import os
 import sys
-from core.character_manager import CharacterManager
-from core.scene_manager import SceneManager
-from core.context_builder import ContextBuilder
-from core.data_models import TurnData
+from src.project_anima.core.character_manager import CharacterManager
+from src.project_anima.core.scene_manager import SceneManager
+from src.project_anima.core.context_builder import ContextBuilder
+from src.project_anima.core.data_models import TurnData
 
 
 def main():

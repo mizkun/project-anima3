@@ -11,19 +11,19 @@ import shutil
 from pydantic import ValidationError
 import yaml
 
-from core.character_manager import (
+from src.project_anima.core.character_manager import (
     CharacterManager,
     CharacterNotFoundError,
     InvalidCharacterDataError,
 )
-from core.data_models import (
+from src.project_anima.core.data_models import (
     ImmutableCharacterData,
     LongTermCharacterData,
     GoalData,
     ExperienceData,
     MemoryData,
 )
-from utils.file_handler import load_yaml
+from src.project_anima.utils.file_handler import load_yaml
 
 
 # フィクスチャ: テスト用CharacterManagerのインスタンス
@@ -93,7 +93,9 @@ def test_caching_behavior(character_manager, monkeypatch):
         raise AssertionError("キャッシュが効いていれば、この関数は呼ばれないはず")
 
     # load_yaml関数をモックに置き換え
-    monkeypatch.setattr("core.character_manager.load_yaml", mock_load_yaml)
+    monkeypatch.setattr(
+        "src.project_anima.core.character_manager.load_yaml", mock_load_yaml
+    )
 
     # 2回目の呼び出しでも例外が発生しないことを確認（キャッシュから読み込まれる）
     immutable_data = character_manager.get_immutable_context("char_001")

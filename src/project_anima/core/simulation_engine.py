@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # ファイルハンドラーモジュールをインポート
-from utils.file_handler import save_json
+from ..utils.file_handler import save_json
 
 
 class SimulationEngineError(Exception):

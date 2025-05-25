@@ -8,8 +8,8 @@ import os
 import pytest
 from unittest.mock import MagicMock, patch
 
-from core.context_builder import ContextBuilder
-from core.data_models import (
+from src.project_anima.core.context_builder import ContextBuilder
+from src.project_anima.core.data_models import (
     ImmutableCharacterData,
     LongTermCharacterData,
     SceneInfoData,
@@ -104,7 +104,7 @@ def mock_character_manager():
             return immutable_data_2
         else:
             # 存在しないキャラクターの場合
-            from core.character_manager import CharacterNotFoundError
+            from src.project_anima.core.character_manager import CharacterNotFoundError
 
             raise CharacterNotFoundError(f"Character with ID {character_id} not found")
 

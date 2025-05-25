@@ -7,7 +7,7 @@
 import pytest
 from pydantic import ValidationError
 
-from core.data_models import (
+from src.project_anima.core.data_models import (
     ImmutableCharacterData,
     ExperienceData,
     GoalData,

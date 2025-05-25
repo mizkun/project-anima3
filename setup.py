@@ -5,7 +5,8 @@ setup(
     version="0.1.0",
     description="AI Character Simulator",
     author="Project Anima Team",
-    packages=find_packages(),
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
     include_package_data=True,
     install_requires=[
         "pydantic>=2.0.0",
@@ -25,7 +26,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "project-anima=project_anima.cli:main",
+            "project-anima=src.project_anima.cli:main",
         ],
     },
 )

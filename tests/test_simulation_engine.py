@@ -12,12 +12,12 @@ from typing import Dict, List, Any, Optional
 
 import pytest
 
-from core.simulation_engine import (
+from src.project_anima.core.simulation_engine import (
     SimulationEngine,
     SimulationEngineError,
     SceneNotLoadedError,
 )
-from core.data_models import (
+from src.project_anima.core.data_models import (
     SceneInfoData,
     SceneLogData,
     TurnData,
@@ -43,21 +43,23 @@ class TestSimulationEngine(unittest.TestCase):
 
         # パッチャーを作成（メソッド内でインポートされるクラスをモック化）
         self.character_manager_patcher = mock.patch(
-            "core.character_manager.CharacterManager",
+            "src.project_anima.core.character_manager.CharacterManager",
             return_value=self.mock_character_manager,
         )
         self.scene_manager_patcher = mock.patch(
-            "core.scene_manager.SceneManager", return_value=self.mock_scene_manager
+            "src.project_anima.core.scene_manager.SceneManager",
+            return_value=self.mock_scene_manager,
         )
         self.context_builder_patcher = mock.patch(
-            "core.context_builder.ContextBuilder",
+            "src.project_anima.core.context_builder.ContextBuilder",
             return_value=self.mock_context_builder,
         )
         self.llm_adapter_patcher = mock.patch(
-            "core.llm_adapter.LLMAdapter", return_value=self.mock_llm_adapter
+            "src.project_anima.core.llm_adapter.LLMAdapter",
+            return_value=self.mock_llm_adapter,
         )
         self.information_updater_patcher = mock.patch(
-            "core.information_updater.InformationUpdater",
+            "src.project_anima.core.information_updater.InformationUpdater",
             return_value=self.mock_information_updater,
         )
 
@@ -103,7 +105,9 @@ class TestSimulationEngine(unittest.TestCase):
             elif character_id == "char_002":
                 return mock_immutable_data_bob
             else:
-                from core.character_manager import CharacterNotFoundError
+                from src.project_anima.core.character_manager import (
+                    CharacterNotFoundError,
+                )
 
                 raise CharacterNotFoundError(character_id)
 
@@ -212,7 +216,7 @@ class TestSimulationEngine(unittest.TestCase):
     def test_start_simulation_scene_load_error(self):
         """場面ロードエラーが適切に処理されること"""
         # 場面ロードでエラーを発生させる
-        from core.scene_manager import SceneFileNotFoundError
+        from src.project_anima.core.scene_manager import SceneFileNotFoundError
 
         self.mock_scene_manager.load_scene_from_file.side_effect = (
             SceneFileNotFoundError("テストエラー")
@@ -237,7 +241,7 @@ class TestSimulationEngine(unittest.TestCase):
         nonexistent_character_id = "nonexistent_char"
 
         # CharacterNotFoundErrorを発生させる準備
-        from core.character_manager import CharacterNotFoundError
+        from src.project_anima.core.character_manager import CharacterNotFoundError
 
         # next_turnを実行
         self.engine.next_turn(nonexistent_character_id)
@@ -476,7 +480,9 @@ class TestSimulationEngine(unittest.TestCase):
         )
 
         # ログ出力を確認するためにloggerをモック化
-        with mock.patch("core.simulation_engine.logger") as mock_logger:
+        with mock.patch(
+            "src.project_anima.core.simulation_engine.logger"
+        ) as mock_logger:
             # 介入処理を実行
             self.engine.process_user_intervention(intervention)
 
@@ -524,8 +530,8 @@ class TestSimulationEngine(unittest.TestCase):
         character_id = self.engine._determine_next_character()
         self.assertIsNone(character_id)
 
-    @mock.patch("core.simulation_engine.datetime")
-    @mock.patch("core.simulation_engine.save_json")
+    @mock.patch("src.project_anima.core.simulation_engine.datetime")
+    @mock.patch("src.project_anima.core.simulation_engine.save_json")
     def test_save_scene_log_success(self, mock_save_json, mock_datetime):
         """場面ログが正常に保存されること"""
         # 固定のタイムスタンプを設定
@@ -572,7 +578,9 @@ class TestSimulationEngine(unittest.TestCase):
         self.engine._current_scene_log = None
 
         # _save_scene_logを実行
-        with mock.patch("core.simulation_engine.logger") as mock_logger:
+        with mock.patch(
+            "src.project_anima.core.simulation_engine.logger"
+        ) as mock_logger:
             self.engine._save_scene_log()
 
             # 警告ログが出力されたことを検証
@@ -580,7 +588,7 @@ class TestSimulationEngine(unittest.TestCase):
                 "保存すべき場面ログが存在しません。"
             )
 
-    @mock.patch("core.simulation_engine.save_json")
+    @mock.patch("src.project_anima.core.simulation_engine.save_json")
     def test_save_scene_log_permission_error(self, mock_save_json):
         """ファイル書き込み権限エラーが適切に処理されること"""
         # 事前に場面ログを初期化
@@ -592,14 +600,16 @@ class TestSimulationEngine(unittest.TestCase):
         mock_save_json.side_effect = PermissionError("テスト権限エラー")
 
         # _save_scene_logを実行
-        with mock.patch("core.simulation_engine.logger") as mock_logger:
+        with mock.patch(
+            "src.project_anima.core.simulation_engine.logger"
+        ) as mock_logger:
             self.engine._save_scene_log()
 
             # エラーログが出力されたことを検証
             mock_logger.error.assert_called_once()
             self.assertIn("書き込み権限がありません", mock_logger.error.call_args[0][0])
 
-    @mock.patch("core.simulation_engine.save_json")
+    @mock.patch("src.project_anima.core.simulation_engine.save_json")
     def test_save_scene_log_generic_error(self, mock_save_json):
         """_save_scene_logのその他一般的なエラーが処理されること"""
         # エラーを発生させる

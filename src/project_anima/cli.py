@@ -1,13 +1,15 @@
+#!/usr/bin/env python3
 """
-Command-line interface for Project Anima.
+Project Anima - Command Line Interface
+
+このモジュールは、Project Animaのコマンドラインインターフェースを提供します。
 """
 
 import argparse
 import os
 import sys
 from datetime import datetime
-
-from project_anima.core.simulation_engine import SimulationEngine
+from .core.simulation_engine import SimulationEngine
 
 
 def parse_args():

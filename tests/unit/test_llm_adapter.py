@@ -11,7 +11,7 @@ from typing import Dict, Any
 import pytest
 from pydantic import BaseModel
 
-from core.llm_adapter import (
+from src.project_anima.core.llm_adapter import (
     LLMAdapter,
     LLMAdapterError,
     PromptTemplateNotFoundError,

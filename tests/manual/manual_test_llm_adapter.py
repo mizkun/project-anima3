@@ -15,7 +15,7 @@ import json
 import logging
 from typing import Dict
 
-from core.llm_adapter import LLMAdapter
+from src.project_anima.core.llm_adapter import LLMAdapter
 
 # ロギングの設定
 logging.basicConfig(

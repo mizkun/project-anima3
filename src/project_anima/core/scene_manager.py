@@ -11,7 +11,7 @@ import yaml
 from pydantic import ValidationError
 
 from .data_models import SceneInfoData
-from utils.file_handler import load_yaml
+from ..utils.file_handler import load_yaml
 
 # ロガーの設定
 logger = logging.getLogger(__name__)

@@ -1,19 +1,20 @@
+#!/usr/bin/env python3
 """
-インタラクティブコマンドラインインターフェース
+Project Anima - Interactive Command Line Interface
 
 このモジュールは、Project Animaのインタラクティブコマンドラインインターフェースを提供します。
-ユーザーはターンの進行を制御したり、シミュレーションに介入したりすることができます。
+キャラクターとの対話的なシミュレーションを可能にします。
 """
 
 import argparse
-import os
+import logging
 import sys
 import cmd
 import shlex
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
-from project_anima.core.simulation_engine import SimulationEngine, SceneNotLoadedError
+from .core.simulation_engine import SimulationEngine, SceneNotLoadedError
 
 
 class ProjectAnimaShell(cmd.Cmd):

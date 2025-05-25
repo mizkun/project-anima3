@@ -10,15 +10,15 @@ import json
 import logging
 from pprint import pprint
 
-from core.data_models import (
+from src.project_anima.core.data_models import (
     SceneInfoData,
     SceneLogData,
     InterventionData,
     SceneUpdateDetails,
     RevelationDetails,
 )
-from core.information_updater import InformationUpdater
-from core.character_manager import CharacterManager
+from src.project_anima.core.information_updater import InformationUpdater
+from src.project_anima.core.character_manager import CharacterManager
 
 # ロギングの設定
 logging.basicConfig(

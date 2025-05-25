@@ -12,8 +12,8 @@ import argparse
 from unittest import mock
 from pprint import pprint
 
-from core.simulation_engine import SimulationEngine
-from core.llm_adapter import LLMAdapter
+from src.project_anima.core.simulation_engine import SimulationEngine
+from src.project_anima.core.llm_adapter import LLMAdapter
 
 # ロギングの設定
 logging.basicConfig(
@@ -93,7 +93,9 @@ def main():
         else:
             # LLMAdapterクラスをモック化
             logger.info("モック化されたLLMAdapterを使用します")
-            with mock.patch("core.llm_adapter.LLMAdapter") as mock_llm_adapter_class:
+            with mock.patch(
+                "src.project_anima.core.llm_adapter.LLMAdapter"
+            ) as mock_llm_adapter_class:
                 # LLMAdapterのインスタンスが呼び出されたとき、ダミーのモックを返すように設定
                 mock_llm_adapter_class.return_value = create_dummy_llm_adapter(
                     "rinko_kizuki_002", "城月燐子"
