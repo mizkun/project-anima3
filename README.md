@@ -128,32 +128,30 @@ python run_tests.py
 
 ### Basic Execution
 
-The main way to run a simulation is through `main.py`.
+The main way to run a simulation is through `scripts/run_simulation.py`.
 
 ```bash
 # Run with default settings (default scene, limited number of turns, etc.)
-python main.py
+python scripts/run_simulation.py
 
 # Specify a scene configuration file
-python main.py --scene scenes/your_scene_file.yaml
+python scripts/run_simulation.py --scene data/scenes/your_scene_file.yaml
 
 # Specify maximum number of turns
-python main.py --max-turns 10
+python scripts/run_simulation.py --max-turns 10
 
 # Specify the LLM model to use
-python main.py --llm-model gemini-1.5-pro-latest
+python scripts/run_simulation.py --llm-model gemini-1.5-pro-latest
 ```
 
 ### Command Line Options
 
-* `--scene SCENE_FILE_PATH`: Path to the scene configuration YAML file (default: scenes/school_rooftop_001.yaml or similar, see main.py for specific defaults)
-* `--characters-dir CHARACTERS_DIR_PATH`: Path to the directory containing character configuration files (default: characters)
-* `--prompts-dir PROMPTS_DIR_PATH`: Path to the directory containing LLM prompt templates (default: prompts)
-* `--max-turns MAX_TURNS`: Maximum number of turns to run in the simulation (default: 3 or based on number of participants, see main.py)
+* `--scene SCENE_FILE_PATH`: Path to the scene configuration YAML file (default: data/scenes/school_rooftop.yaml)
+* `--characters-dir CHARACTERS_DIR_PATH`: Path to the directory containing character configuration files (default: data/characters)
+* `--prompts-dir PROMPTS_DIR_PATH`: Path to the directory containing LLM prompt templates (default: data/prompts)
+* `--max-turns MAX_TURNS`: Maximum number of turns to run in the simulation (default: 3)
 * `--llm-model LLM_MODEL_NAME`: Name of the LLM model to use (default: gemini-1.5-flash-latest)
 * `--debug`: Enable debug mode for more detailed logging and LLM prompt/response display
-
-(Note: Exact default values and available options may be defined in main.py using libraries like argparse.)
 
 ### Interactive Mode
 
@@ -161,13 +159,13 @@ Project Anima also provides an interactive command-line interface that allows yo
 
 ```bash
 # Start the interactive CLI
-python -m project_anima.interactive_cli
+python scripts/run_interactive.py
 
 # Specify a scene configuration file
-python -m project_anima.interactive_cli --scene data/scenes/your_scene_file.yaml
+python scripts/run_interactive.py --scene data/scenes/your_scene_file.yaml
 
 # Enable debug mode to display LLM prompts and responses
-python -m project_anima.interactive_cli --debug
+python scripts/run_interactive.py --debug
 ```
 
 In interactive mode, you can use the following commands:
@@ -191,14 +189,14 @@ When running in debug mode (`--debug`), the system will display the full prompts
 
 ## Creating Character Configuration Files
 
-Character configurations are defined in two YAML files per character, typically placed in `characters/{character_id}/`.
+Character configurations are defined in two YAML files per character, typically placed in `data/characters/{character_id}/`.
 
 ### 1. immutable.yaml (Immutable Information)
 
 This file contains the core, unchanging aspects of a character.
 
 ```yaml
-# characters/{character_id}/immutable.yaml
+# data/characters/{character_id}/immutable.yaml
 character_id: "unique_character_identifier_001"  # Unique ID for the character
 name: "Character Name"
 age: 25  # Optional
@@ -215,7 +213,7 @@ base_personality: |
 This file contains information that evolves as the character experiences simulations.
 
 ```yaml
-# characters/{character_id}/long_term.yaml
+# data/characters/{character_id}/long_term.yaml
 character_id: "unique_character_identifier_001"  # Must match immutable.yaml
 experiences:
   - event: "A significant past event that shaped the character."
@@ -236,10 +234,10 @@ memories:
 
 ## Creating Scene Configuration Files
 
-Scene configurations are defined in YAML files, typically placed in `scenes/`. The filename itself serves as the scene_id (e.g., S001.yaml).
+Scene configurations are defined in YAML files, typically placed in `data/scenes/`. The filename itself serves as the scene_id (e.g., S001.yaml).
 
 ```yaml
-# scenes/{scene_id}.yaml (e.g., scenes/S001.yaml)
+# data/scenes/{scene_id}.yaml (e.g., data/scenes/S001.yaml)
 scene_id: "S001"  # Unique ID for the scene, should match the filename
 location: "Specific location, e.g., 'A busy downtown cafe' or 'A quiet corner of the library'"  # Optional
 time: "Time of day or specific date, e.g., 'Late afternoon' or '2025-05-22 15:00'"  # Optional
@@ -293,37 +291,50 @@ It's recommended to configure your editor to format on save using these tools.
 
 ```
 project-anima/
-├── characters/           # Character configuration files (YAML)
-│   └── {character_id}/
-│       ├── immutable.yaml
-│       └── long_term.yaml
-├── core/                 # Core application logic
-│   ├── character_manager.py
-│   ├── context_builder.py
-│   ├── data_models.py
-│   ├── information_updater.py
-│   ├── llm_adapter.py
-│   ├── scene_manager.py
-│   └── simulation_engine.py
-├── docs/                 # Project documentation (this README, detailed specs, etc.)
-├── issues/               # Issue tracking files (when using local .md files)
+├── src/                  # Source code
+│   └── project_anima/    # Main package
+│       ├── core/         # Core application logic
+│       │   ├── character_manager.py
+│       │   ├── context_builder.py
+│       │   ├── data_models.py
+│       │   ├── information_updater.py
+│       │   ├── llm_adapter.py
+│       │   ├── scene_manager.py
+│       │   └── simulation_engine.py
+│       ├── utils/        # Utility modules
+│       │   └── file_handler.py
+│       ├── cli.py        # Command line interface
+│       └── interactive_cli.py  # Interactive CLI
+├── data/                 # Data files
+│   ├── characters/       # Character configuration files (YAML)
+│   │   └── {character_id}/
+│   │       ├── immutable.yaml
+│   │       └── long_term.yaml
+│   ├── scenes/           # Scene configuration files (YAML)
+│   │   └── {scene_id}.yaml
+│   └── prompts/          # LLM prompt templates (.txt)
+│       ├── think_generate.txt
+│       └── long_term_update.txt
+├── scripts/              # Execution scripts
+│   ├── run_simulation.py
+│   └── run_interactive.py
+├── tests/                # Unit tests and integration tests
+│   ├── test_character_manager.py
+│   └── ...
+├── examples/             # Example files and manual tests
+├── docs/                 # Project documentation
+├── issues/               # Issue tracking files
 │   └── closed/
 ├── logs/                 # Simulation output logs
 │   └── sim_{timestamp}/
 │       └── scene_{scene_id}.json
-├── prompts/              # LLM prompt templates (.txt)
-│   ├── think_generate.txt
-│   └── long_term_update.txt
-├── scenes/               # Scene configuration files (YAML)
-│   └── {scene_id}.yaml
-├── tests/                # Unit tests and integration tests
-│   ├── test_character_manager.py
-│   └── ...
-├── utils/                # Utility modules (e.g., file_handler.py)
+├── config/               # Configuration files
+├── tools/                # Development and management tools
 ├── .env.example          # Example environment file (API keys)
 ├── .gitignore
-├── main.py               # Main entry point for the application
+├── setup.py              # Package setup
 ├── pyproject.toml        # Project metadata and dependencies
+├── requirements.txt      # Dependencies
 └── README.md             # This file
 ```
 

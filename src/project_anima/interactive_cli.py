@@ -8,6 +8,7 @@ Project Anima - Interactive Command Line Interface
 
 import argparse
 import logging
+import os
 import sys
 import cmd
 import shlex
