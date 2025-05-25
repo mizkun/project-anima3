@@ -337,17 +337,3 @@ project-anima/
 ├── requirements.txt      # Dependencies
 └── README.md             # This file
 ```
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork this repository.
-2. Create a new branch (`git checkout -b feature/your-amazing-feature`).
-3. Commit your changes (`git commit -m 'Add some amazing feature'`).
-4. Push to the branch (`git push origin feature/your-amazing-feature`).
-5. Create a new Pull Request.
-
-## License
-
-This project is provided under the MIT License.
