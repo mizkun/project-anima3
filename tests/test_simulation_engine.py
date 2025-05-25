@@ -72,10 +72,10 @@ class TestSimulationEngine(unittest.TestCase):
 
         # テスト用のSimulationEngineインスタンスを作成
         self.scene_file_path = "test_scenes/test_scene.yaml"
-        self.characters_base_path = "test_characters"
+        self.characters_dir = "test_characters"
         self.engine = SimulationEngine(
             scene_file_path=self.scene_file_path,
-            characters_base_path=self.characters_base_path,
+            characters_dir=self.characters_dir,
         )
 
     def tearDown(self):
@@ -169,9 +169,8 @@ class TestSimulationEngine(unittest.TestCase):
     def test_initialization(self):
         """初期化が正しく行われること"""
         self.assertEqual(self.engine.scene_file_path, self.scene_file_path)
-        self.assertEqual(self.engine.characters_base_path, self.characters_base_path)
         self.assertIsNone(self.engine._current_scene_log)
-        self.assertEqual(self.engine._current_turn_index, 0)
+        self.assertEqual(self.engine._current_turn, 0)
 
     def test_start_simulation_success(self):
         """シミュレーションが正常に開始・実行されること"""
@@ -516,17 +515,17 @@ class TestSimulationEngine(unittest.TestCase):
         )
 
         # 1人目のキャラクター
-        self.engine._current_turn_index = 0
+        self.engine._current_turn = 0
         character_id = self.engine._determine_next_character()
         self.assertEqual(character_id, "char_001")
 
         # 2人目のキャラクター
-        self.engine._current_turn_index = 1
+        self.engine._current_turn = 1
         character_id = self.engine._determine_next_character()
         self.assertEqual(character_id, "char_002")
 
         # インデックスが範囲外の場合
-        self.engine._current_turn_index = 2
+        self.engine._current_turn = 2
         character_id = self.engine._determine_next_character()
         self.assertIsNone(character_id)
 

@@ -79,7 +79,7 @@ def main():
         # テスト用のパス設定
         current_dir = os.path.dirname(os.path.abspath(__file__))
         scene_file_path = os.path.join(current_dir, "scenes", "school_rooftop.yaml")
-        characters_base_path = os.path.join(current_dir, "characters")
+        characters_dir = os.path.join(current_dir, "characters")
 
         logger.info("SimulationEngineを初期化しています...")
 
@@ -88,7 +88,7 @@ def main():
             logger.info("実際のLLMAdapterを使用します")
             engine = SimulationEngine(
                 scene_file_path=scene_file_path,
-                characters_base_path=characters_base_path,
+                characters_dir=characters_dir,
             )
         else:
             # LLMAdapterクラスをモック化
@@ -104,7 +104,7 @@ def main():
                 # SimulationEngineのインスタンス化
                 engine = SimulationEngine(
                     scene_file_path=scene_file_path,
-                    characters_base_path=characters_base_path,
+                    characters_dir=characters_dir,
                 )
 
                 # モック化に成功していることを確認
