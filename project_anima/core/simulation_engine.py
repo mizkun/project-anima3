@@ -101,7 +101,7 @@ class SimulationEngine:
         self.information_updater = InformationUpdater(self.character_manager)
 
         # LLMアダプターの初期化
-        self.llm_adapter = LLMAdapter(model_name=llm_model)
+        self.llm_adapter = LLMAdapter(model_name=llm_model, debug=debug)
 
         # コンテキストビルダーの初期化
         self.context_builder = ContextBuilder(

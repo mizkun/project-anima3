@@ -61,7 +61,10 @@ class LLMAdapter:
     """
 
     def __init__(
-        self, model_name: str = "gemini-1.5-flash-latest", api_key: Optional[str] = None
+        self,
+        model_name: str = "gemini-1.5-flash-latest",
+        api_key: Optional[str] = None,
+        debug: bool = False,
     ):
         """
         LLMAdapterを初期化する
@@ -69,10 +72,14 @@ class LLMAdapter:
         Args:
             model_name: 使用するLLMモデル名（デフォルト: "gemini-1.5-flash-latest"）
             api_key: LLM APIキー（省略時は環境変数または.envファイルから読み込み）
+            debug: デバッグモードフラグ（プロンプトと応答をターミナルに出力）
 
         Raises:
             LLMAdapterError: APIキーが設定されていない場合
         """
+        # デバッグモードの設定
+        self.debug = debug
+
         # .envファイルから環境変数を読み込む
         load_dotenv()
 
@@ -105,6 +112,10 @@ class LLMAdapter:
                 model_name=self.model_name, generation_config=self.generation_config
             )
             logger.info(f"LLMAdapterを初期化しました（モデル: {model_name}）")
+            if self.debug:
+                print(
+                    f"\n===== LLMAdapter: モデル {model_name} が初期化されました =====\n"
+                )
         except Exception as e:
             error_msg = f"LLMモデルの初期化に失敗しました: {str(e)}"
             logger.error(error_msg)
@@ -202,12 +213,30 @@ class LLMAdapter:
 
             logger.debug(f"生成された最終プロンプト: {final_prompt}")
 
+            # デバッグモードの場合、プロンプトをターミナルに出力
+            if self.debug:
+                print("\n" + "=" * 80)
+                print(
+                    f"===== LLM PROMPT (Character Thought) - Model: {self.model_name} ====="
+                )
+                print("=" * 80)
+                print(final_prompt)
+                print("=" * 80 + "\n")
+
             # Gemini APIを呼び出して思考生成
             try:
                 response = self.model.generate_content(final_prompt)
                 response_text = response.text
 
                 logger.debug(f"LLMからの応答: {response_text}")
+
+                # デバッグモードの場合、応答をターミナルに出力
+                if self.debug:
+                    print("\n" + "=" * 80)
+                    print(f"===== LLM RESPONSE (Character Thought) =====")
+                    print("=" * 80)
+                    print(response_text)
+                    print("=" * 80 + "\n")
 
                 # コードブロックマーカーの除去
                 # ```json や ``` などのマーカーを削除する
@@ -231,6 +260,10 @@ class LLMAdapter:
                 except json.JSONDecodeError as e:
                     error_msg = f"LLMからの応答をJSONとしてパースできません: {e}\n応答: {response_text}\nクリーン後: {cleaned_response}"
                     logger.error(error_msg)
+                    if self.debug:
+                        print(
+                            f"\n===== JSON PARSE ERROR =====\n{error_msg}\n============================\n"
+                        )
                     raise InvalidLLMResponseError(response_text, error_msg)
 
             except Exception as e:
@@ -239,6 +272,10 @@ class LLMAdapter:
                     raise
                 error_msg = f"LLM API呼び出しに失敗しました: {str(e)}"
                 logger.error(error_msg)
+                if self.debug:
+                    print(
+                        f"\n===== LLM API ERROR =====\n{error_msg}\n========================\n"
+                    )
                 raise LLMGenerationError(error_msg, e)
 
         except PromptTemplateNotFoundError:
@@ -251,6 +288,10 @@ class LLMAdapter:
             # その他の例外は LLMGenerationError でラップ
             error_msg = f"思考生成中に予期せぬエラーが発生しました: {str(e)}"
             logger.error(error_msg)
+            if self.debug:
+                print(
+                    f"\n===== UNEXPECTED ERROR =====\n{error_msg}\n===========================\n"
+                )
             raise LLMGenerationError(error_msg, e)
 
     def _clean_json_response(self, response_text: str) -> str:
@@ -354,12 +395,30 @@ class LLMAdapter:
 
             logger.debug(f"生成された長期情報更新用プロンプト: {final_prompt}")
 
+            # デバッグモードの場合、プロンプトをターミナルに出力
+            if self.debug:
+                print("\n" + "=" * 80)
+                print(
+                    f"===== LLM PROMPT (Long Term Update) - Model: {self.model_name} ====="
+                )
+                print("=" * 80)
+                print(final_prompt)
+                print("=" * 80 + "\n")
+
             # Gemini APIを呼び出して更新提案を生成
             try:
                 response = self.model.generate_content(final_prompt)
                 response_text = response.text
 
                 logger.debug(f"LLMからの長期情報更新応答: {response_text}")
+
+                # デバッグモードの場合、応答をターミナルに出力
+                if self.debug:
+                    print("\n" + "=" * 80)
+                    print(f"===== LLM RESPONSE (Long Term Update) =====")
+                    print("=" * 80)
+                    print(response_text)
+                    print("=" * 80 + "\n")
 
                 # コードブロックマーカーの除去
                 cleaned_response = self._clean_json_response(response_text)
@@ -376,6 +435,10 @@ class LLMAdapter:
                 except json.JSONDecodeError as e:
                     error_msg = f"LLMからの長期情報更新応答をJSONとしてパースできません: {e}\n応答: {response_text}\nクリーン後: {cleaned_response}"
                     logger.error(error_msg)
+                    if self.debug:
+                        print(
+                            f"\n===== JSON PARSE ERROR (Long Term Update) =====\n{error_msg}\n============================\n"
+                        )
                     raise InvalidLLMResponseError(response_text, error_msg)
 
             except Exception as e:
@@ -384,6 +447,10 @@ class LLMAdapter:
                     raise
                 error_msg = f"長期情報更新のLLM API呼び出しに失敗しました: {str(e)}"
                 logger.error(error_msg)
+                if self.debug:
+                    print(
+                        f"\n===== LLM API ERROR (Long Term Update) =====\n{error_msg}\n========================\n"
+                    )
                 raise LLMGenerationError(error_msg, e)
 
         except PromptTemplateNotFoundError:
@@ -396,6 +463,10 @@ class LLMAdapter:
             # その他の例外は LLMGenerationError でラップ
             error_msg = f"長期情報更新中に予期せぬエラーが発生しました: {str(e)}"
             logger.error(error_msg)
+            if self.debug:
+                print(
+                    f"\n===== UNEXPECTED ERROR (Long Term Update) =====\n{error_msg}\n===========================\n"
+                )
             raise LLMGenerationError(error_msg, e)
 
     def _validate_long_term_update_response(
