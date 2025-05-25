@@ -33,6 +33,12 @@ goals:
   importance: 7
 - goal: 新しいテスト手法を開発すること
   importance: 7
+- goal: 新しいテスト手法を開発すること
+  importance: 7
+- goal: 新しいテスト手法を開発すること
+  importance: 7
+- goal: 新しいテスト手法を開発すること
+  importance: 7
 memories:
 - memory: 初めてバグを見つけたときの喜び
   scene_id_of_memory: test_scene_001
