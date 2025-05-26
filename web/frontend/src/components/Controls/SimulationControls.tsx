@@ -18,15 +18,15 @@ export const SimulationControls: React.FC = () => {
   const getStatusColor = (status: SimulationStatus) => {
     switch (status) {
       case 'running':
-        return 'text-green-600'
+        return 'text-green-400'
       case 'paused':
-        return 'text-yellow-600'
+        return 'text-yellow-400'
       case 'error':
-        return 'text-red-600'
+        return 'text-red-400'
       case 'completed':
-        return 'text-blue-600'
+        return 'text-blue-400'
       default:
-        return 'text-gray-600'
+        return 'text-gray-400'
     }
   }
 
@@ -66,7 +66,7 @@ export const SimulationControls: React.FC = () => {
           </div>
           
           {isLoading && (
-            <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
+            <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
           )}
         </div>
       </div>

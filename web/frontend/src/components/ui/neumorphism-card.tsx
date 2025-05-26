@@ -8,7 +8,7 @@ const NeumorphismCard = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "neumorphism-card rounded-2xl text-gray-700 p-1",
+      "neumorphism-card rounded-2xl text-gray-300 dark:text-gray-300 text-gray-700 p-1",
       className
     )}
     {...props}
@@ -35,7 +35,7 @@ const NeumorphismCardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "text-xl font-bold leading-none tracking-tight text-gray-800",
+      "text-xl font-bold leading-none tracking-tight text-gray-200 dark:text-gray-200 text-gray-800",
       className
     )}
     {...props}
@@ -49,7 +49,7 @@ const NeumorphismCardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-gray-600 leading-relaxed", className)}
+    className={cn("text-sm text-gray-400 dark:text-gray-400 text-gray-600 leading-relaxed", className)}
     {...props}
   />
 ))

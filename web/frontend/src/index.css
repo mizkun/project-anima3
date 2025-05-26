@@ -55,82 +55,157 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* ニューモーフィズム用のベース背景 */
-    background: linear-gradient(145deg, #f0f0f3, #e6e6e9);
+    /* ニューモーフィズム用のベース背景 - ダークモード */
+    background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+    color: #e5e5e5;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  
+  /* ライトモード */
+  html:not(.dark) body {
+    background: linear-gradient(145deg, #f0f0f0, #e8e8e8) !important;
+    color: #2d3748 !important;
   }
 }
 
 @layer components {
-  /* ニューモーフィズムカード */
+  /* ニューモーフィズムカード - ダークモード */
   .neumorphism-card {
-    background: linear-gradient(145deg, #f0f0f3, #e6e6e9);
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e);
     box-shadow: 
-      20px 20px 40px #d1d1d4,
-      -20px -20px 40px #ffffff;
+      20px 20px 40px #0a0a0a,
+      -20px -20px 40px #343434;
     border: none;
     transition: all 0.3s ease;
   }
   
   .neumorphism-card:hover {
     box-shadow: 
-      25px 25px 50px #d1d1d4,
-      -25px -25px 50px #ffffff;
+      25px 25px 50px #0a0a0a,
+      -25px -25px 50px #343434;
     transform: translateY(-2px);
   }
   
-  /* ニューモーフィズムボタン */
-  .neumorphism-button {
-    background: linear-gradient(145deg, #f0f0f3, #e6e6e9);
+  /* ニューモーフィズムカード - ライトモード */
+  html:not(.dark) .neumorphism-card {
+    background: linear-gradient(145deg, #ffffff, #f0f0f0) !important;
     box-shadow: 
-      8px 8px 16px #d1d1d4,
-      -8px -8px 16px #ffffff;
+      20px 20px 40px #d1d1d1,
+      -20px -20px 40px #ffffff !important;
+  }
+  
+  html:not(.dark) .neumorphism-card:hover {
+    box-shadow: 
+      25px 25px 50px #d1d1d1,
+      -25px -25px 50px #ffffff !important;
+    transform: translateY(-2px);
+  }
+  
+  /* ニューモーフィズムボタン - ダークモード */
+  .neumorphism-button {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e);
+    box-shadow: 
+      8px 8px 16px #0a0a0a,
+      -8px -8px 16px #343434;
     border: none;
     transition: all 0.2s ease;
+    color: #e5e5e5;
   }
   
   .neumorphism-button:hover {
     box-shadow: 
-      6px 6px 12px #d1d1d4,
-      -6px -6px 12px #ffffff;
+      6px 6px 12px #0a0a0a,
+      -6px -6px 12px #343434;
   }
   
   .neumorphism-button:active {
     box-shadow: 
-      inset 4px 4px 8px #d1d1d4,
-      inset -4px -4px 8px #ffffff;
+      inset 4px 4px 8px #0a0a0a,
+      inset -4px -4px 8px #343434;
   }
   
-  /* ニューモーフィズム凹み効果 */
+  /* ニューモーフィズムボタン - ライトモード */
+  html:not(.dark) .neumorphism-button {
+    background: linear-gradient(145deg, #ffffff, #f0f0f0) !important;
+    box-shadow: 
+      8px 8px 16px #d1d1d1,
+      -8px -8px 16px #ffffff !important;
+    color: #2d3748 !important;
+  }
+  
+  html:not(.dark) .neumorphism-button:hover {
+    box-shadow: 
+      6px 6px 12px #d1d1d1,
+      -6px -6px 12px #ffffff !important;
+  }
+  
+  html:not(.dark) .neumorphism-button:active {
+    box-shadow: 
+      inset 4px 4px 8px #d1d1d1,
+      inset -4px -4px 8px #ffffff !important;
+  }
+  
+  /* ニューモーフィズム凹み効果 - ダークモード */
   .neumorphism-inset {
-    background: linear-gradient(145deg, #e6e6e9, #f0f0f3);
+    background: linear-gradient(145deg, #1e1e1e, #2a2a2a);
     box-shadow: 
-      inset 8px 8px 16px #d1d1d4,
-      inset -8px -8px 16px #ffffff;
+      inset 8px 8px 16px #0a0a0a,
+      inset -8px -8px 16px #343434;
   }
   
-  /* ニューモーフィズムステータスインジケーター */
-  .neumorphism-status {
-    background: linear-gradient(145deg, #f0f0f3, #e6e6e9);
+  /* ニューモーフィズム凹み効果 - ライトモード */
+  html:not(.dark) .neumorphism-inset {
+    background: linear-gradient(145deg, #f0f0f0, #ffffff) !important;
     box-shadow: 
-      4px 4px 8px #d1d1d4,
-      -4px -4px 8px #ffffff;
+      inset 8px 8px 16px #d1d1d1,
+      inset -8px -8px 16px #ffffff !important;
+  }
+  
+  /* ニューモーフィズムステータスインジケーター - ダークモード */
+  .neumorphism-status {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e);
+    box-shadow: 
+      4px 4px 8px #0a0a0a,
+      -4px -4px 8px #343434;
     border-radius: 50%;
   }
   
-  /* ニューモーフィズムアイコン */
-  .neumorphism-icon {
-    background: linear-gradient(145deg, #f0f0f3, #e6e6e9);
+  /* ニューモーフィズムステータスインジケーター - ライトモード */
+  html:not(.dark) .neumorphism-status {
+    background: linear-gradient(145deg, #ffffff, #f0f0f0) !important;
     box-shadow: 
-      6px 6px 12px #d1d1d4,
-      -6px -6px 12px #ffffff;
+      4px 4px 8px #d1d1d1,
+      -4px -4px 8px #ffffff !important;
+  }
+  
+  /* ニューモーフィズムアイコン - ダークモード */
+  .neumorphism-icon {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e);
+    box-shadow: 
+      6px 6px 12px #0a0a0a,
+      -6px -6px 12px #343434;
     border-radius: 50%;
     transition: all 0.2s ease;
   }
   
   .neumorphism-icon:hover {
     box-shadow: 
-      4px 4px 8px #d1d1d4,
-      -4px -4px 8px #ffffff;
+      4px 4px 8px #0a0a0a,
+      -4px -4px 8px #343434;
+  }
+  
+  /* ニューモーフィズムアイコン - ライトモード */
+  html:not(.dark) .neumorphism-icon {
+    background: linear-gradient(145deg, #ffffff, #f0f0f0) !important;
+    box-shadow: 
+      6px 6px 12px #d1d1d1,
+      -6px -6px 12px #ffffff !important;
+  }
+  
+  html:not(.dark) .neumorphism-icon:hover {
+    box-shadow: 
+      4px 4px 8px #d1d1d1,
+      -4px -4px 8px #ffffff !important;
   }
 
   /* カスタムスクロールバー */
@@ -139,14 +214,14 @@
   }
   
   .scrollbar-thumb-gray-300 {
-    scrollbar-color: #d1d5db transparent;
+    scrollbar-color: #4a4a4a transparent;
   }
   
   .scrollbar-track-transparent {
     scrollbar-track-color: transparent;
   }
   
-  /* Webkit用スクロールバー */
+  /* Webkit用スクロールバー - ダークモード */
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
   }
@@ -156,11 +231,11 @@
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: #d1d5db;
+    background: #4a4a4a;
     border-radius: 3px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
+    background: #5a5a5a;
   }
 }

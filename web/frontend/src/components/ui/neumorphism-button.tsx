@@ -4,16 +4,16 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const neumorphismButtonVariants = cva(
-  "neumorphism-button inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "neumorphism-button inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium text-gray-300 dark:text-gray-300 text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         default: "",
-        primary: "text-blue-600 font-semibold",
-        secondary: "text-gray-600",
-        success: "text-green-600 font-semibold",
-        warning: "text-orange-600 font-semibold",
-        danger: "text-red-600 font-semibold",
+        primary: "text-blue-400 dark:text-blue-400 text-blue-600 font-semibold",
+        secondary: "text-gray-400 dark:text-gray-400 text-gray-600",
+        success: "text-green-400 dark:text-green-400 text-green-600 font-semibold",
+        warning: "text-orange-400 dark:text-orange-400 text-orange-600 font-semibold",
+        danger: "text-red-400 dark:text-red-400 text-red-600 font-semibold",
       },
       size: {
         default: "h-12 px-6 py-3",

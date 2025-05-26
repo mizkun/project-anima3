@@ -27,11 +27,11 @@ export const Timeline: React.FC<TimelineProps> = ({ simulationId, className }) =
       <NeumorphismCardHeader className="flex-shrink-0">
         <NeumorphismCardTitle className="flex items-center gap-3">
           <div className="neumorphism-icon p-3">
-            <Clock className="h-6 w-6 text-blue-600" />
+            <Clock className="h-6 w-6 text-blue-400" />
           </div>
           シミュレーションタイムライン
           {turns.length > 0 && (
-            <span className="text-sm font-normal text-gray-500 ml-auto">
+            <span className="text-sm font-normal text-gray-400 ml-auto">
               {turns.length} ターン
             </span>
           )}
@@ -45,8 +45,8 @@ export const Timeline: React.FC<TimelineProps> = ({ simulationId, className }) =
         {isLoading && turns.length === 0 ? (
           <div className="flex items-center justify-center h-32">
             <div className="neumorphism-inset rounded-xl p-6">
-              <div className="flex items-center gap-3 text-gray-600">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-blue-600"></div>
+              <div className="flex items-center gap-3 text-gray-400">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-600 border-t-blue-400"></div>
                 <span>タイムラインを読み込み中...</span>
               </div>
             </div>
@@ -55,7 +55,7 @@ export const Timeline: React.FC<TimelineProps> = ({ simulationId, className }) =
           <div className="flex items-center justify-center h-32">
             <div className="neumorphism-inset rounded-xl p-6 text-center">
               <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-600">シミュレーションを開始してください</p>
+              <p className="text-gray-400">シミュレーションを開始してください</p>
               <p className="text-sm text-gray-500 mt-1">ターンが進行するとここに表示されます</p>
             </div>
           </div>

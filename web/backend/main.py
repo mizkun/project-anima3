@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .api.simulation import router as simulation_router
+from .api.files import router as files_router
 from .websocket.manager import manager, websocket_callback
 from .services.engine_wrapper import engine_wrapper
 
@@ -44,6 +45,7 @@ app.add_middleware(
 
 # APIルーターを追加
 app.include_router(simulation_router)
+app.include_router(files_router)
 
 
 @app.on_event("startup")
