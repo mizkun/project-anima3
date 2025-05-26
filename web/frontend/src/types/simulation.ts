@@ -1,0 +1,95 @@
+// シミュレーション状態
+export type SimulationStatus = 'idle' | 'running' | 'paused' | 'completed' | 'error'
+
+// LLMプロバイダー
+export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'local'
+
+// シミュレーション設定
+export interface SimulationConfig {
+  max_turns: number
+  llm_provider: LLMProvider
+  model_name: string
+  temperature: number
+  max_tokens: number
+  characters_dir: string
+  immutable_config_path: string
+  long_term_config_path: string
+}
+
+// キャラクター情報
+export interface Character {
+  id: string
+  name: string
+  description: string
+  prompt_template: string
+  personality_traits: string[]
+  background: string
+}
+
+// タイムラインエントリ
+export interface TimelineEntry {
+  turn: number
+  timestamp: string
+  character_id: string
+  character_name: string
+  action_type: 'speak' | 'think' | 'act'
+  content: string
+  metadata?: Record<string, any>
+}
+
+// シミュレーション状態
+export interface SimulationState {
+  status: SimulationStatus
+  current_turn: number
+  max_turns: number
+  characters: Character[]
+  timeline: TimelineEntry[]
+  config: SimulationConfig
+  error_message?: string
+  start_time?: string
+  end_time?: string
+}
+
+// WebSocketメッセージ
+export interface WebSocketMessage {
+  type: 'status_update' | 'timeline_update' | 'error' | 'simulation_complete'
+  data: any
+  timestamp: string
+}
+
+// API レスポンス
+export interface ApiResponse<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
+}
+
+// シミュレーション開始リクエスト
+export interface StartSimulationRequest {
+  config: Partial<SimulationConfig>
+}
+
+// ファイル情報
+export interface FileInfo {
+  name: string
+  path: string
+  content: string
+  last_modified: string
+}
+
+// プロンプトテンプレート
+export interface PromptTemplate {
+  id: string
+  name: string
+  content: string
+  variables: string[]
+  description?: string
+}
+
+// 設定ファイル
+export interface ConfigFile {
+  type: 'immutable' | 'long_term'
+  content: Record<string, any>
+  last_modified: string
+} 
