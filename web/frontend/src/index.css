@@ -55,5 +55,112 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* ニューモーフィズム用のベース背景 */
+    background: linear-gradient(145deg, #f0f0f3, #e6e6e9);
+  }
+}
+
+@layer components {
+  /* ニューモーフィズムカード */
+  .neumorphism-card {
+    background: linear-gradient(145deg, #f0f0f3, #e6e6e9);
+    box-shadow: 
+      20px 20px 40px #d1d1d4,
+      -20px -20px 40px #ffffff;
+    border: none;
+    transition: all 0.3s ease;
+  }
+  
+  .neumorphism-card:hover {
+    box-shadow: 
+      25px 25px 50px #d1d1d4,
+      -25px -25px 50px #ffffff;
+    transform: translateY(-2px);
+  }
+  
+  /* ニューモーフィズムボタン */
+  .neumorphism-button {
+    background: linear-gradient(145deg, #f0f0f3, #e6e6e9);
+    box-shadow: 
+      8px 8px 16px #d1d1d4,
+      -8px -8px 16px #ffffff;
+    border: none;
+    transition: all 0.2s ease;
+  }
+  
+  .neumorphism-button:hover {
+    box-shadow: 
+      6px 6px 12px #d1d1d4,
+      -6px -6px 12px #ffffff;
+  }
+  
+  .neumorphism-button:active {
+    box-shadow: 
+      inset 4px 4px 8px #d1d1d4,
+      inset -4px -4px 8px #ffffff;
+  }
+  
+  /* ニューモーフィズム凹み効果 */
+  .neumorphism-inset {
+    background: linear-gradient(145deg, #e6e6e9, #f0f0f3);
+    box-shadow: 
+      inset 8px 8px 16px #d1d1d4,
+      inset -8px -8px 16px #ffffff;
+  }
+  
+  /* ニューモーフィズムステータスインジケーター */
+  .neumorphism-status {
+    background: linear-gradient(145deg, #f0f0f3, #e6e6e9);
+    box-shadow: 
+      4px 4px 8px #d1d1d4,
+      -4px -4px 8px #ffffff;
+    border-radius: 50%;
+  }
+  
+  /* ニューモーフィズムアイコン */
+  .neumorphism-icon {
+    background: linear-gradient(145deg, #f0f0f3, #e6e6e9);
+    box-shadow: 
+      6px 6px 12px #d1d1d4,
+      -6px -6px 12px #ffffff;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+  
+  .neumorphism-icon:hover {
+    box-shadow: 
+      4px 4px 8px #d1d1d4,
+      -4px -4px 8px #ffffff;
+  }
+
+  /* カスタムスクロールバー */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  
+  .scrollbar-thumb-gray-300 {
+    scrollbar-color: #d1d5db transparent;
+  }
+  
+  .scrollbar-track-transparent {
+    scrollbar-track-color: transparent;
+  }
+  
+  /* Webkit用スクロールバー */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
   }
 }
