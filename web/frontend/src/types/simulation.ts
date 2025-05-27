@@ -51,13 +51,6 @@ export interface SimulationState {
   end_time?: string
 }
 
-// WebSocketメッセージ
-export interface WebSocketMessage {
-  type: 'status_update' | 'timeline_update' | 'error' | 'simulation_complete' | 'simulation_reset' | 'simulation_started' | 'simulation_stopped' | 'turn_completed'
-  data: any
-  timestamp: string
-}
-
 // API レスポンス
 export interface ApiResponse<T = any> {
   success: boolean

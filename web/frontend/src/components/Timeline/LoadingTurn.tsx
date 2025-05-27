@@ -17,8 +17,8 @@ export const LoadingTurn: React.FC<LoadingTurnProps> = ({ turnNumber }) => {
             <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-800">ターン {turnNumber}</h3>
-            <p className="text-xs text-blue-600">処理中...</p>
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200">ターン {turnNumber}</h3>
+            <p className="text-xs text-blue-600 dark:text-blue-400">処理中...</p>
           </div>
         </div>
         
@@ -41,7 +41,7 @@ export const LoadingTurn: React.FC<LoadingTurnProps> = ({ turnNumber }) => {
                 <Brain className="h-4 w-4 text-purple-600" />
               </div>
               <div className="flex-1">
-                <h5 className="text-sm font-semibold text-purple-700 mb-1">思考生成中</h5>
+                <h5 className="text-sm font-semibold text-purple-700 dark:text-purple-400 mb-1">思考生成中</h5>
                 <div className="flex gap-1">
                   {[0, 1, 2].map((i) => (
                     <motion.div
@@ -71,10 +71,10 @@ export const LoadingTurn: React.FC<LoadingTurnProps> = ({ turnNumber }) => {
                 <Activity className="h-4 w-4 text-green-600" />
               </div>
               <div className="flex-1">
-                <h5 className="text-sm font-semibold text-green-700 mb-1">行動決定中</h5>
-                <div className="w-full bg-gray-200 rounded-full h-1">
+                <h5 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-1">行動決定中</h5>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
                   <motion.div
-                    className="bg-green-500 h-1 rounded-full"
+                    className="bg-green-500 dark:bg-green-400 h-1 rounded-full"
                     animate={{ width: ["0%", "100%", "0%"] }}
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                   />
@@ -94,7 +94,7 @@ export const LoadingTurn: React.FC<LoadingTurnProps> = ({ turnNumber }) => {
                 <MessageCircle className="h-4 w-4 text-blue-600" />
               </div>
               <div className="flex-1">
-                <h5 className="text-sm font-semibold text-blue-700 mb-1">発言生成待機中</h5>
+                <h5 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">発言生成待機中</h5>
                 <div className="flex gap-1">
                   {[0, 1, 2, 3, 4].map((i) => (
                     <div

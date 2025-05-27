@@ -20,30 +20,8 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* 狭いヘッダー */}
-      <motion.header
-        className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-gray-900/95 to-gray-800/95 backdrop-blur-sm border-b border-gray-700/50"
-        variants={slideUp}
-        initial="initial"
-        animate="animate"
-        transition={{ delay: 0.1 }}
-      >
-        <div className="flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            <div className="neumorphism-icon p-2">
-              <Sparkles className="h-5 w-5 text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-200">Project Anima</h1>
-              <p className="text-xs text-gray-400">AI Character Simulation</p>
-            </div>
-          </div>
-          <HamburgerMenu />
-        </div>
-      </motion.header>
-
       {/* メインコンテンツエリア - 左右分割 */}
-      <div className="flex-1 pt-16 flex">
+      <div className="flex-1 flex relative">
         {/* 左側: Control Panel */}
         <motion.div
           className="left-panel"
@@ -53,17 +31,6 @@ function App() {
           transition={{ delay: 0.3 }}
         >
           <NeumorphismCard className="control-panel-left h-full">
-            <NeumorphismCardHeader className="pb-4">
-              <NeumorphismCardTitle className="flex items-center gap-3">
-                <div className="neumorphism-icon p-3">
-                  <Play className="h-5 w-5 text-green-400" />
-                </div>
-                Control Panel
-              </NeumorphismCardTitle>
-              <NeumorphismCardDescription>
-                シミュレーションの制御と設定
-              </NeumorphismCardDescription>
-            </NeumorphismCardHeader>
             <NeumorphismCardContent className="flex-1 overflow-hidden">
               <SimulationControls />
             </NeumorphismCardContent>
@@ -112,6 +79,17 @@ function App() {
               )}
             </NeumorphismCardContent>
           </NeumorphismCard>
+        </motion.div>
+
+        {/* 左下に設定ボタン */}
+        <motion.div
+          className="fixed bottom-6 left-6 z-50"
+          variants={fadeIn}
+          initial="initial"
+          animate="animate"
+          transition={{ delay: 0.5 }}
+        >
+          <HamburgerMenu />
         </motion.div>
       </div>
 

@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
 import { NeumorphismButton } from '@/components/ui/neumorphism-button'
 import { useSimulationControls } from '@/hooks/useSimulationControls'
-import { usePolling } from '@/hooks/usePolling'
 import { SceneSelector } from './SceneSelector'
 import { ModelSelector } from './ModelSelector'
 import { InterventionPanel } from './InterventionPanel'
-import { Play, Square, Pause, SkipForward, Loader2, Settings, Zap, AlertCircle, X } from 'lucide-react'
+import { Play, Square, Pause, SkipForward, Loader2, Settings, Zap, AlertCircle, X, Sparkles } from 'lucide-react'
 import type { SimulationStatus } from '@/types/simulation'
 
 export const SimulationControls: React.FC = () => {
@@ -21,9 +20,6 @@ export const SimulationControls: React.FC = () => {
     clearError,
   } = useSimulationControls()
 
-  // ポーリング状態の監視
-  const { isPolling } = usePolling()
-
   // 新機能の状態管理
   const [selectedScene, setSelectedScene] = useState<string | null>(null)
   const [selectedProvider, setSelectedProvider] = useState('gemini')
@@ -31,39 +27,7 @@ export const SimulationControls: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'controls' | 'settings' | 'intervention'>('controls')
   const [isExecutingTurn, setIsExecutingTurn] = useState(false)
 
-  const getStatusColor = (status: SimulationStatus) => {
-    switch (status) {
-      case 'running':
-        return 'text-green-400'
-      case 'paused':
-        return 'text-yellow-400'
-      case 'error':
-        return 'text-red-400'
-      case 'completed':
-        return 'text-blue-400'
-      default:
-        return 'text-gray-400'
-    }
-  }
 
-  const getStatusText = (status: SimulationStatus) => {
-    switch (status) {
-      case 'not_started':
-        return '未開始'
-      case 'idle':
-        return '待機中'
-      case 'running':
-        return '実行中'
-      case 'paused':
-        return '一時停止'
-      case 'error':
-        return 'エラー'
-      case 'completed':
-        return '完了'
-      default:
-        return '待機中'
-    }
-  }
 
   // 新機能のハンドラー
   const handleSceneSelect = (sceneId: string) => {
@@ -111,6 +75,16 @@ export const SimulationControls: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      {/* タイトル部分 */}
+      <div className="flex items-center gap-3 mb-6 mt-4">
+        <div className="neumorphism-icon p-2">
+          <Sparkles className="h-5 w-5 text-blue-400" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Project Anima</h1>
+        </div>
+      </div>
+
       {/* エラー表示 */}
       {error && (
         <div className="neumorphism-inset rounded-xl p-4 border border-red-500/30">
@@ -129,41 +103,6 @@ export const SimulationControls: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* ステータス表示 */}
-      <div className="neumorphism-inset rounded-xl p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`neumorphism-status w-3 h-3 relative`}>
-              <div className={`absolute inset-0.5 rounded-full ${
-                status === 'running' ? 'bg-green-500 animate-pulse' :
-                status === 'paused' ? 'bg-yellow-500' :
-                status === 'error' ? 'bg-red-500' :
-                status === 'completed' ? 'bg-blue-500' :
-                'bg-gray-400'
-              }`}></div>
-            </div>
-            <span className={`text-sm font-semibold ${getStatusColor(status)}`}>
-              {getStatusText(status)}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* ポーリング状態表示 */}
-            {isPolling && (
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-gray-400">同期中</span>
-              </div>
-            )}
-            
-            {/* ローディング表示 */}
-            {isAnyLoading && (
-              <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* タブ切り替え */}
       <div className="neumorphism-inset rounded-xl p-2 flex gap-1">
@@ -205,8 +144,8 @@ export const SimulationControls: React.FC = () => {
           <div className="space-y-4">
             {/* 制御ボタン */}
             <div className="grid grid-cols-2 gap-3">
-              {/* 開始/再開ボタン */}
-              {(status === 'not_started' || status === 'idle' || status === 'completed' || status === 'error') && (
+              {/* 開始ボタン（未開始・完了・エラー時のみ表示） */}
+              {(status === 'not_started' || status === 'completed' || status === 'error') && (
                 <NeumorphismButton
                   variant="primary"
                   onClick={() => startSimulation({
@@ -219,67 +158,42 @@ export const SimulationControls: React.FC = () => {
                     max_tokens: 1000
                   })}
                   disabled={isAnyLoading}
-                  className="flex items-center gap-2"
-                >
-                  <Play className="h-4 w-4" />
-                  開始
-                </NeumorphismButton>
-              )}
-
-              {/* 一時停止ボタン */}
-              {status === 'running' && (
-                <NeumorphismButton
-                  variant="warning"
-                  onClick={pauseSimulation}
-                  disabled={isAnyLoading}
-                  className="flex items-center gap-2"
-                >
-                  <Pause className="h-4 w-4" />
-                  一時停止
-                </NeumorphismButton>
-              )}
-
-              {/* 再開ボタン */}
-              {status === 'paused' && (
-                <NeumorphismButton
-                  variant="primary"
-                  onClick={resumeSimulation}
-                  disabled={isAnyLoading}
-                  className="flex items-center gap-2"
-                >
-                  <Play className="h-4 w-4" />
-                  再開
-                </NeumorphismButton>
-              )}
-
-              {/* 停止ボタン */}
-              {(status === 'running' || status === 'paused' || status === 'idle') && (
-                <NeumorphismButton
-                  variant="danger"
-                  onClick={stopSimulation}
-                  disabled={isAnyLoading}
-                  className="flex items-center gap-2"
-                >
-                  <Square className="h-4 w-4" />
-                  停止
-                </NeumorphismButton>
-              )}
-
-              {/* 次ターンボタン */}
-              {(status === 'running' || status === 'paused' || status === 'idle') && (
-                <NeumorphismButton
-                  variant="secondary"
-                  onClick={handleExecuteNextTurn}
-                  disabled={isAnyLoading}
                   className="flex items-center gap-2 col-span-2"
                 >
-                  {isExecutingTurn ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <SkipForward className="h-4 w-4" />
-                  )}
-                  次ターン実行
+                  <Play className="h-4 w-4" />
+                  Start
                 </NeumorphismButton>
+              )}
+
+              {/* シミュレーション開始後のボタン群 */}
+              {(status === 'running' || status === 'paused' || status === 'idle') && (
+                <>
+                  {/* 次ターンボタン */}
+                  <NeumorphismButton
+                    variant="secondary"
+                    onClick={handleExecuteNextTurn}
+                    disabled={isAnyLoading}
+                    className="flex items-center gap-2"
+                  >
+                    {isExecutingTurn ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <SkipForward className="h-4 w-4" />
+                    )}
+                    Next
+                  </NeumorphismButton>
+
+                  {/* 停止ボタン */}
+                  <NeumorphismButton
+                    variant="danger"
+                    onClick={stopSimulation}
+                    disabled={isAnyLoading}
+                    className="flex items-center gap-2"
+                  >
+                    <Square className="h-4 w-4" />
+                    Stop
+                  </NeumorphismButton>
+                </>
               )}
             </div>
           </div>

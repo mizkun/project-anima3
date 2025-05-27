@@ -26,8 +26,8 @@ export const ActionDisplay: React.FC<ActionDisplayProps> = ({
                 <Brain className="h-4 w-4 text-purple-600" />
               </div>
               <div className="flex-1">
-                <h5 className="text-sm font-semibold text-purple-700 mb-1">思考</h5>
-                <p className="text-sm text-gray-700 leading-relaxed">
+                <h5 className="text-sm font-semibold text-purple-700 dark:text-purple-400 mb-1">思考</h5>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {thinkLine.replace('思考: ', '')}
                 </p>
               </div>
@@ -42,8 +42,8 @@ export const ActionDisplay: React.FC<ActionDisplayProps> = ({
                 <Activity className="h-4 w-4 text-green-600" />
               </div>
               <div className="flex-1">
-                <h5 className="text-sm font-semibold text-green-700 mb-1">行動</h5>
-                <p className="text-sm text-gray-700 leading-relaxed">
+                <h5 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-1">行動</h5>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {actLine.replace('行動: ', '')}
                 </p>
               </div>
@@ -58,9 +58,9 @@ export const ActionDisplay: React.FC<ActionDisplayProps> = ({
                 <MessageCircle className="h-4 w-4 text-blue-600" />
               </div>
               <div className="flex-1">
-                <h5 className="text-sm font-semibold text-blue-700 mb-1">発言</h5>
-                <div className="bg-white bg-opacity-50 rounded-lg p-3 border-l-4 border-blue-300">
-                  <p className="text-sm text-gray-700 leading-relaxed italic">
+                <h5 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">発言</h5>
+                <div className="bg-white dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-50 rounded-lg p-3 border-l-4 border-blue-300 dark:border-blue-500">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed italic">
                     "{talkLine.replace('発言: ', '')}"
                   </p>
                 </div>
@@ -80,8 +80,8 @@ export const ActionDisplay: React.FC<ActionDisplayProps> = ({
               <Play className="h-4 w-4 text-orange-600" />
             </div>
             <div className="flex-1">
-              <h5 className="text-sm font-semibold text-orange-700 mb-1">介入</h5>
-              <p className="text-sm text-gray-700 leading-relaxed">{content}</p>
+              <h5 className="text-sm font-semibold text-orange-700 dark:text-orange-400 mb-1">介入</h5>
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{content}</p>
             </div>
           </div>
         </div>

@@ -100,14 +100,6 @@ class FileUpdateRequest(BaseModel):
     content: str
 
 
-class WebSocketMessage(BaseModel):
-    """WebSocketメッセージ"""
-
-    type: str
-    data: Dict[str, Any]
-    timestamp: str
-
-
 class ErrorResponse(BaseModel):
     """エラー応答"""
 

@@ -69,9 +69,13 @@ export const useSimulationStore = create<SimulationStore>()(
 
       addTimelineEntry: (entry) => 
         set(
-          (state) => ({ 
-            timeline: [...state.timeline, entry] 
-          }), 
+          (state) => {
+            console.log('simulationStore: addTimelineEntry called with:', entry)
+            console.log('simulationStore: current timeline length:', state.timeline.length)
+            const newTimeline = [...state.timeline, entry]
+            console.log('simulationStore: new timeline length:', newTimeline.length)
+            return { timeline: newTimeline }
+          }, 
           false, 
           'addTimelineEntry'
         ),

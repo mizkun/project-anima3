@@ -47,7 +47,6 @@ class EngineWrapper:
         self.engine: Optional[SimulationEngine] = None
         self.status = SimulationStatus.NOT_STARTED
         self.current_config: Optional[SimulationConfig] = None
-        self.websocket_callbacks: List[Callable] = []
 
         # プロジェクトのパス設定
         self.project_root = project_root
@@ -57,24 +56,6 @@ class EngineWrapper:
         self.log_dir = self.project_root / "logs"
 
         logger.info("EngineWrapperを初期化しました")
-
-    def add_websocket_callback(self, callback: Callable):
-        """WebSocket通知用のコールバックを追加"""
-        self.websocket_callbacks.append(callback)
-
-    async def _notify_websocket(self, message_type: str, data: Dict[str, Any]):
-        """WebSocketクライアントに通知を送信"""
-        message = {
-            "type": message_type,
-            "data": data,
-            "timestamp": datetime.now().isoformat(),
-        }
-
-        for callback in self.websocket_callbacks:
-            try:
-                await callback(message)
-            except Exception as e:
-                logger.error(f"WebSocket通知エラー: {e}")
 
     def get_available_characters(self) -> List[str]:
         """利用可能なキャラクター一覧を取得"""
@@ -197,11 +178,6 @@ class EngineWrapper:
             self.status = SimulationStatus.IDLE
             self.current_config = config
 
-            # WebSocket通知
-            await self._notify_websocket(
-                "simulation_started", {"config": config.dict(), "status": self.status}
-            )
-
             logger.info(
                 f"シミュレーションを開始しました: {config.character_name}, 状態: {self.status}"
             )
@@ -216,8 +192,6 @@ class EngineWrapper:
             self.status = SimulationStatus.ERROR
             error_msg = f"シミュレーション開始エラー: {str(e)}"
             logger.error(error_msg)
-
-            await self._notify_websocket("simulation_error", {"error": error_msg})
 
             return {"success": False, "message": error_msg, "status": self.status}
 
@@ -251,30 +225,6 @@ class EngineWrapper:
                 # 最新のターンデータを取得
                 turn_data = self.engine._current_scene_log.turns[-1]
 
-                # WebSocket通知
-                await self._notify_websocket(
-                    "turn_completed",
-                    {
-                        "turn_number": turn_data.turn_number,
-                        "character_name": turn_data.character_name,
-                        "think": turn_data.think,
-                        "act": turn_data.act,
-                        "talk": turn_data.talk,
-                        "timeline_entry": {
-                            "step": turn_data.turn_number,
-                            "timestamp": datetime.now().isoformat(),
-                            "character": turn_data.character_name,
-                            "action_type": "turn",
-                            "content": f"思考: {turn_data.think}\n行動: {turn_data.act}\n発言: {turn_data.talk}",
-                            "metadata": {
-                                "think": turn_data.think,
-                                "act": turn_data.act,
-                                "talk": turn_data.talk,
-                            },
-                        },
-                    },
-                )
-
                 return {
                     "success": True,
                     "message": "ターンを実行しました",
@@ -289,9 +239,6 @@ class EngineWrapper:
             else:
                 # シミュレーション終了
                 self.status = SimulationStatus.COMPLETED
-                await self._notify_websocket(
-                    "simulation_completed", {"status": self.status}
-                )
 
                 return {
                     "success": True,
@@ -303,8 +250,6 @@ class EngineWrapper:
             self.status = SimulationStatus.ERROR
             error_msg = f"ターン実行エラー: {str(e)}"
             logger.error(error_msg)
-
-            await self._notify_websocket("turn_error", {"error": error_msg})
 
             return {"success": False, "message": error_msg}
 
@@ -411,16 +356,6 @@ class EngineWrapper:
             success, message = self.engine.process_intervention_command(command)
 
             if success:
-                # WebSocket通知
-                await self._notify_websocket(
-                    "intervention_applied",
-                    {
-                        "intervention_type": intervention_type,
-                        "content": content,
-                        "message": message,
-                    },
-                )
-
                 return {"success": True, "message": message}
             else:
                 return {"success": False, "message": message}
@@ -435,11 +370,6 @@ class EngineWrapper:
         try:
             if self.engine and self.status == SimulationStatus.RUNNING:
                 self.engine.end_simulation()
-
-                # WebSocket通知
-                await self._notify_websocket(
-                    "simulation_stopped", {"status": SimulationStatus.NOT_STARTED}
-                )
 
             self.status = SimulationStatus.NOT_STARTED
             self.engine = None
@@ -473,9 +403,6 @@ class EngineWrapper:
             self.status = SimulationStatus.NOT_STARTED
             self.engine = None
             self.current_config = None
-
-            # WebSocket通知
-            await self._notify_websocket("simulation_reset", {"status": self.status})
 
             logger.info("シミュレーション状態を強制的にリセットしました")
 
@@ -518,12 +445,6 @@ class EngineWrapper:
             # 設定を更新
             self.current_config.llm_provider = llm_provider
             self.current_config.model_name = model_name
-
-            # WebSocket通知
-            await self._notify_websocket(
-                "llm_model_updated",
-                {"llm_provider": llm_provider, "model_name": model_name},
-            )
 
             return {
                 "success": True,

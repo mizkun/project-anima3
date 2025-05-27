@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { CharacterInfo } from './CharacterInfo'
 import { ActionDisplay } from './ActionDisplay'
 import { NeumorphismCard } from '@/components/ui/neumorphism-card'
-import { ChevronDown, ChevronUp, Clock } from 'lucide-react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { TimelineEntry } from '@/types/simulation'
 
 interface TurnItemProps {
@@ -15,28 +15,17 @@ interface TurnItemProps {
 export const TurnItem: React.FC<TurnItemProps> = ({ turn, isLatest, turnNumber }) => {
   const [isExpanded, setIsExpanded] = useState(isLatest)
 
-  const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString('ja-JP', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-  }
-
   return (
     <NeumorphismCard className={`relative ${isLatest ? 'ring-2 ring-blue-200' : ''}`}>
-      {/* ターン番号とタイムスタンプ */}
+      {/* ターン番号とキャラクター名のみ */}
       <div className="flex items-center justify-between p-4 pb-2">
         <div className="flex items-center gap-3">
           <div className="neumorphism-status w-8 h-8 flex items-center justify-center">
-            <span className="text-xs font-bold text-gray-700">{turnNumber}</span>
+            <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{turnNumber}</span>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-800">ターン {turnNumber}</h3>
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <Clock className="h-3 w-3" />
-              <span>{formatTimestamp(turn.timestamp)}</span>
-            </div>
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200">ターン {turnNumber}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{turn.character}</p>
           </div>
         </div>
         
@@ -45,19 +34,11 @@ export const TurnItem: React.FC<TurnItemProps> = ({ turn, isLatest, turnNumber }
           className="neumorphism-button p-2 rounded-lg"
         >
           {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-gray-600" />
+            <ChevronUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-gray-600" />
+            <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           )}
         </button>
-      </div>
-
-      {/* キャラクター情報 */}
-      <div className="px-4 pb-2">
-        <CharacterInfo 
-          characterId={turn.character} 
-          characterName={turn.character}
-        />
       </div>
 
       {/* 展開可能なアクション詳細 */}

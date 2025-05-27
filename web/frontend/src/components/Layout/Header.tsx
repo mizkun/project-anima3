@@ -3,11 +3,9 @@
  */
 import React from 'react';
 import { useSimulationStore } from '../../stores/simulationStore';
-import { useWebSocket } from '../../hooks/useWebSocket';
 
 export const Header: React.FC = () => {
-  const { ui, simulation } = useSimulationStore();
-  const { getConnectionStateString, reconnect } = useWebSocket();
+  const { status, current_turn, max_turns, config, isLoading, error_message } = useSimulationStore();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -24,10 +22,23 @@ export const Header: React.FC = () => {
     }
   };
 
-  const getConnectionColor = (isConnected: boolean) => {
-    return isConnected 
-      ? 'text-green-600 bg-green-50' 
-      : 'text-red-600 bg-red-50';
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'not_started':
+        return '未開始';
+      case 'idle':
+        return 'アイドル';
+      case 'running':
+        return '実行中';
+      case 'paused':
+        return '一時停止';
+      case 'completed':
+        return '完了';
+      case 'error':
+        return 'エラー';
+      default:
+        return status;
+    }
   };
 
   return (
@@ -53,56 +64,33 @@ export const Header: React.FC = () => {
           {/* シミュレーション状態 */}
           <div className="flex items-center space-x-2">
             <span className="text-sm text-secondary-600">状態:</span>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(simulation.status)}`}>
-              {simulation.status === 'idle' && 'アイドル'}
-              {simulation.status === 'running' && '実行中'}
-              {simulation.status === 'paused' && '一時停止'}
-              {simulation.status === 'completed' && '完了'}
-              {simulation.status === 'error' && 'エラー'}
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+              {getStatusText(status)}
             </span>
           </div>
 
-          {/* 接続状態 */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-secondary-600">接続:</span>
-            <div className="flex items-center space-x-1">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConnectionColor(ui.isConnected)}`}>
-                {getConnectionStateString()}
-              </span>
-              {!ui.isConnected && (
-                <button
-                  onClick={reconnect}
-                  className="text-xs text-primary-600 hover:text-primary-700 underline"
-                >
-                  再接続
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* 現在のステップ */}
-          {simulation.status !== 'idle' && (
+          {/* 現在のターン */}
+          {status !== 'not_started' && (
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-secondary-600">ステップ:</span>
+              <span className="text-sm text-secondary-600">ターン:</span>
               <span className="text-sm font-medium text-secondary-900">
-                {simulation.current_step}
-                {simulation.total_steps && ` / ${simulation.total_steps}`}
+                {current_turn} / {max_turns}
               </span>
             </div>
           )}
 
           {/* キャラクター名 */}
-          {simulation.character_name && (
+          {config.character_name && (
             <div className="flex items-center space-x-2">
               <span className="text-sm text-secondary-600">キャラクター:</span>
               <span className="text-sm font-medium text-secondary-900">
-                {simulation.character_name}
+                {config.character_name}
               </span>
             </div>
           )}
 
           {/* ローディング表示 */}
-          {ui.isLoading && (
+          {isLoading && (
             <div className="flex items-center space-x-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
               <span className="text-sm text-secondary-600">処理中...</span>
@@ -112,7 +100,7 @@ export const Header: React.FC = () => {
       </div>
 
       {/* エラー表示 */}
-      {ui.error && (
+      {error_message && (
         <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -121,11 +109,11 @@ export const Header: React.FC = () => {
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-red-800">{ui.error}</p>
+              <p className="text-sm text-red-800">{error_message}</p>
             </div>
             <div className="ml-auto pl-3">
               <button
-                onClick={() => useSimulationStore.getState().setUIState({ error: null })}
+                onClick={() => useSimulationStore.getState().clearError()}
                 className="inline-flex text-red-400 hover:text-red-600"
               >
                 <span className="sr-only">閉じる</span>

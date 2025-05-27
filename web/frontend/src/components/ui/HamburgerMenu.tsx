@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, Sun, Moon, Settings, Info } from 'lucide-react'
+import { Sun, Moon, Settings, Info } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { NeumorphismButton } from './neumorphism-button'
 
@@ -75,19 +75,19 @@ export const HamburgerMenu: React.FC = () => {
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* ハンバーガーボタン */}
+      {/* 設定ボタン */}
       <NeumorphismButton
         variant="secondary"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative z-50"
-        aria-label="メニューを開く"
+        className="relative z-50 w-12 h-12"
+        aria-label="設定を開く"
       >
         <motion.div
-          animate={{ rotate: isOpen ? 90 : 0 }}
-          transition={{ duration: 0.2 }}
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <Menu className="h-5 w-5" />
+          <Settings className="h-5 w-5" />
         </motion.div>
       </NeumorphismButton>
 
@@ -106,17 +106,17 @@ export const HamburgerMenu: React.FC = () => {
 
             {/* メニューパネル */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="absolute top-full right-0 mt-2 w-64 z-50"
+              className="absolute bottom-full left-0 mb-2 w-64 z-50"
             >
               <div className="neumorphism-card rounded-2xl p-4 space-y-2">
                 {/* メニューヘッダー */}
                 <div className="px-3 py-2 border-b border-gray-600/30 dark:border-gray-600/30 border-gray-300/30">
                   <h3 className="text-sm font-semibold text-gray-300 dark:text-gray-300 text-gray-700">
-                    メニュー
+                    設定
                   </h3>
                 </div>
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSimulationStore } from '@/stores/simulationStore'
+import { useSimulationControls } from '@/hooks/useSimulationControls'
 import { TurnItem } from './TurnItem'
 import { LoadingTurn } from './LoadingTurn'
 import { Users } from 'lucide-react'
@@ -12,24 +13,29 @@ interface TimelineProps {
 
 export const Timeline: React.FC<TimelineProps> = ({ className }) => {
   const { timeline, status } = useSimulationStore()
+  const { isLoading } = useSimulationControls()
   const timelineRef = useRef<HTMLDivElement>(null)
   
-  // タイムラインデータをそのまま使用
-  const turns = timeline
+  // タイムラインデータを逆順にして新しいターンを上部に表示
+  const turns = [...timeline].reverse()
   
-  const isLoading = false
-  const isProcessing = status === 'running'
+  // ターン実行中またはシミュレーション実行中の判定
+  // status が 'running' の場合、または isLoading が true の場合にローディング表示
+  const isProcessing = status === 'running' || isLoading
+  
+  console.log('Timeline状態:', { status, isLoading, isProcessing, timelineLength: timeline.length })
+  console.log('Timeline turns:', turns)
 
-  // 新しいターンが追加されたときに自動スクロール
+  // 新しいターンが追加されたときに上部にスクロール
   useEffect(() => {
-    if (timelineRef.current && turns.length > 0) {
+    if (timelineRef.current && timeline.length > 0) {
       setTimeout(() => {
         if (timelineRef.current) {
-          timelineRef.current.scrollTop = timelineRef.current.scrollHeight
+          timelineRef.current.scrollTop = 0
         }
       }, 100)
     }
-  }, [turns.length])
+  }, [timeline.length])
 
   return (
     <div className={`timeline-infinite-scroll ${className}`}>
@@ -38,30 +44,35 @@ export const Timeline: React.FC<TimelineProps> = ({ className }) => {
         ref={timelineRef}
         className="timeline-scroll-container"
       >
-        {isLoading && turns.length === 0 ? (
-          <div className="timeline-empty-state">
-            <div className="neumorphism-inset rounded-xl p-6">
-              <div className="flex items-center gap-3 text-gray-400">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-600 border-t-blue-400"></div>
-                <span>タイムラインを読み込み中...</span>
-              </div>
-            </div>
-          </div>
-        ) : turns.length === 0 ? (
+        {turns.length === 0 ? (
           <div className="timeline-empty-state">
             <div className="neumorphism-inset rounded-xl p-8 text-center">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg mb-2">シミュレーションを開始してください</p>
-              <p className="text-sm text-gray-500">ターンが進行するとここに表示されます</p>
+              <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-400 dark:text-gray-500 text-lg mb-2">シミュレーションを開始してください</p>
+              <p className="text-sm text-gray-500 dark:text-gray-600">ターンが進行するとここに表示されます</p>
             </div>
           </div>
         ) : (
           <div className="timeline-content">
             <AnimatePresence>
+              {/* 処理中の表示を最上部に */}
+              {isProcessing && (
+                <motion.div
+                  key="loading-turn"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="timeline-item"
+                >
+                  <LoadingTurn turnNumber={timeline.length + 1} />
+                </motion.div>
+              )}
+              
               {turns.map((turn, index) => (
                 <motion.div
                   key={`${turn.step}-${index}`}
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  initial={{ opacity: 0, y: -20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20, scale: 0.95 }}
                   transition={{ 
@@ -73,23 +84,11 @@ export const Timeline: React.FC<TimelineProps> = ({ className }) => {
                 >
                   <TurnItem 
                     turn={turn} 
-                    isLatest={index === turns.length - 1}
+                    isLatest={index === 0}
                     turnNumber={turn.step}
                   />
                 </motion.div>
               ))}
-              
-              {isProcessing && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="timeline-item"
-                >
-                  <LoadingTurn turnNumber={turns.length + 1} />
-                </motion.div>
-              )}
             </AnimatePresence>
           </div>
         )}

@@ -5,15 +5,13 @@ Project Anima Web UI - FastAPIバックエンド
 """
 
 import logging
-import json
 from datetime import datetime
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.simulation import router as simulation_router
 from api.files import router as files_router
-from websocket.manager import manager, websocket_callback
 from services.engine_wrapper import engine_wrapper
 
 # ロギング設定
@@ -52,10 +50,6 @@ app.include_router(files_router)
 async def startup_event():
     """アプリケーション起動時の処理"""
     logger.info("Project Anima Web UI APIを起動しています...")
-
-    # EngineWrapperにWebSocketコールバックを登録
-    engine_wrapper.add_websocket_callback(websocket_callback)
-
     logger.info("Project Anima Web UI APIが起動しました")
 
 
@@ -89,122 +83,17 @@ async def health_check():
     return {
         "status": "healthy",
         "simulation_status": engine_wrapper.status.value,
-        "websocket_connections": manager.get_connection_count(),
         "timestamp": datetime.now().isoformat(),
     }
 
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """WebSocketエンドポイント"""
-    client_id = None
-    try:
-        # クエリパラメータからクライアントIDを取得（オプション）
-        client_id = websocket.query_params.get("client_id")
-
-        # 接続を受け入れ
-        await manager.connect(websocket, client_id)
-
-        # メッセージループ
-        while True:
-            try:
-                # クライアントからのメッセージを受信
-                data = await websocket.receive_text()
-                message = json.loads(data)
-
-                message_type = message.get("type")
-
-                if message_type == "ping":
-                    # Pingメッセージの処理
-                    await manager.handle_ping(websocket)
-
-                elif message_type == "get_status":
-                    # 現在の状態を送信
-                    state = engine_wrapper.get_simulation_state()
-                    await manager.send_personal_message(
-                        websocket,
-                        {
-                            "type": "status_update",
-                            "data": state.dict(),
-                            "timestamp": datetime.now().isoformat(),
-                        },
-                    )
-
-                elif message_type in [
-                    "subscribe_updates",
-                    "subscribe_simulation_updates",
-                ]:
-                    # 更新通知の購読（特に何もしない、接続していれば自動的に通知される）
-                    await manager.send_personal_message(
-                        websocket,
-                        {
-                            "type": "subscription_confirmed",
-                            "data": {"message": "更新通知を購読しました"},
-                            "timestamp": datetime.now().isoformat(),
-                        },
-                    )
-
-                else:
-                    # 未知のメッセージタイプ
-                    await manager.send_personal_message(
-                        websocket,
-                        {
-                            "type": "error",
-                            "data": {
-                                "message": f"未知のメッセージタイプ: {message_type}"
-                            },
-                            "timestamp": datetime.now().isoformat(),
-                        },
-                    )
-
-            except WebSocketDisconnect:
-                # WebSocket切断を検知したらループを終了
-                logger.info(
-                    f"WebSocket接続が切断されました（メッセージループ内）: {client_id or 'unknown'}"
-                )
-                break
-
-            except json.JSONDecodeError:
-                # JSONパースエラー
-                try:
-                    await manager.send_personal_message(
-                        websocket,
-                        {
-                            "type": "error",
-                            "data": {"message": "無効なJSONフォーマットです"},
-                            "timestamp": datetime.now().isoformat(),
-                        },
-                    )
-                except:
-                    # 送信に失敗した場合は接続が切れているので終了
-                    break
-
-            except Exception as e:
-                logger.error(f"WebSocketメッセージ処理エラー: {e}")
-                try:
-                    await manager.send_personal_message(
-                        websocket,
-                        {
-                            "type": "error",
-                            "data": {"message": f"メッセージ処理エラー: {str(e)}"},
-                            "timestamp": datetime.now().isoformat(),
-                        },
-                    )
-                except:
-                    # 送信に失敗した場合は接続が切れているので終了
-                    break
-
-    except WebSocketDisconnect:
-        # 正常な切断
-        logger.info(f"WebSocket接続が切断されました: {client_id or 'unknown'}")
-
-    except Exception as e:
-        # 予期しないエラー
-        logger.error(f"WebSocketエラー: {e}")
-
-    finally:
-        # 接続をクリーンアップ
-        manager.disconnect(websocket)
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc):
+    """HTTP例外ハンドラー"""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "message": exc.detail, "error": exc.detail},
+    )
 
 
 @app.exception_handler(Exception)
@@ -214,8 +103,9 @@ async def global_exception_handler(request, exc):
     return JSONResponse(
         status_code=500,
         content={
-            "error": "内部サーバーエラー",
-            "detail": str(exc),
+            "success": False,
+            "message": "内部サーバーエラーが発生しました",
+            "error": str(exc),
             "timestamp": datetime.now().isoformat(),
         },
     )

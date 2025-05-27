@@ -1,5 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
-import { usePolling } from './usePolling'
+import { useState, useCallback } from 'react'
 import { useSimulationStore } from '@/stores/simulationStore'
 import type { SimulationConfig, SimulationStatus } from '@/types/simulation'
 
@@ -19,7 +18,6 @@ interface UseSimulationControlsReturn {
 
 export const useSimulationControls = (): UseSimulationControlsReturn => {
   const [isLoading, setIsLoading] = useState(false)
-  const [pollingError, setPollingError] = useState<string | null>(null)
   
   // グローバルストアから状態を取得
   const store = useSimulationStore()
@@ -35,22 +33,33 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
     updateTimeline,
   } = store
   
-  const error = error_message || pollingError
+  const error = error_message
 
-  // HTTPポーリングを使用
-  const { fetchStatus, restartPolling } = usePolling({
-    interval: 2000, // 2秒間隔
-    enabled: true,
-    onError: (err) => {
-      setPollingError(err.message)
+  // 状態同期用のヘルパー関数
+  const syncState = useCallback(async () => {
+    try {
+      const response = await fetch('/api/simulation/status')
+      const data = await response.json()
+      
+      if (response.ok && data.success !== false) {
+        // バックエンドの状態でストアを更新
+        setStatus(data.status)
+        if (data.current_turn !== undefined) {
+          setCurrentTurn(data.current_turn)
+        }
+        if (data.timeline) {
+          updateTimeline(data.timeline)
+        }
+      }
+    } catch (err) {
+      console.error('状態同期エラー:', err)
     }
-  })
+  }, [setStatus, setCurrentTurn, updateTimeline])
 
   // API呼び出し用のヘルパー関数
   const apiCall = useCallback(async (endpoint: string, method: string = 'POST', body?: any) => {
     setIsLoading(true)
     storeClearError()
-    setPollingError(null)
     
     try {
       const response = await fetch(`/api${endpoint}`, {
@@ -71,8 +80,8 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
         throw new Error(responseData.message || 'API呼び出しが失敗しました')
       }
 
-      // API呼び出し成功後、状態を即座に更新
-      await fetchStatus()
+      // API呼び出し成功後、状態を同期
+      await syncState()
 
       return responseData
     } catch (err) {
@@ -91,7 +100,7 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
     } finally {
       setIsLoading(false)
     }
-  }, [setError, storeClearError, fetchStatus])
+  }, [setError, storeClearError, syncState])
 
   // シミュレーション開始
   const startSimulation = useCallback(async (newConfig?: Partial<SimulationConfig>) => {
@@ -165,13 +174,12 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
   // エラークリア
   const clearError = useCallback(() => {
     storeClearError()
-    setPollingError(null)
   }, [storeClearError])
 
   return {
     status,
     isLoading,
-    error,
+    error: error || null,
     config,
     startSimulation,
     stopSimulation,

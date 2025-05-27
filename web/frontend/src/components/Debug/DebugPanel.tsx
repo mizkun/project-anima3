@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { useSimulationStore } from '@/stores/simulationStore'
 import { useSimulationControls } from '@/hooks/useSimulationControls'
-import { useWebSocket } from '@/hooks/useWebSocket'
 
 export const DebugPanel: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -10,7 +9,6 @@ export const DebugPanel: React.FC = () => {
   // ストアの状態を取得
   const store = useSimulationStore()
   const controls = useSimulationControls()
-  const websocket = useWebSocket()
 
   // 直接API呼び出しテスト
   const testDirectAPI = async () => {
@@ -70,15 +68,6 @@ export const DebugPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* WebSocket状態 */}
-        <div>
-          <h4 className="font-semibold text-orange-400 mb-2">🔌 WebSocket State</h4>
-          <div className="bg-gray-800 p-2 rounded">
-            <div>Connected: <span className="text-yellow-300">{websocket.connected ? 'Yes' : 'No'}</span></div>
-            <div>State: <span className="text-yellow-300">{websocket.connectionState}</span></div>
-          </div>
-        </div>
-
         {/* API テスト */}
         <div>
           <h4 className="font-semibold text-red-400 mb-2">🔧 API Test</h4>
@@ -105,12 +94,6 @@ export const DebugPanel: React.FC = () => {
         <div>
           <h4 className="font-semibold text-pink-400 mb-2">⚡ Actions</h4>
           <div className="space-y-1">
-            <button
-              onClick={() => controls.syncState()}
-              className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 w-full"
-            >
-              Sync State
-            </button>
             <button
               onClick={() => store.markSynced()}
               className="bg-yellow-600 text-white px-3 py-1 rounded text-xs hover:bg-yellow-700 w-full"
