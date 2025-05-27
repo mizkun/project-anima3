@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { NeumorphismCard, NeumorphismCardContent, NeumorphismCardHeader, NeumorphismCardTitle } from '@/components/ui/neumorphism-card'
+
 import { NeumorphismButton } from '@/components/ui/neumorphism-button'
 import { FileSelector } from './FileSelector'
 import { CodeEditor } from './CodeEditor'
@@ -153,122 +153,110 @@ export const EditorContainer: React.FC<EditorContainerProps> = ({ className }) =
   const statusDisplay = getSaveStatusDisplay()
 
   return (
-    <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${className}`}>
-      {/* ファイル選択パネル */}
-      <div className="lg:col-span-1">
-        <FileSelector
-          onFileSelect={handleFileSelect}
-          selectedFile={selectedFile}
-          className="h-full"
-        />
+    <div className={`flex flex-col h-full ${className}`}>
+      {/* ファイル選択とアクションバー */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex-1">
+          <FileSelector
+            onFileSelect={handleFileSelect}
+            selectedFile={selectedFile}
+            className="h-auto"
+          />
+        </div>
+        
+        {/* アクションボタン */}
+        {selectedFile && (
+          <div className="flex items-center gap-2">
+            {/* 保存ステータス */}
+            {statusDisplay && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={`flex items-center gap-1 text-sm ${statusDisplay.color}`}
+              >
+                {statusDisplay.icon}
+                <span className="hidden sm:inline">{statusDisplay.message}</span>
+              </motion.div>
+            )}
+            
+            <NeumorphismButton
+              variant="secondary"
+              size="sm"
+              onClick={handleRevert}
+              disabled={!hasUnsavedChanges || isLoading}
+              title="変更を元に戻す (Ctrl+Z)"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </NeumorphismButton>
+            <NeumorphismButton
+              variant="primary"
+              size="sm"
+              onClick={handleSave}
+              disabled={!hasUnsavedChanges || isLoading}
+              title="保存 (Ctrl+S)"
+            >
+              <Save className="h-4 w-4" />
+            </NeumorphismButton>
+          </div>
+        )}
       </div>
 
-      {/* エディターパネル */}
-      <div className="lg:col-span-2">
-        <NeumorphismCard className="h-full">
-          <NeumorphismCardHeader>
-            <NeumorphismCardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span>
-                  {selectedFile ? selectedFile.name : 'ファイルを選択してください'}
-                </span>
-                {hasUnsavedChanges && (
-                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                    未保存
-                  </span>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {/* 保存ステータス */}
-                {statusDisplay && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={`flex items-center gap-1 text-sm ${statusDisplay.color}`}
-                  >
-                    {statusDisplay.icon}
-                    <span>{statusDisplay.message}</span>
-                  </motion.div>
-                )}
-                
-                {/* アクションボタン */}
-                {selectedFile && (
-                  <div className="flex gap-2">
-                    <NeumorphismButton
-                      variant="secondary"
-                      size="sm"
-                      onClick={handleRevert}
-                      disabled={!hasUnsavedChanges || isLoading}
-                      title="変更を元に戻す (Ctrl+Z)"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </NeumorphismButton>
-                    <NeumorphismButton
-                      variant="primary"
-                      size="sm"
-                      onClick={handleSave}
-                      disabled={!hasUnsavedChanges || isLoading}
-                      title="保存 (Ctrl+S)"
-                    >
-                      <Save className="h-4 w-4" />
-                    </NeumorphismButton>
-                  </div>
-                )}
-              </div>
-            </NeumorphismCardTitle>
-          </NeumorphismCardHeader>
-          
-          <NeumorphismCardContent className="p-0">
-            {/* エラー表示 */}
-            {error && (
-                             <div className="m-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg">
-                                 <div className="flex items-center gap-2">
-                   <AlertCircle className="h-4 w-4 text-red-400" />
-                   <p className="text-sm text-red-400">{error}</p>
-                 </div>
-                <NeumorphismButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={clearError}
-                  className="mt-2"
-                >
-                  閉じる
-                </NeumorphismButton>
-              </div>
-            )}
+      {/* エディターエリア */}
+      <div className="flex-1 min-h-0">
+        {/* エラー表示 */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-red-400" />
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+            <NeumorphismButton
+              variant="secondary"
+              size="sm"
+              onClick={clearError}
+              className="mt-2"
+            >
+              閉じる
+            </NeumorphismButton>
+          </div>
+        )}
 
-            {/* エディター */}
-            {selectedFile ? (
-              <CodeEditor
-                value={editorContent}
-                onChange={handleEditorChange}
-                language={getLanguageFromFile(selectedFile)}
-                height="600px"
-                className="m-4"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-96 m-4">
-                <div className="neumorphism-inset rounded-xl p-8">
-                                     <div className="text-center text-gray-400">
-                     <div className="neumorphism-icon p-4 mx-auto mb-4">
-                       <Save className="h-8 w-8 text-gray-500" />
-                     </div>
-                     <h3 className="text-lg font-medium mb-2 text-gray-300">ファイルエディター</h3>
-                     <p className="text-sm">
-                       左側のパネルからファイルを選択して編集を開始してください
-                     </p>
-                     <div className="mt-4 text-xs text-gray-500">
-                       <p>ショートカット:</p>
-                       <p>Ctrl+S: 保存</p>
-                       <p>Ctrl+Z: 元に戻す</p>
-                     </div>
-                   </div>
+        {/* エディター */}
+        {selectedFile ? (
+          <div className="h-full">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-sm text-gray-300">{selectedFile.name}</span>
+              {hasUnsavedChanges && (
+                <span className="text-xs bg-yellow-600/20 text-yellow-400 px-2 py-1 rounded-full">
+                  未保存
+                </span>
+              )}
+            </div>
+            <CodeEditor
+              value={editorContent}
+              onChange={handleEditorChange}
+              language={getLanguageFromFile(selectedFile)}
+              height="calc(100% - 2rem)"
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="neumorphism-inset rounded-xl p-6">
+              <div className="text-center text-gray-400">
+                <div className="neumorphism-icon p-4 mx-auto mb-4">
+                  <Save className="h-8 w-8 text-gray-500" />
+                </div>
+                <h3 className="text-lg font-medium mb-2 text-gray-300">ファイルエディター</h3>
+                <p className="text-sm">
+                  ファイルを選択して編集を開始してください
+                </p>
+                <div className="mt-4 text-xs text-gray-500">
+                  <p>Ctrl+S: 保存 | Ctrl+Z: 元に戻す</p>
                 </div>
               </div>
-            )}
-          </NeumorphismCardContent>
-        </NeumorphismCard>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

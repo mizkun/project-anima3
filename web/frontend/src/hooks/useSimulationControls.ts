@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react'
-import { useWebSocket } from './useWebSocket'
+import { useState, useCallback, useEffect } from 'react'
+import { usePolling } from './usePolling'
+import { useSimulationStore } from '@/stores/simulationStore'
 import type { SimulationConfig, SimulationStatus } from '@/types/simulation'
 
 interface UseSimulationControlsReturn {
@@ -17,27 +18,39 @@ interface UseSimulationControlsReturn {
 }
 
 export const useSimulationControls = (): UseSimulationControlsReturn => {
-  const [status, setStatus] = useState<SimulationStatus>('idle')
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [config, setConfig] = useState<Partial<SimulationConfig>>({
-    max_turns: 10,
-    llm_provider: 'openai',
-    model_name: 'gpt-4',
-    temperature: 0.7,
-    max_tokens: 1000,
-    characters_dir: 'data/characters',
-    immutable_config_path: 'data/immutable.yaml',
-    long_term_config_path: 'data/long_term.yaml'
-  })
+  const [pollingError, setPollingError] = useState<string | null>(null)
+  
+  // グローバルストアから状態を取得
+  const store = useSimulationStore()
+  const { 
+    status, 
+    error_message, 
+    config,
+    setStatus,
+    setError,
+    clearError: storeClearError,
+    setConfig,
+    setCurrentTurn,
+    updateTimeline,
+  } = store
+  
+  const error = error_message || pollingError
 
-  // WebSocket接続
-  const { connected, sendMessage } = useWebSocket()
+  // HTTPポーリングを使用
+  const { fetchStatus, restartPolling } = usePolling({
+    interval: 2000, // 2秒間隔
+    enabled: true,
+    onError: (err) => {
+      setPollingError(err.message)
+    }
+  })
 
   // API呼び出し用のヘルパー関数
   const apiCall = useCallback(async (endpoint: string, method: string = 'POST', body?: any) => {
     setIsLoading(true)
-    setError(null)
+    storeClearError()
+    setPollingError(null)
     
     try {
       const response = await fetch(`/api${endpoint}`, {
@@ -48,87 +61,112 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
         body: body ? JSON.stringify(body) : undefined,
       })
 
+      const responseData = await response.json()
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `HTTP ${response.status}`)
+        throw new Error(responseData.detail || responseData.message || `HTTP ${response.status}`)
       }
 
-      return await response.json()
+      if (responseData.success === false) {
+        throw new Error(responseData.message || 'API呼び出しが失敗しました')
+      }
+
+      // API呼び出し成功後、状態を即座に更新
+      await fetchStatus()
+
+      return responseData
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '不明なエラーが発生しました'
+      let errorMessage = '不明なエラーが発生しました'
+      
+      if (err instanceof Error) {
+        errorMessage = err.message
+      } else if (typeof err === 'object' && err !== null) {
+        // オブジェクトエラーの場合、詳細を表示
+        errorMessage = JSON.stringify(err)
+      }
+      
+      console.error('API呼び出しエラー詳細:', err)
       setError(errorMessage)
       throw err
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [setError, storeClearError, fetchStatus])
 
   // シミュレーション開始
   const startSimulation = useCallback(async (newConfig?: Partial<SimulationConfig>) => {
+    if (isLoading) {
+      console.log('シミュレーション開始処理が既に実行中です')
+      return
+    }
+
     try {
+      // 設定を更新
       const finalConfig = { ...config, ...newConfig }
       setConfig(finalConfig)
+
+      // シミュレーション開始API呼び出し（configでラップ）
+      const result = await apiCall('/simulation/start', 'POST', { config: finalConfig })
       
-      await apiCall('/simulations/start', 'POST', { config: finalConfig })
-      setStatus('running')
-      
-      // WebSocketでリアルタイム更新を開始
-      if (connected) {
-        sendMessage({ type: 'subscribe_simulation_updates' })
-      }
+      console.log('シミュレーションを開始しました:', result)
     } catch (err) {
-      setStatus('error')
+      console.error('シミュレーション開始エラー:', err)
     }
-  }, [config, apiCall, connected, sendMessage])
+  }, [isLoading, config, setConfig, apiCall])
 
   // シミュレーション停止
   const stopSimulation = useCallback(async () => {
     try {
-      await apiCall('/simulations/stop', 'POST')
-      setStatus('idle')
+      const result = await apiCall('/simulation/stop', 'POST')
+      console.log('シミュレーションを停止しました:', result)
     } catch (err) {
-      setStatus('error')
+      console.error('シミュレーション停止エラー:', err)
     }
   }, [apiCall])
 
   // シミュレーション一時停止
   const pauseSimulation = useCallback(async () => {
     try {
-      await apiCall('/simulations/pause', 'POST')
+      // 一時停止は状態をローカルで変更（バックエンドAPIがない場合）
       setStatus('paused')
+      console.log('シミュレーションを一時停止しました')
     } catch (err) {
-      setStatus('error')
+      console.error('シミュレーション一時停止エラー:', err)
     }
-  }, [apiCall])
+  }, [setStatus])
 
   // シミュレーション再開
   const resumeSimulation = useCallback(async () => {
     try {
-      await apiCall('/simulations/resume', 'POST')
+      // 再開は状態をローカルで変更（バックエンドAPIがない場合）
       setStatus('running')
+      console.log('シミュレーションを再開しました')
     } catch (err) {
-      setStatus('error')
+      console.error('シミュレーション再開エラー:', err)
     }
-  }, [apiCall])
+  }, [setStatus])
 
   // 次ターン実行
   const executeNextTurn = useCallback(async () => {
     try {
-      await apiCall('/simulations/next-turn', 'POST')
+      console.log('次ターン実行開始: 現在の状態=', status)
+      const result = await apiCall('/simulation/next-turn', 'POST')
+      console.log('次ターンを実行しました:', result)
     } catch (err) {
-      // エラーは既にsetErrorで設定済み
+      console.error('次ターン実行エラー:', err)
     }
-  }, [apiCall])
+  }, [apiCall, status])
 
   // 設定更新
   const updateConfig = useCallback((newConfig: Partial<SimulationConfig>) => {
-    setConfig(prev => ({ ...prev, ...newConfig }))
-  }, [])
+    setConfig({ ...config, ...newConfig })
+  }, [config, setConfig])
 
   // エラークリア
   const clearError = useCallback(() => {
-    setError(null)
-  }, [])
+    storeClearError()
+    setPollingError(null)
+  }, [storeClearError])
 
   return {
     status,
@@ -141,6 +179,6 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
     resumeSimulation,
     executeNextTurn,
     updateConfig,
-    clearError
+    clearError,
   }
 } 

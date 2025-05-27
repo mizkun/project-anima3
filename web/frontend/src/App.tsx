@@ -1,6 +1,5 @@
-import { useState } from "react"
 import { motion } from "framer-motion"
-import { NeumorphismButton } from "@/components/ui/neumorphism-button"
+import { useState } from "react"
 import { 
   NeumorphismCard, 
   NeumorphismCardContent, 
@@ -12,190 +11,112 @@ import { HamburgerMenu } from "@/components/ui/HamburgerMenu"
 import { Timeline } from "@/components/Timeline/Timeline"
 import { SimulationControls } from "@/components/Controls/SimulationControls"
 import { EditorContainer } from "@/components/Editors/EditorContainer"
+import { DebugPanel } from "@/components/Debug/DebugPanel"
 import { fadeIn, slideUp } from "@/lib/animations"
-import { Play, BarChart3, Edit } from "lucide-react"
+import { Play, Edit, Sparkles, Clock } from "lucide-react"
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'simulation' | 'editor'>('simulation')
+  const [activeTab, setActiveTab] = useState<'timeline' | 'editor'>('timeline')
 
   return (
-    <div className="min-h-screen">
-      {/* ハンバーガーメニュー */}
-      <div className="fixed top-4 right-4 z-50">
-        <HamburgerMenu />
-      </div>
-
-      <motion.div
-        className="container mx-auto px-4 py-8"
-        variants={fadeIn}
+    <div className="min-h-screen flex flex-col">
+      {/* 狭いヘッダー */}
+      <motion.header
+        className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-gray-900/95 to-gray-800/95 backdrop-blur-sm border-b border-gray-700/50"
+        variants={slideUp}
         initial="initial"
         animate="animate"
+        transition={{ delay: 0.1 }}
       >
-        <motion.header
-          className="text-center mb-12"
+        <div className="flex items-center justify-between px-6 py-3">
+          <div className="flex items-center gap-3">
+            <div className="neumorphism-icon p-2">
+              <Sparkles className="h-5 w-5 text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-200">Project Anima</h1>
+              <p className="text-xs text-gray-400">AI Character Simulation</p>
+            </div>
+          </div>
+          <HamburgerMenu />
+        </div>
+      </motion.header>
+
+      {/* メインコンテンツエリア - 左右分割 */}
+      <div className="flex-1 pt-16 flex">
+        {/* 左側: Control Panel */}
+        <motion.div
+          className="left-panel"
           variants={slideUp}
           initial="initial"
           animate="animate"
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
         >
-          <div className="neumorphism-inset rounded-3xl p-8 mb-8 inline-block">
-            <h1 className="text-5xl font-bold text-gray-200 dark:text-gray-200 text-gray-800 mb-4">
-              Project Anima
-            </h1>
-            <p className="text-xl text-gray-400 dark:text-gray-400 text-gray-600">
-              Web UI for AI Character Simulation
-            </p>
-          </div>
-        </motion.header>
+          <NeumorphismCard className="control-panel-left h-full">
+            <NeumorphismCardHeader className="pb-4">
+              <NeumorphismCardTitle className="flex items-center gap-3">
+                <div className="neumorphism-icon p-3">
+                  <Play className="h-5 w-5 text-green-400" />
+                </div>
+                Control Panel
+              </NeumorphismCardTitle>
+              <NeumorphismCardDescription>
+                シミュレーションの制御と設定
+              </NeumorphismCardDescription>
+            </NeumorphismCardHeader>
+            <NeumorphismCardContent className="flex-1 overflow-hidden">
+              <SimulationControls />
+            </NeumorphismCardContent>
+          </NeumorphismCard>
+        </motion.div>
 
+        {/* 右側: Timeline & File Edit タブ */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
-          variants={slideUp}
+          className="right-panel"
+          variants={fadeIn}
           initial="initial"
           animate="animate"
           transition={{ delay: 0.4 }}
         >
-          <NeumorphismCard>
-            <NeumorphismCardHeader>
-              <NeumorphismCardTitle className="flex items-center gap-3">
-                <div className="neumorphism-icon p-3">
-                  <Play className="h-6 w-6 text-blue-400 dark:text-blue-400 text-blue-600" />
-                </div>
-                シミュレーション実行
-              </NeumorphismCardTitle>
-              <NeumorphismCardDescription>
-                AIキャラクターのシミュレーションを開始・制御します
-              </NeumorphismCardDescription>
-            </NeumorphismCardHeader>
-            <NeumorphismCardContent>
-              <SimulationControls />
-            </NeumorphismCardContent>
-          </NeumorphismCard>
-
-          <NeumorphismCard>
-            <NeumorphismCardHeader>
-              <NeumorphismCardTitle className="flex items-center gap-3">
-                <div className="neumorphism-icon p-3">
-                  <Edit className="h-6 w-6 text-purple-400 dark:text-purple-400 text-purple-600" />
-                </div>
-                ファイル編集
-              </NeumorphismCardTitle>
-              <NeumorphismCardDescription>
-                プロンプトテンプレートやYAML設定を編集します
-              </NeumorphismCardDescription>
-            </NeumorphismCardHeader>
-            <NeumorphismCardContent>
-              <NeumorphismButton 
-                variant={activeTab === 'editor' ? 'primary' : 'secondary'} 
-                className="w-full"
-                onClick={() => setActiveTab('editor')}
+          <NeumorphismCard className="right-panel-card h-full">
+            {/* タブヘッダー */}
+            <div className="tab-header">
+              <button
+                onClick={() => setActiveTab('timeline')}
+                className={`tab-button ${activeTab === 'timeline' ? 'tab-active' : 'tab-inactive'}`}
               >
-                エディターを開く
-              </NeumorphismButton>
-            </NeumorphismCardContent>
-          </NeumorphismCard>
-
-          <NeumorphismCard>
-            <NeumorphismCardHeader>
-              <NeumorphismCardTitle className="flex items-center gap-3">
-                <div className="neumorphism-icon p-3">
-                  <BarChart3 className="h-6 w-6 text-green-400 dark:text-green-400 text-green-600" />
+                <div className="neumorphism-icon p-2">
+                  <Clock className="h-4 w-4 text-blue-400" />
                 </div>
-                結果表示
-              </NeumorphismCardTitle>
-              <NeumorphismCardDescription>
-                シミュレーション結果とタイムラインを表示します
-              </NeumorphismCardDescription>
-            </NeumorphismCardHeader>
-            <NeumorphismCardContent>
-              <NeumorphismButton variant="success" className="w-full">
-                結果を見る
-              </NeumorphismButton>
+                Timeline
+              </button>
+              <button
+                onClick={() => setActiveTab('editor')}
+                className={`tab-button ${activeTab === 'editor' ? 'tab-active' : 'tab-inactive'}`}
+              >
+                <div className="neumorphism-icon p-2">
+                  <Edit className="h-4 w-4 text-purple-400" />
+                </div>
+                File Edit
+              </button>
+            </div>
+
+            {/* タブコンテンツ */}
+            <NeumorphismCardContent className="flex-1 overflow-hidden p-0">
+              {activeTab === 'timeline' ? (
+                <Timeline className="h-full" />
+              ) : (
+                <div className="h-full p-6">
+                  <EditorContainer />
+                </div>
+              )}
             </NeumorphismCardContent>
           </NeumorphismCard>
         </motion.div>
+      </div>
 
-        {/* タブ切り替えボタン */}
-        <motion.div
-          className="flex justify-center mb-8"
-          variants={slideUp}
-          initial="initial"
-          animate="animate"
-          transition={{ delay: 0.6 }}
-        >
-          <div className="neumorphism-inset rounded-xl p-2 flex gap-2">
-            <NeumorphismButton
-              variant={activeTab === 'simulation' ? 'primary' : 'secondary'}
-              onClick={() => setActiveTab('simulation')}
-              className="flex items-center gap-2"
-            >
-              <Play className="h-4 w-4" />
-              シミュレーション
-            </NeumorphismButton>
-            <NeumorphismButton
-              variant={activeTab === 'editor' ? 'primary' : 'secondary'}
-              onClick={() => setActiveTab('editor')}
-              className="flex items-center gap-2"
-            >
-              <Edit className="h-4 w-4" />
-              ファイル編集
-            </NeumorphismButton>
-          </div>
-        </motion.div>
-
-        {/* コンテンツエリア */}
-        <motion.div
-          className="min-h-[600px]"
-          variants={slideUp}
-          initial="initial"
-          animate="animate"
-          transition={{ delay: 0.8 }}
-        >
-          {activeTab === 'simulation' ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* タイムライン表示 */}
-              <div className="lg:col-span-1">
-                <Timeline className="h-96" />
-              </div>
-
-              {/* システムステータス */}
-              <div className="lg:col-span-1">
-                <NeumorphismCard className="h-96">
-                  <NeumorphismCardHeader>
-                    <NeumorphismCardTitle className="text-center">
-                      システムステータス
-                    </NeumorphismCardTitle>
-                    <NeumorphismCardDescription className="text-center">
-                      現在のシステム状態
-                    </NeumorphismCardDescription>
-                  </NeumorphismCardHeader>
-                  <NeumorphismCardContent>
-                    <div className="flex items-center justify-center gap-3">
-                      <div className="neumorphism-status w-4 h-4 relative">
-                        <div className="absolute inset-1 bg-green-500 rounded-full animate-pulse"></div>
-                      </div>
-                      <span className="text-green-400 dark:text-green-400 text-green-600 font-semibold">システム準備完了</span>
-                    </div>
-                    
-                    <div className="mt-6 grid grid-cols-2 gap-4">
-                                              <div className="neumorphism-inset rounded-xl p-4">
-                                                <div className="text-xs text-gray-400 dark:text-gray-400 text-gray-600 mb-1">CPU使用率</div>
-                      <div className="text-lg font-bold text-gray-200 dark:text-gray-200 text-gray-800">12%</div>
-                    </div>
-                    <div className="neumorphism-inset rounded-xl p-4">
-                      <div className="text-xs text-gray-400 dark:text-gray-400 text-gray-600 mb-1">メモリ使用率</div>
-                      <div className="text-lg font-bold text-gray-200 dark:text-gray-200 text-gray-800">34%</div>
-                        </div>
-                    </div>
-                  </NeumorphismCardContent>
-                </NeumorphismCard>
-              </div>
-            </div>
-          ) : (
-            <EditorContainer />
-          )}
-        </motion.div>
-      </motion.div>
+      {/* 開発環境でのみデバッグパネルを表示 */}
+      {import.meta.env.DEV && <DebugPanel />}
     </div>
   )
 }

@@ -18,7 +18,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 from project_anima.core.simulation_engine import SimulationEngine, SceneNotLoadedError
 from project_anima.core.data_models import InterventionData
-from ..api.models import (
+from api.models import (
     SimulationStatus,
     SimulationConfig,
     TimelineEntry,
@@ -45,7 +45,7 @@ class EngineWrapper:
     def __init__(self):
         """EngineWrapperを初期化"""
         self.engine: Optional[SimulationEngine] = None
-        self.status = SimulationStatus.IDLE
+        self.status = SimulationStatus.NOT_STARTED
         self.current_config: Optional[SimulationConfig] = None
         self.websocket_callbacks: List[Callable] = []
 
@@ -89,14 +89,40 @@ class EngineWrapper:
             logger.error(f"キャラクター一覧取得エラー: {e}")
             return []
 
-    def get_available_scenes(self) -> List[str]:
+    def get_available_scenes(self) -> List[Dict[str, str]]:
         """利用可能なシーン一覧を取得"""
         try:
+            import yaml
+
             scenes = []
             if self.scenes_dir.exists():
                 for scene_file in self.scenes_dir.glob("*.yaml"):
-                    scenes.append(scene_file.stem)
-            return sorted(scenes)
+                    try:
+                        with open(scene_file, "r", encoding="utf-8") as f:
+                            scene_data = yaml.safe_load(f)
+
+                        scene_info = {
+                            "id": scene_file.stem,
+                            "name": scene_data.get("scene_name", scene_file.stem),
+                            "description": scene_data.get("description", "説明なし"),
+                            "file_path": str(scene_file),
+                        }
+                        scenes.append(scene_info)
+                    except Exception as e:
+                        logger.warning(
+                            f"シーンファイル読み込みエラー {scene_file}: {e}"
+                        )
+                        # エラーがあってもファイル名だけは返す
+                        scenes.append(
+                            {
+                                "id": scene_file.stem,
+                                "name": scene_file.stem,
+                                "description": "読み込みエラー",
+                                "file_path": str(scene_file),
+                            }
+                        )
+
+            return sorted(scenes, key=lambda x: x["name"])
         except Exception as e:
             logger.error(f"シーン一覧取得エラー: {e}")
             return []
@@ -104,11 +130,40 @@ class EngineWrapper:
     async def start_simulation(self, config: SimulationConfig) -> Dict[str, Any]:
         """シミュレーションを開始"""
         try:
-            if self.status != SimulationStatus.IDLE:
-                raise EngineWrapperError("シミュレーションは既に実行中です")
+            # 重複実行防止：既にエンジンが存在する場合は何もしない
+            if self.engine is not None:
+                logger.warning("シミュレーションは既に開始されています")
+                return {
+                    "success": True,
+                    "message": "シミュレーションは既に開始されています",
+                    "status": self.status,
+                }
 
-            # シーンファイルのパスを構築
-            scene_file_path = self.scenes_dir / f"{config.character_name}.yaml"
+            # 既に実行中の場合は何もしない
+            if self.status == SimulationStatus.RUNNING:
+                logger.warning(f"シミュレーションは既に実行中です")
+                return {
+                    "success": True,
+                    "message": "シミュレーションは既に実行中です",
+                    "status": self.status,
+                }
+
+            # 必要に応じてリセット
+            if self.status not in [SimulationStatus.NOT_STARTED, SimulationStatus.IDLE]:
+                logger.info(
+                    f"シミュレーションが{self.status}状態のため、リセットします"
+                )
+                await self.reset_simulation()
+
+            # 利用可能なシーンファイルを取得
+            available_scenes = self.get_available_scenes()
+            if not available_scenes:
+                raise EngineWrapperError("利用可能なシーンファイルがありません")
+
+            # シーンファイルを選択（設定で指定されていればそれを使用、なければデフォルト）
+            scene_id = getattr(config, "scene_id", None) or available_scenes[0]["id"]
+            scene_file_path = self.scenes_dir / f"{scene_id}.yaml"
+
             if not scene_file_path.exists():
                 raise EngineWrapperError(
                     f"シーンファイルが見つかりません: {scene_file_path}"
@@ -138,7 +193,8 @@ class EngineWrapper:
             if not self.engine.start_simulation_setup():
                 raise EngineWrapperError("シミュレーションのセットアップに失敗しました")
 
-            self.status = SimulationStatus.RUNNING
+            # 手動制御のため、セットアップ後はIDLE状態にする
+            self.status = SimulationStatus.IDLE
             self.current_config = config
 
             # WebSocket通知
@@ -146,7 +202,9 @@ class EngineWrapper:
                 "simulation_started", {"config": config.dict(), "status": self.status}
             )
 
-            logger.info(f"シミュレーションを開始しました: {config.character_name}")
+            logger.info(
+                f"シミュレーションを開始しました: {config.character_name}, 状態: {self.status}"
+            )
 
             return {
                 "success": True,
@@ -166,11 +224,30 @@ class EngineWrapper:
     async def execute_next_turn(self) -> Dict[str, Any]:
         """次のターンを実行"""
         try:
-            if not self.engine or self.status != SimulationStatus.RUNNING:
-                raise EngineWrapperError("シミュレーションが実行されていません")
+            logger.info(
+                f"execute_next_turn開始: engine={self.engine is not None}, status={self.status}"
+            )
+
+            if not self.engine:
+                raise EngineWrapperError(
+                    "シミュレーションエンジンが初期化されていません"
+                )
+
+            if self.status not in [SimulationStatus.IDLE, SimulationStatus.RUNNING]:
+                raise EngineWrapperError(
+                    f"シミュレーションが実行可能な状態ではありません: {self.status}"
+                )
+
+            logger.info(f"ターン実行開始: 現在の状態={self.status}")
+
+            # ターン実行中はRUNNING状態にする
+            self.status = SimulationStatus.RUNNING
 
             # ターンを実行
             if self.engine.execute_one_turn():
+                # ターン実行後は一時停止状態にする（手動制御のため）
+                self.status = SimulationStatus.IDLE
+
                 # 最新のターンデータを取得
                 turn_data = self.engine._current_scene_log.turns[-1]
 
@@ -183,6 +260,18 @@ class EngineWrapper:
                         "think": turn_data.think,
                         "act": turn_data.act,
                         "talk": turn_data.talk,
+                        "timeline_entry": {
+                            "step": turn_data.turn_number,
+                            "timestamp": datetime.now().isoformat(),
+                            "character": turn_data.character_name,
+                            "action_type": "turn",
+                            "content": f"思考: {turn_data.think}\n行動: {turn_data.act}\n発言: {turn_data.talk}",
+                            "metadata": {
+                                "think": turn_data.think,
+                                "act": turn_data.act,
+                                "talk": turn_data.talk,
+                            },
+                        },
                     },
                 )
 
@@ -211,6 +300,7 @@ class EngineWrapper:
                 }
 
         except Exception as e:
+            self.status = SimulationStatus.ERROR
             error_msg = f"ターン実行エラー: {str(e)}"
             logger.error(error_msg)
 
@@ -231,7 +321,14 @@ class EngineWrapper:
                     config=SimulationConfig(
                         character_name="",
                         llm_provider=LLMProvider.GEMINI,
-                        model_name="",
+                        model_name="gemini-1.5-flash",
+                        max_steps=10,
+                        max_turns=10,
+                        temperature=0.7,
+                        max_tokens=1000,
+                        characters_dir="data/characters",
+                        immutable_config_path="data/immutable.yaml",
+                        long_term_config_path="data/long_term.yaml",
                     ),
                 )
 
@@ -275,7 +372,9 @@ class EngineWrapper:
                 character_name="",
                 timeline=[],
                 config=SimulationConfig(
-                    character_name="", llm_provider=LLMProvider.GEMINI, model_name=""
+                    character_name="",
+                    llm_provider=LLMProvider.GEMINI,
+                    model_name="gemini-1.5-flash",
                 ),
             )
 
@@ -339,10 +438,10 @@ class EngineWrapper:
 
                 # WebSocket通知
                 await self._notify_websocket(
-                    "simulation_stopped", {"status": SimulationStatus.IDLE}
+                    "simulation_stopped", {"status": SimulationStatus.NOT_STARTED}
                 )
 
-            self.status = SimulationStatus.IDLE
+            self.status = SimulationStatus.NOT_STARTED
             self.engine = None
             self.current_config = None
 
@@ -355,6 +454,44 @@ class EngineWrapper:
         except Exception as e:
             error_msg = f"シミュレーション停止エラー: {str(e)}"
             logger.error(error_msg)
+            return {"success": False, "message": error_msg}
+
+    async def reset_simulation(self) -> Dict[str, Any]:
+        """シミュレーション状態を強制的にリセット"""
+        try:
+            # エンジンが存在し、実行中の場合は停止
+            if self.engine:
+                try:
+                    if self.status == SimulationStatus.RUNNING:
+                        self.engine.end_simulation()
+                except Exception as e:
+                    logger.warning(
+                        f"エンジン停止時にエラーが発生しましたが、リセットを続行します: {e}"
+                    )
+
+            # 状態を強制的にリセット
+            self.status = SimulationStatus.NOT_STARTED
+            self.engine = None
+            self.current_config = None
+
+            # WebSocket通知
+            await self._notify_websocket("simulation_reset", {"status": self.status})
+
+            logger.info("シミュレーション状態を強制的にリセットしました")
+
+            return {
+                "success": True,
+                "message": "シミュレーション状態をリセットしました",
+                "status": self.status,
+            }
+
+        except Exception as e:
+            error_msg = f"シミュレーションリセットエラー: {str(e)}"
+            logger.error(error_msg)
+            # エラーが発生してもリセットは実行
+            self.status = SimulationStatus.NOT_STARTED
+            self.engine = None
+            self.current_config = None
             return {"success": False, "message": error_msg}
 
     async def update_llm_model(

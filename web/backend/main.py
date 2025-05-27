@@ -11,10 +11,10 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .api.simulation import router as simulation_router
-from .api.files import router as files_router
-from .websocket.manager import manager, websocket_callback
-from .services.engine_wrapper import engine_wrapper
+from api.simulation import router as simulation_router
+from api.files import router as files_router
+from websocket.manager import manager, websocket_callback
+from services.engine_wrapper import engine_wrapper
 
 # ロギング設定
 logging.basicConfig(
@@ -65,7 +65,7 @@ async def shutdown_event():
     logger.info("Project Anima Web UI APIを終了しています...")
 
     # 実行中のシミュレーションがあれば停止
-    if engine_wrapper.status.value != "idle":
+    if engine_wrapper.status.value not in ["not_started", "idle"]:
         await engine_wrapper.stop_simulation()
         logger.info("実行中のシミュレーションを停止しました")
 
@@ -130,7 +130,10 @@ async def websocket_endpoint(websocket: WebSocket):
                         },
                     )
 
-                elif message_type == "subscribe_updates":
+                elif message_type in [
+                    "subscribe_updates",
+                    "subscribe_simulation_updates",
+                ]:
                     # 更新通知の購読（特に何もしない、接続していれば自動的に通知される）
                     await manager.send_personal_message(
                         websocket,
@@ -154,27 +157,42 @@ async def websocket_endpoint(websocket: WebSocket):
                         },
                     )
 
+            except WebSocketDisconnect:
+                # WebSocket切断を検知したらループを終了
+                logger.info(
+                    f"WebSocket接続が切断されました（メッセージループ内）: {client_id or 'unknown'}"
+                )
+                break
+
             except json.JSONDecodeError:
                 # JSONパースエラー
-                await manager.send_personal_message(
-                    websocket,
-                    {
-                        "type": "error",
-                        "data": {"message": "無効なJSONフォーマットです"},
-                        "timestamp": datetime.now().isoformat(),
-                    },
-                )
+                try:
+                    await manager.send_personal_message(
+                        websocket,
+                        {
+                            "type": "error",
+                            "data": {"message": "無効なJSONフォーマットです"},
+                            "timestamp": datetime.now().isoformat(),
+                        },
+                    )
+                except:
+                    # 送信に失敗した場合は接続が切れているので終了
+                    break
 
             except Exception as e:
                 logger.error(f"WebSocketメッセージ処理エラー: {e}")
-                await manager.send_personal_message(
-                    websocket,
-                    {
-                        "type": "error",
-                        "data": {"message": f"メッセージ処理エラー: {str(e)}"},
-                        "timestamp": datetime.now().isoformat(),
-                    },
-                )
+                try:
+                    await manager.send_personal_message(
+                        websocket,
+                        {
+                            "type": "error",
+                            "data": {"message": f"メッセージ処理エラー: {str(e)}"},
+                            "timestamp": datetime.now().isoformat(),
+                        },
+                    )
+                except:
+                    # 送信に失敗した場合は接続が切れているので終了
+                    break
 
     except WebSocketDisconnect:
         # 正常な切断

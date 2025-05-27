@@ -6,8 +6,7 @@ import type {
   SimulationConfig,
   Character,
   FileInfo,
-  PromptTemplate,
-  ConfigFile
+
 } from '@/types/simulation'
 
 const API_BASE_URL = '/api'

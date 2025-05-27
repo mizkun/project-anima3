@@ -258,7 +258,7 @@ class LLMAdapter:
                     return response_dict
 
                 except json.JSONDecodeError as e:
-                    error_msg = f"LLMからの応答をJSONとしてパースできません: {e}\n応答: {response_text}\nクリーン後: {cleaned_response}"
+                    error_msg = f"LLMからの応答をJSONとしてパースできません: {e}\n応答: {response_text}\nクリーン後: {cleaned_response}\nクリーン後のrepr: {repr(cleaned_response)}"
                     logger.error(error_msg)
                     if self.debug:
                         print(
@@ -296,7 +296,7 @@ class LLMAdapter:
 
     def _clean_json_response(self, response_text: str) -> str:
         """
-        LLMからの応答テキストからコードブロックマーカーを除去する
+        LLMからの応答テキストからコードブロックマーカーと不正な制御文字を除去する
 
         Args:
             response_text: LLMからの応答テキスト
@@ -312,6 +312,13 @@ class LLMAdapter:
         # 単一行の応答から ```json と ``` を削除
         cleaned = re.sub(r"^```json", "", cleaned)
         cleaned = re.sub(r"```$", "", cleaned)
+
+        # 不正な制御文字を除去（\n, \r, \t以外のASCII制御文字）
+        # ASCII 0x00-0x1F のうち、\n(0x0A), \r(0x0D), \t(0x09)以外を除去
+        cleaned = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F]", "", cleaned)
+
+        # Unicode制御文字も除去（U+007F-U+009F）
+        cleaned = re.sub(r"[\x7F-\x9F]", "", cleaned)
 
         return cleaned.strip()
 
@@ -433,7 +440,7 @@ class LLMAdapter:
                     return response_dict
 
                 except json.JSONDecodeError as e:
-                    error_msg = f"LLMからの長期情報更新応答をJSONとしてパースできません: {e}\n応答: {response_text}\nクリーン後: {cleaned_response}"
+                    error_msg = f"LLMからの長期情報更新応答をJSONとしてパースできません: {e}\n応答: {response_text}\nクリーン後: {cleaned_response}\nクリーン後のrepr: {repr(cleaned_response)}"
                     logger.error(error_msg)
                     if self.debug:
                         print(

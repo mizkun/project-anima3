@@ -111,11 +111,27 @@ def main():
                 if mock_llm_adapter_class.called:
                     logger.info("LLMAdapterのモック化に成功しました")
 
-        # シミュレーションの実行
+        # シミュレーションの実行（手動制御方式）
         logger.info(
             f"シーンファイル '{scene_file_path}' を使用してシミュレーションを開始します... （最大ターン数: {args.max_turns}）"
         )
-        engine.start_simulation(max_turns=args.max_turns)
+
+        # セットアップ
+        if not engine.start_simulation_setup():
+            logger.error("シミュレーションのセットアップに失敗しました")
+            return
+
+        # 手動でターンを実行
+        turn_count = 0
+        while turn_count < args.max_turns:
+            if not engine.execute_one_turn():
+                logger.info("シミュレーションが終了しました")
+                break
+            turn_count += 1
+            logger.info(f"ターン {turn_count} 完了")
+
+        # シミュレーション終了
+        engine.end_simulation()
 
         # 結果の表示
         if engine._current_scene_log:

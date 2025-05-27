@@ -107,15 +107,19 @@ pip install -r requirements.txt
 
 ### 2. Run a Simulation
 
+**注意: 自動実行機能は無効化されました。手動制御のみ利用可能です。**
+
 ```bash
-# Basic simulation
-python scripts/run_simulation.py
+# インタラクティブCLI（推奨）
+python -m project_anima.interactive_cli --scene data/scenes/school_rooftop.yaml
 
-# With custom parameters
-python scripts/run_simulation.py --scene data/scenes/school_rooftop.yaml --max-turns 5 --debug
+# Web UI
+cd web && python -m uvicorn backend.main:app --reload
 
-# Interactive mode
-python scripts/run_interactive.py
+# プログラムから手動制御
+# engine.start_simulation_setup()
+# while engine.execute_one_turn():
+#     pass
 ```
 
 ### 3. Run Tests
@@ -126,22 +130,50 @@ python run_tests.py
 
 ## Usage
 
-### Basic Execution
+### 重要な変更: 自動実行機能の無効化
 
-The main way to run a simulation is through `scripts/run_simulation.py`.
+**Project Animaの自動実行機能は完全に無効化されました。** 以下の手動制御方式のみ利用可能です：
+
+### 1. インタラクティブCLI（推奨）
 
 ```bash
-# Run with default settings (default scene, limited number of turns, etc.)
-python scripts/run_simulation.py
+# 基本的な使用方法
+python -m project_anima.interactive_cli --scene data/scenes/school_rooftop.yaml
 
-# Specify a scene configuration file
-python scripts/run_simulation.py --scene data/scenes/your_scene_file.yaml
+# デバッグモードで実行
+python -m project_anima.interactive_cli --scene data/scenes/your_scene_file.yaml --debug
 
-# Specify maximum number of turns
-python scripts/run_simulation.py --max-turns 10
+# LLMモデルを指定
+python -m project_anima.interactive_cli --scene data/scenes/your_scene_file.yaml --llm-model gemini-1.5-pro-latest
+```
 
-# Specify the LLM model to use
-python scripts/run_simulation.py --llm-model gemini-1.5-pro-latest
+### 2. Web UI
+
+```bash
+# バックエンドサーバーを起動
+cd web && python -m uvicorn backend.main:app --reload
+
+# フロントエンドサーバーを起動（別ターミナル）
+cd web/frontend && npm run dev
+```
+
+### 3. プログラムから手動制御
+
+```python
+from project_anima.core.simulation_engine import SimulationEngine
+
+# エンジンを初期化
+engine = SimulationEngine(scene_file_path="data/scenes/your_scene.yaml")
+
+# セットアップ
+if engine.start_simulation_setup():
+    # 1ターンずつ手動実行
+    while engine.execute_one_turn():
+        # ターン完了後の処理
+        pass
+    
+    # シミュレーション終了
+    engine.end_simulation()
 ```
 
 ### Command Line Options

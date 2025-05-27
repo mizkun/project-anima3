@@ -55,45 +55,39 @@ def parse_args():
 
 def main():
     """Main entry point for the application."""
+    print("=" * 60)
+    print("Project Anima - 自動実行機能は無効化されました")
+    print("=" * 60)
+    print()
+    print("自動実行機能は完全に無効化されました。")
+    print("手動制御を使用するには、以下のオプションをご利用ください：")
+    print()
+    print("1. インタラクティブCLI（推奨）:")
+    print("   python -m project_anima.interactive_cli --scene <scene_file>")
+    print()
+    print("2. Web UI:")
+    print("   cd web && python -m uvicorn backend.main:app --reload")
+    print()
+    print("3. プログラムから手動制御:")
+    print("   engine.start_simulation_setup()")
+    print("   while engine.execute_one_turn():")
+    print("       # 1ターンずつ実行")
+    print("       pass")
+    print()
+    print("詳細については、README.mdを参照してください。")
+    print("=" * 60)
+
+    # 引数を解析して警告を表示
     args = parse_args()
-
-    # Check if scene file exists
-    if not os.path.exists(args.scene):
-        print(f"Error: Scene file '{args.scene}' not found.")
-        sys.exit(1)
-
-    # Create logs directory if it doesn't exist
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_dir = f"logs/sim_{timestamp}"
-    os.makedirs(log_dir, exist_ok=True)
-
-    # Initialize simulation engine
-    engine = SimulationEngine(
-        scene_file_path=args.scene,
-        characters_dir=args.characters_dir,
-        prompts_dir=args.prompts_dir,
-        log_dir=log_dir,
-        llm_model=args.llm_model,
-        debug=args.debug,
+    print(f"\n注意: 指定された設定は無視されます:")
+    print(f"  - Scene: {args.scene}")
+    print(f"  - Max turns: {args.max_turns}")
+    print(f"  - LLM model: {args.llm_model}")
+    print(
+        f"\n上記の設定を使用するには、インタラクティブCLIまたはWeb UIをご利用ください。"
     )
 
-    # Start simulation
-    print(f"Starting simulation with scene: {args.scene}")
-    print(f"Maximum turns: {args.max_turns}")
-    print(f"Using LLM model: {args.llm_model}")
-    print(f"Logs will be saved to: {log_dir}")
-
-    try:
-        engine.start_simulation(max_turns=args.max_turns)
-        print(f"\nSimulation completed successfully.")
-        print(f"Logs saved to: {log_dir}")
-    except KeyboardInterrupt:
-        print("\nSimulation interrupted by user.")
-        print(f"Partial logs saved to: {log_dir}")
-    except Exception as e:
-        print(f"\nError during simulation: {str(e)}")
-        print(f"Partial logs may be available in: {log_dir}")
-        raise
+    sys.exit(0)
 
 
 if __name__ == "__main__":

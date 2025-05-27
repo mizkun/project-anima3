@@ -10,6 +10,7 @@ from enum import Enum
 class SimulationStatus(str, Enum):
     """シミュレーション状態"""
 
+    NOT_STARTED = "not_started"
     IDLE = "idle"
     RUNNING = "running"
     PAUSED = "paused"
@@ -27,10 +28,16 @@ class LLMProvider(str, Enum):
 class SimulationConfig(BaseModel):
     """シミュレーション設定"""
 
-    character_name: str
+    character_name: Optional[str] = ""
     llm_provider: LLMProvider
     model_name: str
     max_steps: Optional[int] = None
+    max_turns: Optional[int] = None
+    temperature: Optional[float] = 0.7
+    max_tokens: Optional[int] = 1000
+    characters_dir: Optional[str] = "data/characters"
+    immutable_config_path: Optional[str] = "data/immutable.yaml"
+    long_term_config_path: Optional[str] = "data/long_term.yaml"
 
 
 class SimulationStartRequest(BaseModel):
@@ -42,6 +49,7 @@ class SimulationStartRequest(BaseModel):
 class SimulationResponse(BaseModel):
     """シミュレーション応答"""
 
+    success: bool
     status: SimulationStatus
     message: str
     data: Optional[Dict[str, Any]] = None

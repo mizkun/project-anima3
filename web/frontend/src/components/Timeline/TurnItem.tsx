@@ -55,8 +55,8 @@ export const TurnItem: React.FC<TurnItemProps> = ({ turn, isLatest, turnNumber }
       {/* キャラクター情報 */}
       <div className="px-4 pb-2">
         <CharacterInfo 
-          characterId={turn.character_id} 
-          characterName={turn.character_name}
+          characterId={turn.character} 
+          characterName={turn.character}
         />
       </div>
 

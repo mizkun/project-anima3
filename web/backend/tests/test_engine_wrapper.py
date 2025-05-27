@@ -25,7 +25,7 @@ class TestEngineWrapper:
 
     def test_initialization(self):
         """初期化のテスト"""
-        assert self.wrapper.status == SimulationStatus.IDLE
+        assert self.wrapper.status == SimulationStatus.NOT_STARTED
         assert self.wrapper.engine is None
         assert self.wrapper.current_config is None
         assert len(self.wrapper.websocket_callbacks) == 0
@@ -73,13 +73,13 @@ class TestEngineWrapper:
         result = await self.wrapper.stop_simulation()
 
         assert result["success"] is True
-        assert self.wrapper.status == SimulationStatus.IDLE
+        assert self.wrapper.status == SimulationStatus.NOT_STARTED
 
     def test_get_simulation_state_when_idle(self):
-        """アイドル状態でのシミュレーション状態取得テスト"""
+        """未開始状態でのシミュレーション状態取得テスト"""
         state = self.wrapper.get_simulation_state()
 
-        assert state.status == SimulationStatus.IDLE
+        assert state.status == SimulationStatus.NOT_STARTED
         assert state.current_step == 0
         assert state.character_name == ""
         assert len(state.timeline) == 0

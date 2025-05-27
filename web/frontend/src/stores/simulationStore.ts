@@ -9,6 +9,11 @@ import type {
 } from '@/types/simulation'
 
 interface SimulationStore extends SimulationState {
+  // 追加の状態
+  isInitialized: boolean
+  isLoading: boolean
+  lastSyncTime: string | null
+  
   // Actions
   setStatus: (status: SimulationStatus) => void
   setCurrentTurn: (turn: number) => void
@@ -21,18 +26,25 @@ interface SimulationStore extends SimulationState {
   updateTimeline: (timeline: TimelineEntry[]) => void
   setStartTime: (time: string) => void
   setEndTime: (time: string) => void
+  setInitialized: (initialized: boolean) => void
+  setLoading: (loading: boolean) => void
+  syncFromBackend: (backendState: Partial<SimulationState>) => void
+  updateFromBackend: (backendState: any) => void
+  markSynced: () => void
 }
 
 const initialState: SimulationState = {
-  status: 'idle',
+  status: 'not_started',
   current_turn: 0,
   max_turns: 10,
   characters: [],
   timeline: [],
   config: {
+    character_name: '',
     max_turns: 10,
-    llm_provider: 'openai',
-    model_name: 'gpt-4',
+    max_steps: 10,
+    llm_provider: 'gemini',
+    model_name: 'gemini-pro',
     temperature: 0.7,
     max_tokens: 1000,
     characters_dir: 'data/characters',
@@ -45,6 +57,9 @@ export const useSimulationStore = create<SimulationStore>()(
   devtools(
     (set, get) => ({
       ...initialState,
+      isInitialized: false,
+      isLoading: false,
+      lastSyncTime: null,
 
       setStatus: (status) => 
         set({ status }, false, 'setStatus'),
@@ -77,7 +92,10 @@ export const useSimulationStore = create<SimulationStore>()(
         set(
           { 
             ...initialState,
-            config: get().config // 設定は保持
+            config: get().config, // 設定は保持
+            isInitialized: get().isInitialized, // 初期化状態も保持
+            isLoading: false,
+            lastSyncTime: null,
           }, 
           false, 
           'resetSimulation'
@@ -91,6 +109,58 @@ export const useSimulationStore = create<SimulationStore>()(
 
       setEndTime: (end_time) => 
         set({ end_time }, false, 'setEndTime'),
+
+      setInitialized: (isInitialized) => 
+        set({ isInitialized }, false, 'setInitialized'),
+
+      setLoading: (isLoading) => 
+        set({ isLoading }, false, 'setLoading'),
+
+      // バックエンドの状態をフロントエンドに同期
+      syncFromBackend: (backendState) => 
+        set(
+          (state) => ({
+            ...state,
+            ...backendState,
+            // 重要な状態のみ同期し、UIの状態は保持
+            status: backendState.status || state.status,
+            current_turn: backendState.current_turn !== undefined ? backendState.current_turn : state.current_turn,
+            timeline: backendState.timeline || state.timeline,
+            characters: backendState.characters || state.characters,
+            config: backendState.config ? { ...state.config, ...backendState.config } : state.config,
+          }),
+          false,
+          'syncFromBackend'
+        ),
+
+      // ポーリング用のバックエンド状態更新
+      updateFromBackend: (backendState) => {
+        if (backendState && typeof backendState === 'object') {
+          set(
+            (state) => ({
+              ...state,
+              status: backendState.status || state.status,
+              current_turn: backendState.current_turn !== undefined ? backendState.current_turn : state.current_turn,
+              timeline: backendState.timeline || state.timeline,
+              characters: backendState.characters || state.characters,
+              config: backendState.config ? { ...state.config, ...backendState.config } : state.config,
+              lastSyncTime: new Date().toISOString(),
+              isInitialized: true,
+            }),
+            false,
+            'updateFromBackend'
+          )
+        }
+      },
+
+      // 同期完了をマーク
+      markSynced: () => {
+        console.log('simulationStore: markSynced called - 初期化完了')
+        set({ 
+          lastSyncTime: new Date().toISOString(),
+          isInitialized: true 
+        }, false, 'markSynced')
+      },
     }),
     {
       name: 'simulation-store',

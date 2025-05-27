@@ -1,11 +1,12 @@
 // シミュレーション状態
-export type SimulationStatus = 'idle' | 'running' | 'paused' | 'completed' | 'error'
+export type SimulationStatus = 'not_started' | 'idle' | 'running' | 'paused' | 'completed' | 'error'
 
 // LLMプロバイダー
-export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'local'
+export type LLMProvider = 'openai' | 'gemini'
 
 // シミュレーション設定
 export interface SimulationConfig {
+  character_name?: string
   max_turns: number
   llm_provider: LLMProvider
   model_name: string
@@ -14,6 +15,7 @@ export interface SimulationConfig {
   characters_dir: string
   immutable_config_path: string
   long_term_config_path: string
+  max_steps?: number
 }
 
 // キャラクター情報
@@ -28,11 +30,10 @@ export interface Character {
 
 // タイムラインエントリ
 export interface TimelineEntry {
-  turn: number
+  step: number
   timestamp: string
-  character_id: string
-  character_name: string
-  action_type: 'speak' | 'think' | 'act'
+  character: string
+  action_type: 'turn' | 'intervention'
   content: string
   metadata?: Record<string, any>
 }
@@ -52,7 +53,7 @@ export interface SimulationState {
 
 // WebSocketメッセージ
 export interface WebSocketMessage {
-  type: 'status_update' | 'timeline_update' | 'error' | 'simulation_complete'
+  type: 'status_update' | 'timeline_update' | 'error' | 'simulation_complete' | 'simulation_reset' | 'simulation_started' | 'simulation_stopped' | 'turn_completed'
   data: any
   timestamp: string
 }
