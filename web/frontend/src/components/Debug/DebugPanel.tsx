@@ -2,8 +2,12 @@ import React, { useState } from 'react'
 import { useSimulationStore } from '@/stores/simulationStore'
 import { useSimulationControls } from '@/hooks/useSimulationControls'
 
-export const DebugPanel: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false)
+interface DebugPanelProps {
+  onClose?: () => void
+}
+
+export const DebugPanel: React.FC<DebugPanelProps> = ({ onClose }) => {
+  const [isOpen, setIsOpen] = useState(true)
   const [apiTestResult, setApiTestResult] = useState<any>(null)
   
   // ストアの状態を取得
@@ -21,17 +25,13 @@ export const DebugPanel: React.FC = () => {
     }
   }
 
+  const handleClose = () => {
+    setIsOpen(false)
+    onClose?.()
+  }
+
   if (!isOpen) {
-    return (
-      <div className="fixed bottom-4 right-4 z-50">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-purple-700"
-        >
-          🐛 Debug
-        </button>
-      </div>
-    )
+    return null
   }
 
   return (
@@ -39,7 +39,7 @@ export const DebugPanel: React.FC = () => {
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold text-purple-400">🐛 Debug Panel</h3>
         <button
-          onClick={() => setIsOpen(false)}
+          onClick={handleClose}
           className="text-gray-400 hover:text-white"
         >
           ✕

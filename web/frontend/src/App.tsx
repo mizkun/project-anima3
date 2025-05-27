@@ -11,7 +11,6 @@ import { HamburgerMenu } from "@/components/ui/HamburgerMenu"
 import { Timeline } from "@/components/Timeline/Timeline"
 import { SimulationControls } from "@/components/Controls/SimulationControls"
 import { EditorContainer } from "@/components/Editors/EditorContainer"
-import { DebugPanel } from "@/components/Debug/DebugPanel"
 import { fadeIn, slideUp } from "@/lib/animations"
 import { Play, Edit, Sparkles, Clock } from "lucide-react"
 
@@ -92,9 +91,6 @@ function App() {
           <HamburgerMenu />
         </motion.div>
       </div>
-
-      {/* 開発環境でのみデバッグパネルを表示 */}
-      {import.meta.env.DEV && <DebugPanel />}
     </div>
   )
 }

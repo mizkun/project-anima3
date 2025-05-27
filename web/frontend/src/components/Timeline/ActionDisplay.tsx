@@ -59,11 +59,9 @@ export const ActionDisplay: React.FC<ActionDisplayProps> = ({
               </div>
               <div className="flex-1">
                 <h5 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">発言</h5>
-                <div className="bg-white dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-50 rounded-lg p-3 border-l-4 border-blue-300 dark:border-blue-500">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed italic">
-                    "{talkLine.replace('発言: ', '')}"
-                  </p>
-                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {talkLine.replace('発言: ', '')}
+                </p>
               </div>
             </div>
           </div>

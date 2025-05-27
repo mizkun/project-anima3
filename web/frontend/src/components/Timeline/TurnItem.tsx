@@ -13,7 +13,8 @@ interface TurnItemProps {
 }
 
 export const TurnItem: React.FC<TurnItemProps> = ({ turn, isLatest, turnNumber }) => {
-  const [isExpanded, setIsExpanded] = useState(isLatest)
+  // 全てのターンカードをデフォルトで開いた状態にする
+  const [isExpanded, setIsExpanded] = useState(true)
 
   return (
     <NeumorphismCard className={`relative ${isLatest ? 'ring-2 ring-blue-200' : ''}`}>
@@ -24,8 +25,7 @@ export const TurnItem: React.FC<TurnItemProps> = ({ turn, isLatest, turnNumber }
             <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{turnNumber}</span>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200">ターン {turnNumber}</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{turn.character}</p>
+            <h3 className="font-semibold text-gray-800 dark:text-gray-200">{turn.character}</h3>
           </div>
         </div>
         

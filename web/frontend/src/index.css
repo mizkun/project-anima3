@@ -289,6 +289,14 @@
     position: relative;
   }
 
+  .tab-button:first-child {
+    border-radius: 1rem 0 0 0;
+  }
+
+  .tab-button:last-child {
+    border-radius: 0 1rem 0 0;
+  }
+
   .tab-button:hover {
     color: #e5e5e5;
     background: rgba(255, 255, 255, 0.05);
@@ -388,6 +396,14 @@
 
   html:not(.dark) .tab-button {
     color: #6b7280;
+  }
+
+  html:not(.dark) .tab-button:first-child {
+    border-radius: 1rem 0 0 0;
+  }
+
+  html:not(.dark) .tab-button:last-child {
+    border-radius: 0 1rem 0 0;
   }
 
   html:not(.dark) .tab-button:hover {
