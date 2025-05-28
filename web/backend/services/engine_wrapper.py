@@ -85,12 +85,15 @@ class EngineWrapper:
                         scene_info = {
                             "id": scene_file.stem,
                             "name": scene_data.get(
-                                "location", scene_file.stem
-                            ),  # locationを名前として使用
+                                "scene_id", scene_file.stem
+                            ),  # scene_idを名前として使用
                             "description": scene_data.get(
                                 "situation", "説明なし"
                             ),  # situationを説明として使用
                             "file_path": str(scene_file),
+                            "location": scene_data.get(
+                                "location", ""
+                            ),  # locationは別途保持
                         }
                         scenes.append(scene_info)
                     except Exception as e:
@@ -101,9 +104,10 @@ class EngineWrapper:
                         scenes.append(
                             {
                                 "id": scene_file.stem,
-                                "name": scene_file.stem,
+                                "name": scene_file.stem,  # ファイル名をシーンIDとして使用
                                 "description": "読み込みエラー",
                                 "file_path": str(scene_file),
+                                "location": "",
                             }
                         )
 
@@ -327,6 +331,9 @@ class EngineWrapper:
 
                 # 介入記録をタイムラインに追加
                 if hasattr(self, "_intervention_timeline"):
+                    logger.info(
+                        f"介入タイムライン件数: {len(self._intervention_timeline)}"
+                    )
                     for intervention in self._intervention_timeline:
                         timeline.append(
                             TimelineEntry(
@@ -347,6 +354,8 @@ class EngineWrapper:
                                 is_intervention=True,
                             )
                         )
+                else:
+                    logger.info("介入タイムラインが存在しません")
 
                 # ステップ順にソート
                 timeline.sort(key=lambda x: (x.step, 0 if not x.is_intervention else 1))
@@ -461,6 +470,7 @@ class EngineWrapper:
         try:
             if not hasattr(self, "_intervention_timeline"):
                 self._intervention_timeline = []
+                logger.info("介入タイムラインを初期化しました")
 
             # 現在のステップ数を取得
             current_step = 0
@@ -470,6 +480,7 @@ class EngineWrapper:
                 and self.engine._current_scene_log
             ):
                 current_step = len(self.engine._current_scene_log.turns)
+                logger.info(f"現在のステップ数: {current_step}")
 
             # 介入記録を作成
             intervention_record = {
@@ -483,6 +494,9 @@ class EngineWrapper:
 
             self._intervention_timeline.append(intervention_record)
             logger.info(f"介入記録をタイムラインに追加: {intervention_record}")
+            logger.info(
+                f"現在の介入タイムライン件数: {len(self._intervention_timeline)}"
+            )
 
         except Exception as e:
             logger.error(f"介入記録の追加に失敗: {e}")
@@ -490,12 +504,51 @@ class EngineWrapper:
     async def stop_simulation(self) -> Dict[str, Any]:
         """シミュレーションを停止"""
         try:
-            if self.engine and self.status == SimulationStatus.RUNNING:
-                self.engine.end_simulation()
+            logger.info(
+                f"シミュレーション停止要求: 現在のステータス={self.status}, エンジン存在={self.engine is not None}"
+            )
 
+            # エンジンが存在し、実行中またはアイドル状態の場合は履歴を保存
+            if self.engine and self.status in [
+                SimulationStatus.RUNNING,
+                SimulationStatus.IDLE,
+            ]:
+                logger.info(
+                    f"シミュレーション停止処理開始: 現在のステータス={self.status}"
+                )
+
+                # シーンログの存在確認
+                if (
+                    hasattr(self.engine, "_current_scene_log")
+                    and self.engine._current_scene_log
+                ):
+                    turn_count = len(self.engine._current_scene_log.turns)
+                    logger.info(f"保存対象のシーンログ: ターン数={turn_count}")
+                else:
+                    logger.warning("シーンログが存在しません")
+
+                # 履歴保存のためにend_simulationを呼び出し
+                try:
+                    self.engine.end_simulation()
+                    logger.info("シミュレーション履歴の保存が完了しました")
+                except Exception as e:
+                    logger.error(f"履歴保存中にエラーが発生しました: {e}")
+                    # エラーが発生しても停止処理は続行
+            else:
+                logger.info(
+                    f"履歴保存をスキップ: エンジン存在={self.engine is not None}, ステータス={self.status}"
+                )
+
+            # 状態をリセット
             self.status = SimulationStatus.NOT_STARTED
             self.engine = None
             self.current_config = None
+
+            # 介入タイムラインもクリア
+            if hasattr(self, "_intervention_timeline"):
+                self._intervention_timeline = []
+
+            logger.info("シミュレーション停止処理が完了しました")
 
             return {
                 "success": True,
@@ -511,20 +564,32 @@ class EngineWrapper:
     async def reset_simulation(self) -> Dict[str, Any]:
         """シミュレーション状態を強制的にリセット"""
         try:
-            # エンジンが存在し、実行中の場合は停止
-            if self.engine:
+            # エンジンが存在し、実行中またはアイドル状態の場合は履歴を保存
+            if self.engine and self.status in [
+                SimulationStatus.RUNNING,
+                SimulationStatus.IDLE,
+            ]:
+                logger.info(
+                    f"シミュレーションリセット処理開始: 現在のステータス={self.status}"
+                )
+
+                # 履歴保存のためにend_simulationを呼び出し
                 try:
-                    if self.status == SimulationStatus.RUNNING:
-                        self.engine.end_simulation()
+                    self.engine.end_simulation()
+                    logger.info("シミュレーション履歴の保存が完了しました")
                 except Exception as e:
                     logger.warning(
-                        f"エンジン停止時にエラーが発生しましたが、リセットを続行します: {e}"
+                        f"履歴保存時にエラーが発生しましたが、リセットを続行します: {e}"
                     )
 
             # 状態を強制的にリセット
             self.status = SimulationStatus.NOT_STARTED
             self.engine = None
             self.current_config = None
+
+            # 介入タイムラインもクリア
+            if hasattr(self, "_intervention_timeline"):
+                self._intervention_timeline = []
 
             logger.info("シミュレーション状態を強制的にリセットしました")
 
@@ -541,6 +606,9 @@ class EngineWrapper:
             self.status = SimulationStatus.NOT_STARTED
             self.engine = None
             self.current_config = None
+            # 介入タイムラインもクリア
+            if hasattr(self, "_intervention_timeline"):
+                self._intervention_timeline = []
             return {"success": False, "message": error_msg}
 
     async def update_llm_model(

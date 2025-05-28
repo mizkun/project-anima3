@@ -669,21 +669,18 @@ class TestSimulationEngine(unittest.TestCase):
         self.mock_information_updater.trigger_long_term_update.assert_not_called()
 
     def test_update_character_long_term_info_character_not_in_scene(self):
-        """場面に参加していないキャラクターの長期情報更新を試みるとエラーになること"""
-        # 場面ログを初期化
+        """場面に参加していないキャラクターの長期情報更新でエラーが発生すること"""
+        # 場面ログを初期化（char_001のみ参加）
         self.engine._current_scene_log = SceneLogData(
             scene_info=self.test_scene_info, interventions_in_scene=[], turns=[]
         )
 
-        # 存在しないキャラクターIDを指定
-        nonexistent_character_id = "nonexistent_char"
+        # 場面に参加していないキャラクターで長期情報更新を試行
+        with self.assertRaises(ValueError) as context:
+            self.engine.update_character_long_term_info("char_999")
 
-        # エラーが発生することを検証
-        with self.assertRaises(ValueError):
-            self.engine.update_character_long_term_info(nonexistent_character_id)
-
-        # InformationUpdaterが呼び出されないことを検証
-        self.mock_information_updater.trigger_long_term_update.assert_not_called()
+        # エラーメッセージを検証
+        self.assertIn("は現在の場面に参加していません", str(context.exception))
 
     def test_update_character_long_term_info_error_handling(self):
         """update_character_long_term_infoのエラーハンドリングが適切に行われること"""
@@ -703,6 +700,67 @@ class TestSimulationEngine(unittest.TestCase):
 
         # InformationUpdaterが呼び出されたことを検証
         self.mock_information_updater.trigger_long_term_update.assert_called_once()
+
+    def test_realtime_logging_initialization(self):
+        """リアルタイムログ機能の初期化テスト"""
+        # シミュレーションセットアップを実行
+        with mock.patch("src.project_anima.core.simulation_engine.save_json"):
+            self.engine.start_simulation_setup()
+
+        # シミュレーションIDとログディレクトリが設定されていることを確認
+        self.assertIsNotNone(self.engine._simulation_id)
+        self.assertIsNotNone(self.engine._simulation_log_directory)
+        self.assertTrue(self.engine._simulation_id.startswith("sim_"))
+
+    @mock.patch("src.project_anima.core.simulation_engine.save_json")
+    def test_realtime_logging_on_turn_execution(self, mock_save_json):
+        """ターン実行時のリアルタイムログ保存テスト"""
+        # シミュレーションセットアップ
+        self.engine.start_simulation_setup()
+
+        # next_turnを実行
+        self.engine.next_turn("char_001")
+
+        # save_jsonが複数回呼ばれることを確認（初期化時 + ターン実行後）
+        self.assertGreaterEqual(mock_save_json.call_count, 2)
+
+    @mock.patch("src.project_anima.core.simulation_engine.save_json")
+    def test_realtime_logging_error_handling(self, mock_save_json):
+        """リアルタイムログ保存のエラーハンドリングテスト"""
+        # save_jsonでエラーを発生させる
+        mock_save_json.side_effect = Exception("テストエラー")
+
+        # シミュレーションセットアップ（エラーが発生してもセットアップは継続）
+        result = self.engine.start_simulation_setup()
+
+        # セットアップは成功するはず（ログ保存エラーは無視される）
+        self.assertTrue(result)
+
+    def test_simulation_id_consistency(self):
+        """同一シミュレーション内でのシミュレーションID一貫性テスト"""
+        with mock.patch("src.project_anima.core.simulation_engine.save_json"):
+            # シミュレーションセットアップ
+            self.engine.start_simulation_setup()
+            initial_simulation_id = self.engine._simulation_id
+
+            # ターンを実行
+            self.engine.next_turn("char_001")
+
+            # シミュレーションIDが変わっていないことを確認
+            self.assertEqual(self.engine._simulation_id, initial_simulation_id)
+
+    def test_simulation_state_reset_on_end(self):
+        """シミュレーション終了時の状態リセットテスト"""
+        with mock.patch("src.project_anima.core.simulation_engine.save_json"):
+            # シミュレーションセットアップ
+            self.engine.start_simulation_setup()
+
+            # シミュレーション終了
+            self.engine.end_simulation()
+
+            # シミュレーションIDとログディレクトリがリセットされていることを確認
+            self.assertIsNone(self.engine._simulation_id)
+            self.assertIsNone(self.engine._simulation_log_directory)
 
 
 if __name__ == "__main__":

@@ -7,17 +7,17 @@ import {
   ListItemButton,
   Typography,
   Button,
-  TextField,
   Alert,
   CircularProgress,
-  Divider,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   Edit as EditIcon,
-  Save as SaveIcon,
   Refresh as RefreshIcon,
-  Add as AddIcon,
+  Description as DescriptionIcon,
 } from '@mui/icons-material';
+import { PromptEditor } from '../../Editors/PromptEditor';
 
 interface PromptFile {
   name: string;
@@ -29,11 +29,10 @@ interface PromptFile {
 export const PromptTab: React.FC = () => {
   const [promptFiles, setPromptFiles] = useState<PromptFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [fileContent, setFileContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
 
   // プロンプトファイル一覧を取得
   const fetchPromptFiles = async () => {
@@ -60,136 +59,25 @@ export const PromptTab: React.FC = () => {
     }
   };
 
-  // ファイル内容を取得
-  const fetchFileContent = async (filePath: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/files/${encodeURIComponent(filePath)}`);
-      const data = await response.json();
-      
-      if (response.ok && data.content !== undefined) {
-        setFileContent(data.content);
-        setIsEditing(false);
-      } else {
-        throw new Error(data.message || 'ファイル内容の取得に失敗しました');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ファイル内容を保存
-  const saveFileContent = async () => {
-    if (!selectedFile) return;
-    
-    setIsSaving(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/files/${encodeURIComponent(selectedFile)}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: fileContent }),
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setIsEditing(false);
-        // ファイル一覧を更新
-        await fetchPromptFiles();
-      } else {
-        throw new Error(data.message || 'ファイルの保存に失敗しました');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // 新規ファイル作成
-  const createNewFile = async () => {
-    const fileName = prompt('新しいプロンプトファイル名を入力してください（.txtは自動で追加されます）:');
-    if (!fileName) return;
-    
-    const fullFileName = fileName.endsWith('.txt') ? fileName : `${fileName}.txt`;
-    const filePath = `data/prompts/${fullFileName}`;
-    
-    // プロンプトファイルのテンプレート
-    const template = `# ${fileName} プロンプト
-
-このプロンプトの説明をここに記述してください。
-
-## 使用方法
-このプロンプトの使用方法や目的を記述してください。
-
-## パラメータ
-- {{parameter1}}: パラメータの説明
-- {{parameter2}}: パラメータの説明
-
-## プロンプト内容
-ここにプロンプトの内容を記述してください。
-`;
-
-    setIsSaving(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/files', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          path: filePath,
-          content: template 
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        await fetchPromptFiles();
-        setSelectedFile(filePath);
-        setFileContent(template);
-        setIsEditing(true);
-      } else {
-        throw new Error(data.message || 'ファイルの作成に失敗しました');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // 初期化
-  useEffect(() => {
-    fetchPromptFiles();
-  }, []);
-
   // ファイル選択ハンドラー
   const handleFileSelect = (filePath: string) => {
     setSelectedFile(filePath);
-    fetchFileContent(filePath);
   };
 
   // 編集開始ハンドラー
-  const handleStartEdit = () => {
-    setIsEditing(true);
+  const handleStartEdit = (filePath: string) => {
+    setSelectedFile(filePath);
+    setShowEditor(true);
   };
 
-  // 編集キャンセルハンドラー
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    if (selectedFile) {
-      fetchFileContent(selectedFile);
-    }
+  // エディター保存後のハンドラー
+  const handleEditorSave = () => {
+    fetchPromptFiles();
   };
+
+  useEffect(() => {
+    fetchPromptFiles();
+  }, []);
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -198,15 +86,6 @@ export const PromptTab: React.FC = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">プロンプト管理</Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              startIcon={<AddIcon />}
-              onClick={createNewFile}
-              disabled={isSaving}
-              size="small"
-              variant="outlined"
-            >
-              新規作成
-            </Button>
             <Button
               startIcon={<RefreshIcon />}
               onClick={fetchPromptFiles}
@@ -228,109 +107,62 @@ export const PromptTab: React.FC = () => {
         </Box>
       )}
 
-      <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* ファイル一覧 */}
-        <Box sx={{ width: '40%', borderRight: 1, borderColor: 'divider', overflow: 'auto' }}>
-          {isLoading && promptFiles.length === 0 ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : (
-            <List dense>
-              {promptFiles.map((file) => (
-                <ListItem key={file.path} disablePadding>
-                  <ListItemButton
-                    selected={selectedFile === file.path}
-                    onClick={() => handleFileSelect(file.path)}
-                  >
-                    <ListItemText
-                      primary={file.name}
-                      primaryTypographyProps={{ variant: 'body2' }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </Box>
-
-        {/* ファイル編集エリア */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {selectedFile ? (
-            <>
-              {/* 編集ツールバー */}
-              <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider', display: 'flex', gap: 1 }}>
-                {!isEditing ? (
-                  <Button
-                    startIcon={<EditIcon />}
-                    onClick={handleStartEdit}
-                    size="small"
-                    variant="outlined"
-                  >
-                    編集
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      startIcon={<SaveIcon />}
-                      onClick={saveFileContent}
-                      disabled={isSaving}
-                      size="small"
-                      variant="contained"
-                    >
-                      {isSaving ? '保存中...' : '保存'}
-                    </Button>
-                    <Button
-                      onClick={handleCancelEdit}
-                      disabled={isSaving}
+      {/* ファイル一覧 */}
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
+        {isLoading && promptFiles.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : promptFiles.length === 0 ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', p: 2 }}>
+            <DescriptionIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              プロンプトファイルがありません
+            </Typography>
+          </Box>
+        ) : (
+          <List dense>
+            {promptFiles.map((file) => (
+              <ListItem 
+                key={file.path} 
+                disablePadding
+                secondaryAction={
+                  <Tooltip title="編集">
+                    <IconButton
+                      edge="end"
+                      onClick={() => handleStartEdit(file.path)}
                       size="small"
                     >
-                      キャンセル
-                    </Button>
-                  </>
-                )}
-              </Box>
-
-              {/* ファイル内容表示/編集 */}
-              <Box sx={{ flex: 1, p: 2, overflow: 'auto' }}>
-                {isLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                    <CircularProgress size={24} />
-                  </Box>
-                ) : (
-                  <TextField
-                    multiline
-                    fullWidth
-                    value={fileContent}
-                    onChange={(e) => setFileContent(e.target.value)}
-                    disabled={!isEditing}
-                    variant="outlined"
-                    sx={{
-                      '& .MuiInputBase-root': {
-                        fontFamily: 'monospace',
-                        fontSize: '0.875rem',
-                        height: '100%',
-                        alignItems: 'flex-start',
-                      },
-                      '& .MuiInputBase-input': {
-                        height: '100% !important',
-                        overflow: 'auto !important',
-                      },
-                    }}
-                    placeholder="プロンプトファイルの内容がここに表示されます..."
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                }
+              >
+                <ListItemButton
+                  selected={selectedFile === file.path}
+                  onClick={() => handleFileSelect(file.path)}
+                  sx={{ pr: 6 }} // アイコンボタンのスペースを確保
+                >
+                  <ListItemText
+                    primary={file.name}
+                    primaryTypographyProps={{ variant: 'body2' }}
+                    secondary={`パス: ${file.path}`}
+                    secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
                   />
-                )}
-              </Box>
-            </>
-          ) : (
-            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                編集するプロンプトファイルを選択してください
-              </Typography>
-            </Box>
-          )}
-        </Box>
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        )}
       </Box>
+
+      {/* プロンプトエディター */}
+      <PromptEditor
+        open={showEditor}
+        onClose={() => setShowEditor(false)}
+        filePath={selectedFile}
+        onSave={handleEditorSave}
+      />
     </Box>
   );
 }; 

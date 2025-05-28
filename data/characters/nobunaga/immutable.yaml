@@ -1,0 +1,7 @@
+character_id: "nobunaga"
+name: "織田信長"
+age: 18
+occupation: "殿様"
+base_personality: "基本的な性格を記述してください"
+speech_pattern: "話し方の特徴を記述してください"
+appearance: "外見の特徴を記述してください"

@@ -7,6 +7,7 @@ interface Scene {
   name: string
   description: string
   file_path: string
+  location: string
 }
 
 interface SceneSelectorProps {
@@ -37,9 +38,10 @@ export const SceneSelector: React.FC<SceneSelectorProps> = ({
         const scenesData = data.scenes || []
         const formattedScenes = scenesData.map((scene: any) => ({
           id: scene.scene_id || scene.id,
-          name: scene.location || scene.name,
+          name: scene.scene_id || scene.id,
           description: scene.situation || scene.description,
-          file_path: scene.file_path || ''
+          file_path: scene.file_path || '',
+          location: scene.location || ''
         }))
         setScenes(formattedScenes)
       } else {

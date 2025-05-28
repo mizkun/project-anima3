@@ -6,6 +6,10 @@ import logging
 from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
+import os
+import json
+from datetime import datetime
+import glob
 
 from web.backend.services.engine_wrapper import engine_wrapper
 from web.backend.api.models import (
@@ -200,6 +204,127 @@ async def get_available_scenes():
         return {"scenes": scenes}
     except Exception as e:
         logger.error(f"シーン一覧取得エラー: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/history")
+async def get_simulation_history():
+    """シミュレーション履歴を取得"""
+    try:
+        logs_dir = "logs"
+        if not os.path.exists(logs_dir):
+            return {"history": []}
+
+        history = []
+
+        # logsディレクトリ内のsim_*ディレクトリを取得
+        sim_dirs = glob.glob(os.path.join(logs_dir, "sim_*"))
+        sim_dirs.sort(reverse=True)  # 新しい順にソート
+
+        for sim_dir in sim_dirs:
+            if not os.path.isdir(sim_dir):
+                continue
+
+            sim_id = os.path.basename(sim_dir)
+
+            # ディレクトリ内のJSONファイルを探す
+            json_files = glob.glob(os.path.join(sim_dir, "*.json"))
+
+            if not json_files:
+                continue
+
+            # 最初のJSONファイルを読み込んで情報を取得
+            try:
+                with open(json_files[0], "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                scene_info = data.get("scene_info", {})
+                turns = data.get("turns", [])
+
+                # タイムスタンプをパース
+                timestamp_str = sim_id.replace("sim_", "")
+                try:
+                    timestamp = datetime.strptime(timestamp_str, "%Y%m%d_%H%M%S")
+                    formatted_timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                except:
+                    formatted_timestamp = timestamp_str
+
+                history_item = {
+                    "id": sim_id,
+                    "timestamp": formatted_timestamp,
+                    "scene_id": scene_info.get("scene_id", "unknown"),
+                    "location": scene_info.get("location", "不明"),
+                    "participants": [
+                        turn.get("character_name", "不明")
+                        for turn in turns
+                        if turn.get("character_name")
+                    ],
+                    "turn_count": len(turns),
+                    "status": "completed" if turns else "empty",
+                    "file_path": json_files[0],
+                }
+
+                # 参加者の重複を除去
+                history_item["participants"] = list(set(history_item["participants"]))
+
+                history.append(history_item)
+
+            except Exception as e:
+                logger.warning(f"履歴ファイル読み込みエラー {json_files[0]}: {e}")
+                continue
+
+        return {"history": history}
+
+    except Exception as e:
+        logger.error(f"履歴取得エラー: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/history/{sim_id}")
+async def get_simulation_detail(sim_id: str):
+    """特定のシミュレーション履歴の詳細を取得"""
+    try:
+        logs_dir = "logs"
+        sim_dir = os.path.join(logs_dir, sim_id)
+
+        if not os.path.exists(sim_dir):
+            raise HTTPException(
+                status_code=404, detail="シミュレーションが見つかりません"
+            )
+
+        # JSONファイルを探す
+        json_files = glob.glob(os.path.join(sim_dir, "*.json"))
+        if not json_files:
+            raise HTTPException(
+                status_code=404, detail="シミュレーションデータが見つかりません"
+            )
+
+        # 最初のJSONファイルを読み込み
+        with open(json_files[0], "r", encoding="utf-8") as f:
+            simulation_data = json.load(f)
+
+        return simulation_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"履歴詳細取得エラー: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/resume/{sim_id}")
+async def resume_simulation(sim_id: str):
+    """履歴からシミュレーションを再開"""
+    try:
+        # 現在は模擬的な実装
+        # 実際の実装では、履歴データを読み込んでシミュレーションエンジンに設定する
+        return {
+            "success": True,
+            "message": f"シミュレーション {sim_id} の再開機能は開発中です",
+            "sim_id": sim_id,
+        }
+
+    except Exception as e:
+        logger.error(f"シミュレーション再開エラー: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

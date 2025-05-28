@@ -118,6 +118,11 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
       const result = await apiCall('/simulation/start', 'POST', { config: finalConfig })
       
       console.log('シミュレーションを開始しました:', result)
+      
+      // シミュレーション開始後、自動的に最初のターンを実行
+      console.log('最初のターンを自動実行します')
+      await apiCall('/simulation/next-turn', 'POST')
+      console.log('最初のターンを実行しました')
     } catch (err) {
       console.error('シミュレーション開始エラー:', err)
     }

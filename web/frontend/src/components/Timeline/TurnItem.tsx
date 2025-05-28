@@ -8,10 +8,15 @@ import {
   Typography, 
   IconButton,
   Collapse,
-  Chip
+  Chip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material'
-import { ChevronDown, ChevronUp, Brain, Activity, MessageCircle } from 'lucide-react'
+import { ChevronDown, ChevronUp, Brain, Activity, MessageCircle, MoreHorizontal, Archive, RotateCcw } from 'lucide-react'
 import type { TimelineEntry } from '@/types/simulation'
+import { useSimulationStore } from '@/stores/simulationStore'
 
 interface TurnItemProps {
   turn: TimelineEntry
@@ -28,6 +33,8 @@ export const TurnItem: React.FC<TurnItemProps> = ({
 }) => {
   // デフォルトで発言のみ表示（閉じた状態）
   const [isExpanded, setIsExpanded] = useState(false)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
+  const debugMode = useSimulationStore((state) => state.debugMode)
 
   // グローバル展開状態の変更を監視
   useEffect(() => {
@@ -36,11 +43,36 @@ export const TurnItem: React.FC<TurnItemProps> = ({
     }
   }, [isGlobalExpanded])
 
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation()
+    setMenuAnchorEl(event.currentTarget)
+  }
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null)
+  }
+
+  const handleSaveAsMemory = () => {
+    // TODO: キャラクターの記憶として保存する機能を実装
+    console.log('Save as memory for turn:', turnNumber)
+    handleMenuClose()
+  }
+
+  const handleRevertToTurn = () => {
+    // TODO: このターンまで遡って再開する機能を実装
+    console.log('Revert to turn:', turnNumber)
+    handleMenuClose()
+  }
+
   // ターンの内容を解析
   const lines = turn.content.split('\n')
   const thinkLine = lines.find(line => line.startsWith('思考:'))
   const actLine = lines.find(line => line.startsWith('行動:'))
   const talkLine = lines.find(line => line.startsWith('発言:'))
+  
+  // 発言の内容を取得（空の場合も考慮）
+  const talkContent = talkLine ? talkLine.replace('発言: ', '').replace(/^「|」$/g, '').trim() : null
+  const hasTalk = talkContent && talkContent.length > 0
 
   return (
     <Card 
@@ -109,7 +141,7 @@ export const TurnItem: React.FC<TurnItemProps> = ({
                 }} 
               />
             )}
-            {talkLine && (
+            {hasTalk && (
               <Box 
                 sx={{ 
                   width: 8, 
@@ -121,23 +153,36 @@ export const TurnItem: React.FC<TurnItemProps> = ({
             )}
           </Box>
           
-          <IconButton size="small">
+          <IconButton size="small" onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}>
             {isExpanded ? (
               <ChevronUp size={16} />
             ) : (
               <ChevronDown size={16} />
             )}
           </IconButton>
+          
+          <IconButton size="small" onClick={handleMenuOpen}>
+            <MoreHorizontal size={16} />
+          </IconButton>
         </Box>
       </Box>
 
       {/* 発言（常時表示） */}
-      {talkLine && (
+      {hasTalk ? (
         <Box sx={{ px: 2, pb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
             <MessageCircle size={16} color="#1976d2" style={{ marginTop: 4, flexShrink: 0 }} />
             <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-              {talkLine.replace('発言: ', '').replace(/^「|」$/g, '')}
+              {talkContent}
+            </Typography>
+          </Box>
+        </Box>
+      ) : (
+        <Box sx={{ px: 2, pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+            <MessageCircle size={16} color="#9e9e9e" style={{ marginTop: 4, flexShrink: 0 }} />
+            <Typography variant="body2" sx={{ lineHeight: 1.5, color: 'text.secondary', fontStyle: 'italic' }}>
+              （発言なし）
             </Typography>
           </Box>
         </Box>
@@ -178,7 +223,53 @@ export const TurnItem: React.FC<TurnItemProps> = ({
             )}
           </Box>
         </Box>
+        
+        {/* デバッグ情報（デバッグモード時のみ表示） */}
+        {debugMode && (
+          <Box sx={{ px: 2, pb: 2, borderTop: 1, borderColor: 'divider', pt: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              デバッグ情報
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <Chip 
+                label="Gemini 1.5 Flash" 
+                size="small" 
+                variant="outlined" 
+                color="info"
+              />
+              <Chip 
+                label={`ターン ${turnNumber}`} 
+                size="small" 
+                variant="outlined"
+              />
+              <Chip 
+                label="Temperature: 0.7" 
+                size="small" 
+                variant="outlined"
+              />
+            </Box>
+          </Box>
+        )}
       </Collapse>
+
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={handleSaveAsMemory}>
+          <ListItemIcon>
+            <Archive />
+          </ListItemIcon>
+          <ListItemText>キャラクターの記憶として保存</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleRevertToTurn}>
+          <ListItemIcon>
+            <RotateCcw />
+          </ListItemIcon>
+          <ListItemText>このターンまで遡って再開</ListItemText>
+        </MenuItem>
+      </Menu>
     </Card>
   )
 } 

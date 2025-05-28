@@ -12,8 +12,12 @@ import argparse
 from unittest import mock
 from pprint import pprint
 
-from core.simulation_engine import SimulationEngine
-from core.llm_adapter import LLMAdapter
+# プロジェクトルートをパスに追加
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(project_root, "src"))
+
+from project_anima.core.simulation_engine import SimulationEngine
+from project_anima.core.llm_adapter import LLMAdapter
 
 # ロギングの設定
 logging.basicConfig(
@@ -78,8 +82,12 @@ def main():
 
         # テスト用のパス設定
         current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        scene_file_path = os.path.join(current_dir, "scenes", "school_rooftop.yaml")
-        characters_base_path = os.path.join(current_dir, "characters")
+        scene_file_path = os.path.join(
+            current_dir, "data", "scenes", "school_rooftop.yaml"
+        )
+        characters_dir = os.path.join(current_dir, "data", "characters")
+        prompts_dir = os.path.join(current_dir, "data", "prompts")
+        log_dir = os.path.join(current_dir, "logs")
 
         logger.info("SimulationEngineを初期化しています...")
 
@@ -88,12 +96,16 @@ def main():
             logger.info("実際のLLMAdapterを使用します")
             engine = SimulationEngine(
                 scene_file_path=scene_file_path,
-                characters_base_path=characters_base_path,
+                characters_dir=characters_dir,
+                prompts_dir=prompts_dir,
+                log_dir=log_dir,
             )
         else:
             # LLMAdapterクラスをモック化
             logger.info("モック化されたLLMAdapterを使用します")
-            with mock.patch("core.llm_adapter.LLMAdapter") as mock_llm_adapter_class:
+            with mock.patch(
+                "project_anima.core.llm_adapter.LLMAdapter"
+            ) as mock_llm_adapter_class:
                 # LLMAdapterのインスタンスが呼び出されたとき、ダミーのモックを返すように設定
                 mock_llm_adapter_class.return_value = create_dummy_llm_adapter(
                     "rinko_kizuki_002", "城月燐子"
@@ -102,7 +114,9 @@ def main():
                 # SimulationEngineのインスタンス化
                 engine = SimulationEngine(
                     scene_file_path=scene_file_path,
-                    characters_base_path=characters_base_path,
+                    characters_dir=characters_dir,
+                    prompts_dir=prompts_dir,
+                    log_dir=log_dir,
                 )
 
                 # モック化に成功していることを確認

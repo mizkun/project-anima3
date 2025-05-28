@@ -13,6 +13,7 @@ interface SimulationStore extends SimulationState {
   isInitialized: boolean
   isLoading: boolean
   lastSyncTime: string | null
+  debugMode: boolean
   
   // Actions
   setStatus: (status: SimulationStatus) => void
@@ -28,6 +29,7 @@ interface SimulationStore extends SimulationState {
   setEndTime: (time: string) => void
   setInitialized: (initialized: boolean) => void
   setLoading: (loading: boolean) => void
+  setDebugMode: (debugMode: boolean) => void
   syncFromBackend: (backendState: Partial<SimulationState>) => void
   updateFromBackend: (backendState: any) => void
   markSynced: () => void
@@ -61,6 +63,7 @@ export const useSimulationStore = create<SimulationStore>()(
       isInitialized: false,
       isLoading: false,
       lastSyncTime: null,
+      debugMode: false,
 
       setStatus: (status) => 
         set({ status }, false, 'setStatus'),
@@ -120,6 +123,9 @@ export const useSimulationStore = create<SimulationStore>()(
 
       setLoading: (isLoading) => 
         set({ isLoading }, false, 'setLoading'),
+
+      setDebugMode: (debugMode) => 
+        set({ debugMode }, false, 'setDebugMode'),
 
       // バックエンドの状態をフロントエンドに同期
       syncFromBackend: (backendState) => 

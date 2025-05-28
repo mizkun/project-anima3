@@ -117,6 +117,10 @@ class SimulationEngine:
         self._end_scene_requested = False
         self._turn_count = 0
 
+        # シミュレーションIDを保持（ターンごと保存用）
+        self._simulation_id = None
+        self._simulation_log_directory = None
+
         # 天啓情報を保持する辞書 (キャラクターID -> 天啓内容のリスト)
         self._pending_revelations: Dict[str, List[str]] = {}
 
@@ -178,6 +182,12 @@ class SimulationEngine:
             self._turn_count = 0
             self._current_turn = 0
             self._is_running = True
+
+            # シミュレーションIDを生成し、ログディレクトリを作成
+            self._initialize_simulation_logging()
+
+            # 初期状態のシーンログを即座に保存
+            self._save_scene_log_realtime()
 
             logger.info(
                 f"場面 '{scene_info.scene_id}' のセットアップが完了しました。参加キャラクター: {participant_ids}"
@@ -337,12 +347,15 @@ class SimulationEngine:
         現在の場面ログを保存し、シミュレーション状態をリセットします。
         終了前に場面に参加している全キャラクターの長期情報も更新します。
         """
-        if self._is_running and self._current_scene_log is not None:
+        # シーンログが存在する場合は履歴を保存（実行状態に関係なく）
+        if self._current_scene_log is not None:
+            logger.info("シミュレーション終了処理を開始します...")
+
             # 参加キャラクターの長期情報を更新
             logger.info(
                 "シミュレーション終了に伴い、参加キャラクターの長期情報を更新します..."
             )
-            if self._current_scene_log and self._current_scene_log.scene_info:
+            if self._current_scene_log.scene_info:
                 # この時点での最終的な参加者リストを使用する
                 final_participants = list(
                     self._current_scene_log.scene_info.participant_character_ids
@@ -375,10 +388,19 @@ class SimulationEngine:
 
             # 場面ログを保存
             self._save_scene_log()
-            logger.info("シミュレーションを手動で終了しました")
+            logger.info("シミュレーション履歴の保存が完了しました")
+        else:
+            logger.warning("保存すべきシーンログが存在しません")
 
+        # シミュレーション状態をリセット
         self._is_running = False
         self._end_scene_requested = True
+
+        # シミュレーションログ関連の状態もリセット
+        self._simulation_id = None
+        self._simulation_log_directory = None
+
+        logger.info("シミュレーションを手動で終了しました")
 
     def _determine_next_character(self) -> Optional[str]:
         """
@@ -529,6 +551,9 @@ class SimulationEngine:
                 not act_content and not talk_content and "エラー" not in think_content
             ):  # エラーでない場合で行動も発言もない場合
                 logger.info(f"  (何も行動せず、何も話さなかった)")
+
+            # ターン実行後に即座にログを保存
+            self._save_scene_log_realtime()
 
         except Exception as e:
             error_msg = f"ターン実行中にエラーが発生しました: {str(e)}"
@@ -690,6 +715,9 @@ class SimulationEngine:
             # 元の例外を保持して再発生させず、警告ログとして出力
             # これにより、介入処理が失敗してもシミュレーションは継続可能
 
+        # 介入処理後に即座にログを保存
+        self._save_scene_log_realtime()
+
     def _save_scene_log(self) -> None:
         """
         場面ログをファイルに保存する
@@ -713,12 +741,15 @@ class SimulationEngine:
         # 場面IDを取得
         scene_id = self._current_scene_log.scene_info.scene_id
 
-        # タイムスタンプを含むシミュレーションIDを生成
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        simulation_id = f"sim_{timestamp}"
-
-        # ログディレクトリのパスを作成
-        log_directory = os.path.join(self.log_dir, simulation_id)
+        # シミュレーションIDとログディレクトリを使用
+        if self._simulation_id is None or self._simulation_log_directory is None:
+            # フォールバック: 従来の方式でシミュレーションIDを生成
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            simulation_id = f"sim_{timestamp}"
+            log_directory = os.path.join(self.log_dir, simulation_id)
+        else:
+            # 既存のシミュレーションIDとディレクトリを使用
+            log_directory = self._simulation_log_directory
 
         # ファイル名を決定
         file_name = f"scene_{scene_id}.json"
@@ -1057,3 +1088,39 @@ class SimulationEngine:
         except Exception as e:
             logger.error(f"介入コマンド処理中にエラーが発生しました: {str(e)}")
             return False, f"介入コマンド処理中にエラーが発生しました: {str(e)}"
+
+    def _initialize_simulation_logging(self) -> None:
+        """
+        シミュレーションログの初期化
+
+        シミュレーションIDを生成し、ログディレクトリを作成します。
+        """
+        self._simulation_id = self._generate_simulation_id()
+        self._simulation_log_directory = os.path.join(self.log_dir, self._simulation_id)
+        os.makedirs(self._simulation_log_directory, exist_ok=True)
+        logger.info(
+            f"シミュレーションログディレクトリを作成しました: {self._simulation_log_directory}"
+        )
+
+    def _generate_simulation_id(self) -> str:
+        """
+        シミュレーションIDを生成
+
+        Returns:
+            str: タイムスタンプベースのシミュレーションID
+        """
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        return f"sim_{timestamp}"
+
+    def _save_scene_log_realtime(self) -> None:
+        """
+        リアルタイムでシーンログを保存
+
+        ターンごとや介入後に即座にログファイルを更新します。
+        エラーが発生してもシミュレーションは継続します。
+        """
+        try:
+            self._save_scene_log()
+        except Exception as e:
+            logger.error(f"リアルタイムログ保存中にエラーが発生しました: {str(e)}")
+            # エラーが発生してもシミュレーションは継続

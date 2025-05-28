@@ -1,0 +1,7 @@
+scene_id: "discussion_001_001"
+location: "教室"
+time: "放課後"
+situation: "猫と犬のどちらが可愛いかについて議論している"
+participant_character_ids:
+  - "rinko_kizuki_002"
+  - "mei_kinoshita_001"

@@ -12,16 +12,14 @@ import {
   Movie as MovieIcon,
   People as PeopleIcon,
   Settings as SettingsIcon,
-  Edit as EditIcon,
-  TouchApp as TouchAppIcon,
+  History as HistoryIcon,
   ChevronLeft,
   ChevronRight,
 } from '@mui/icons-material';
-import { PromptTab } from './tabs/PromptTab';
 import { SceneTab } from './tabs/SceneTab';
 import { CharacterTab } from './tabs/CharacterTab';
+import { SettingsTab } from './tabs/SettingsTab';
 import { SimulationTab } from './tabs/SimulationTab';
-import { InterventionTab } from './tabs/InterventionTab';
 
 interface IntegratedInspectorProps {
   width: number;
@@ -70,7 +68,7 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
   isCollapsed = false,
   onCollapseChange,
 }) => {
-  const [activeTab, setActiveTab] = useState(3); // プロンプトタブをデフォルトで開く
+  const [activeTab, setActiveTab] = useState(0); // シーンタブをデフォルトで開く
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -158,21 +156,15 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
                   sx={{ minHeight: 64 }}
                 />
                 <Tab
-                  icon={<SettingsIcon />}
-                  label="シミュレーション"
+                  icon={<HistoryIcon />}
+                  label="履歴"
                   {...a11yProps(2)}
                   sx={{ minHeight: 64 }}
                 />
                 <Tab
-                  icon={<EditIcon />}
-                  label="プロンプト"
+                  icon={<SettingsIcon />}
+                  label="設定"
                   {...a11yProps(3)}
-                  sx={{ minHeight: 64 }}
-                />
-                <Tab
-                  icon={<TouchAppIcon />}
-                  label="介入"
-                  {...a11yProps(4)}
                   sx={{ minHeight: 64 }}
                 />
               </Tabs>
@@ -193,11 +185,7 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
               </TabPanel>
 
               <TabPanel value={activeTab} index={3}>
-                <PromptTab />
-              </TabPanel>
-
-              <TabPanel value={activeTab} index={4}>
-                <InterventionTab />
+                <SettingsTab />
               </TabPanel>
             </Box>
           </>
