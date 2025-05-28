@@ -1,15 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sun, Moon, Settings, Info, Bug } from 'lucide-react'
+import { Sun, Moon, Settings, Info, Bug, Cpu } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { NeumorphismButton } from './neumorphism-button'
 import { DebugPanel } from '@/components/Debug/DebugPanel'
+import { ModelSelector } from '@/components/Controls/ModelSelector'
 
 export const HamburgerMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [isDebugOpen, setIsDebugOpen] = useState(false)
+  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // モデル選択の状態管理
+  const [selectedProvider, setSelectedProvider] = useState('gemini')
+  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash')
+
+  const handleModelChange = (provider: string, model: string) => {
+    setSelectedProvider(provider)
+    setSelectedModel(model)
+  }
 
   // メニュー外クリックで閉じる
   useEffect(() => {
@@ -33,17 +44,18 @@ export const HamburgerMenu: React.FC = () => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsOpen(false)
+        setIsModelSelectorOpen(false)
       }
     }
 
-    if (isOpen) {
+    if (isOpen || isModelSelectorOpen) {
       document.addEventListener('keydown', handleEscape)
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [isOpen])
+  }, [isOpen, isModelSelectorOpen])
 
   const menuItems = [
     {
@@ -54,6 +66,15 @@ export const HamburgerMenu: React.FC = () => {
         setIsOpen(false)
       },
       variant: 'primary' as const
+    },
+    {
+      icon: Cpu,
+      label: 'モデル設定',
+      onClick: () => {
+        setIsModelSelectorOpen(true)
+        setIsOpen(false)
+      },
+      variant: 'secondary' as const
     },
     {
       icon: Settings,
@@ -172,6 +193,63 @@ export const HamburgerMenu: React.FC = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* モデル選択パネル */}
+      <AnimatePresence>
+        {isModelSelectorOpen && (
+          <>
+            {/* 背景オーバーレイ */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+              onClick={() => setIsModelSelectorOpen(false)}
+            />
+
+            {/* モデル選択パネル */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 flex items-center justify-center z-50 p-4"
+            >
+              <div className="neumorphism-card rounded-2xl p-6 w-full max-w-md">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    モデル設定
+                  </h3>
+                  <NeumorphismButton
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => setIsModelSelectorOpen(false)}
+                    className="w-8 h-8"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </NeumorphismButton>
+                </div>
+                
+                <ModelSelector
+                  selectedProvider={selectedProvider}
+                  selectedModel={selectedModel}
+                  onModelChange={handleModelChange}
+                  disabled={false}
+                />
+
+                <div className="mt-6 flex justify-end">
+                  <NeumorphismButton
+                    variant="primary"
+                    onClick={() => setIsModelSelectorOpen(false)}
+                  >
+                    完了
+                  </NeumorphismButton>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* DebugPanel */}
       {import.meta.env.DEV && isDebugOpen && (

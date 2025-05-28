@@ -39,7 +39,7 @@ async def list_files(
     """指定されたディレクトリ内のファイル一覧を取得"""
     try:
         # セキュリティ: 許可されたディレクトリのみアクセス可能
-        allowed_dirs = ["data/prompts", "data/characters"]
+        allowed_dirs = ["data/prompts", "data/characters", "data/scenes"]
         if directory not in allowed_dirs:
             raise HTTPException(
                 status_code=403, detail="Access to this directory is not allowed"
@@ -99,7 +99,7 @@ async def get_file(file_path: str):
             raise HTTPException(status_code=400, detail="Path is not a file")
 
         # 許可されたディレクトリ内かチェック
-        allowed_dirs = ["data/prompts", "data/characters"]
+        allowed_dirs = ["data/prompts", "data/characters", "data/scenes"]
         if not any(file_path.startswith(allowed_dir) for allowed_dir in allowed_dirs):
             raise HTTPException(
                 status_code=403, detail="Access to this file is not allowed"
@@ -133,7 +133,7 @@ async def update_file(file_path: str, file_content: FileContent):
             raise HTTPException(status_code=403, detail="Invalid file path")
 
         # 許可されたディレクトリ内かチェック
-        allowed_dirs = ["data/prompts", "data/characters"]
+        allowed_dirs = ["data/prompts", "data/characters", "data/scenes"]
         if not any(file_path.startswith(allowed_dir) for allowed_dir in allowed_dirs):
             raise HTTPException(
                 status_code=403, detail="Access to this file is not allowed"
@@ -165,7 +165,7 @@ async def create_file(request: CreateFileRequest):
             raise HTTPException(status_code=403, detail="Invalid file path")
 
         # 許可されたディレクトリ内かチェック
-        allowed_dirs = ["data/prompts", "data/characters"]
+        allowed_dirs = ["data/prompts", "data/characters", "data/scenes"]
         if not any(
             request.path.startswith(allowed_dir) for allowed_dir in allowed_dirs
         ):
@@ -203,7 +203,7 @@ async def delete_file(file_path: str):
             raise HTTPException(status_code=403, detail="Invalid file path")
 
         # 許可されたディレクトリ内かチェック
-        allowed_dirs = ["data/prompts", "data/characters"]
+        allowed_dirs = ["data/prompts", "data/characters", "data/scenes"]
         if not any(file_path.startswith(allowed_dir) for allowed_dir in allowed_dirs):
             raise HTTPException(
                 status_code=403, detail="Access to this file is not allowed"

@@ -7,6 +7,7 @@ export type LLMProvider = 'openai' | 'gemini'
 // シミュレーション設定
 export interface SimulationConfig {
   character_name?: string
+  scene_id?: string
   max_turns: number
   llm_provider: LLMProvider
   model_name: string
@@ -46,6 +47,7 @@ export interface SimulationState {
   characters: Character[]
   timeline: TimelineEntry[]
   config: SimulationConfig
+  scene_name?: string
   error_message?: string
   start_time?: string
   end_time?: string

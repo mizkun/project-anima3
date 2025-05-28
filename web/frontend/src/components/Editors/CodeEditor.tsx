@@ -16,7 +16,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   onChange,
   language,
   readOnly = false,
-  height = '400px',
+  height = '100%',
   className
 }) => {
   const editorRef = useRef<any>(null)
@@ -128,8 +128,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   const config = getLanguageConfig(language)
 
   return (
-    <NeumorphismCard className={`overflow-hidden ${className}`}>
-      <div className="neumorphism-inset rounded-xl p-1">
+    <NeumorphismCard className={`h-full overflow-hidden ${className}`}>
+      <div className="neumorphism-inset rounded-xl p-1 h-full flex flex-col">
         <Editor
           height={height}
           language={config.language}

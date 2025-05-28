@@ -17,11 +17,18 @@ export const EditorContainer: React.FC<EditorContainerProps> = ({ className }) =
   const [editorContent, setEditorContent] = useState('')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [error, setError] = useState<string | null>(null)
 
-  const { loadFile, saveFile, isLoading, error, clearError } = useFileManager()
+  const { saveFile, isLoading, clearError } = useFileManager()
+
+  // エラークリア
+  const clearLocalError = useCallback(() => {
+    setError(null)
+  }, [])
 
   // ファイル選択時の処理
   const handleFileSelect = useCallback(async (file: FileInfo) => {
+    
     // 未保存の変更がある場合の確認
     if (hasUnsavedChanges) {
       const shouldContinue = window.confirm(
@@ -31,16 +38,33 @@ export const EditorContainer: React.FC<EditorContainerProps> = ({ className }) =
     }
 
     try {
-      await loadFile(file.path)
+      // ファイル情報を設定
       setSelectedFile(file)
-      setEditorContent(file.content || '')
+      
+      // ファイル内容が含まれていない場合は個別に取得
+      if (file.content === undefined || file.content === null) {
+        // APIから直接ファイル内容を取得
+        const response = await fetch(`/api/files/${encodeURIComponent(file.path)}`)
+        if (!response.ok) {
+          throw new Error(`Failed to load file: ${response.status}`)
+        }
+        
+        const fileData = await response.json()
+        setEditorContent(fileData.content || '')
+      } else {
+        // ファイル内容が既に含まれている場合はそのまま使用
+        setEditorContent(file.content)
+      }
+      
       setHasUnsavedChanges(false)
       setSaveStatus('idle')
       clearError()
+      clearLocalError()
     } catch (err) {
       console.error('Failed to load file:', err)
+      setError(err instanceof Error ? err.message : '不明なエラーが発生しました')
     }
-  }, [hasUnsavedChanges, loadFile, clearError])
+  }, [hasUnsavedChanges, clearError, clearLocalError])
 
   // エディター内容変更時の処理
   const handleEditorChange = useCallback((content: string) => {
@@ -155,7 +179,7 @@ export const EditorContainer: React.FC<EditorContainerProps> = ({ className }) =
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* ファイル選択とアクションバー */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-4 flex-shrink-0">
         <div className="flex-1">
           <FileSelector
             onFileSelect={handleFileSelect}
@@ -202,10 +226,10 @@ export const EditorContainer: React.FC<EditorContainerProps> = ({ className }) =
       </div>
 
       {/* エディターエリア */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 overflow-hidden">
         {/* エラー表示 */}
         {error && (
-          <div className="mb-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg">
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg flex-shrink-0">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-red-400" />
               <p className="text-sm text-red-400">{error}</p>
@@ -213,7 +237,7 @@ export const EditorContainer: React.FC<EditorContainerProps> = ({ className }) =
             <NeumorphismButton
               variant="secondary"
               size="sm"
-              onClick={clearError}
+              onClick={clearLocalError}
               className="mt-2"
             >
               閉じる
@@ -223,8 +247,8 @@ export const EditorContainer: React.FC<EditorContainerProps> = ({ className }) =
 
         {/* エディター */}
         {selectedFile ? (
-          <div className="h-full">
-            <div className="mb-2 flex items-center gap-2">
+          <div className="h-full flex flex-col">
+            <div className="mb-2 flex items-center gap-2 flex-shrink-0">
               <span className="text-sm text-gray-300">{selectedFile.name}</span>
               {hasUnsavedChanges && (
                 <span className="text-xs bg-yellow-600/20 text-yellow-400 px-2 py-1 rounded-full">
@@ -232,12 +256,15 @@ export const EditorContainer: React.FC<EditorContainerProps> = ({ className }) =
                 </span>
               )}
             </div>
-            <CodeEditor
-              value={editorContent}
-              onChange={handleEditorChange}
-              language={getLanguageFromFile(selectedFile)}
-              height="calc(100% - 2rem)"
-            />
+            <div className="flex-1 min-h-0">
+              <CodeEditor
+                value={editorContent}
+                onChange={handleEditorChange}
+                language={getLanguageFromFile(selectedFile)}
+                height="100%"
+                className="h-full"
+              />
+            </div>
           </div>
         ) : (
           <div className="flex items-center justify-center h-full">

@@ -34,6 +34,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   const directories = [
     { path: 'data/prompts', label: 'プロンプト', icon: File },
     { path: 'data/characters', label: 'キャラクター', icon: Folder },
+    { path: 'data/scenes', label: 'シーン', icon: Folder },
   ]
 
   // 初期ロード
@@ -72,10 +73,32 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   // ファイル拡張子に基づくデフォルトコンテンツ
   const getDefaultContent = (fileName: string): string => {
     const ext = fileName.split('.').pop()?.toLowerCase()
+    const baseName = fileName.replace(/\.[^/.]+$/, "")
     
     switch (ext) {
       case 'yaml':
       case 'yml':
+        // シーンディレクトリの場合はシーンテンプレートを使用
+        if (selectedDirectory === 'data/scenes') {
+          return `scene_id: "${baseName}"
+location: "場所を記述してください"
+time: "時間を記述してください"
+situation: "状況を詳しく記述してください"
+participant_character_ids:
+  - "character_id_1"
+  - "character_id_2"
+`
+        }
+        // キャラクターディレクトリの場合はキャラクターテンプレートを使用
+        else if (selectedDirectory === 'data/characters') {
+          return `character_id: "${baseName}"
+name: "キャラクター名"
+age: 16
+occupation: "職業・立場"
+base_personality: "基本的な性格を詳しく記述してください"
+`
+        }
+        // その他の場合は汎用テンプレート
         return `# ${fileName}\n# 作成日: ${new Date().toISOString()}\n\n# ここに設定を記述してください\n`
       case 'md':
         return `# ${fileName}\n\n作成日: ${new Date().toLocaleDateString()}\n\n## 概要\n\nここにプロンプトテンプレートを記述してください。\n`

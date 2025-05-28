@@ -18,7 +18,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 from project_anima.core.simulation_engine import SimulationEngine, SceneNotLoadedError
 from project_anima.core.data_models import InterventionData
-from api.models import (
+from web.backend.api.models import (
     SimulationStatus,
     SimulationConfig,
     TimelineEntry,
@@ -262,6 +262,7 @@ class EngineWrapper:
                     current_step=0,
                     total_steps=None,
                     character_name="",
+                    scene_name=None,
                     timeline=[],
                     config=SimulationConfig(
                         character_name="",
@@ -279,6 +280,16 @@ class EngineWrapper:
 
             # エンジンから状態を取得
             engine_status = self.engine.get_simulation_status()
+
+            # シーン名を取得
+            scene_name = None
+            if hasattr(self.engine, "_current_scene") and self.engine._current_scene:
+                scene_name = getattr(self.engine._current_scene, "scene_name", None)
+
+            # シーン名が取得できない場合は、シーンファイル名から推測
+            if not scene_name and hasattr(self.engine, "scene_file_path"):
+                scene_file_path = Path(self.engine.scene_file_path)
+                scene_name = scene_file_path.stem
 
             # タイムラインを構築
             timeline = []
@@ -304,6 +315,7 @@ class EngineWrapper:
                 current_step=engine_status.get("turns_completed", 0),
                 total_steps=None,  # 無制限
                 character_name=self.current_config.character_name,
+                scene_name=scene_name,
                 timeline=timeline,
                 config=self.current_config,
             )
@@ -315,6 +327,7 @@ class EngineWrapper:
                 current_step=0,
                 total_steps=None,
                 character_name="",
+                scene_name=None,
                 timeline=[],
                 config=SimulationConfig(
                     character_name="",

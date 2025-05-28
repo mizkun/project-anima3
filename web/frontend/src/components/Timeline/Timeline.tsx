@@ -1,20 +1,30 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSimulationStore } from '@/stores/simulationStore'
 import { useSimulationControls } from '@/hooks/useSimulationControls'
 import { TurnItem } from './TurnItem'
 import { LoadingTurn } from './LoadingTurn'
-import { Users } from 'lucide-react'
+import { NeumorphismButton } from '@/components/ui/neumorphism-button'
+import { Users, ChevronDown, ChevronUp, File } from 'lucide-react'
 
 interface TimelineProps {
   simulationId?: string
   className?: string
+  onInspectionPanelToggle?: () => void
+  inspectionPanelOpen?: boolean
 }
 
-export const Timeline: React.FC<TimelineProps> = ({ className }) => {
+export const Timeline: React.FC<TimelineProps> = ({ 
+  className, 
+  onInspectionPanelToggle,
+  inspectionPanelOpen = false
+}) => {
   const { timeline, status } = useSimulationStore()
   const { isLoading } = useSimulationControls()
   const timelineRef = useRef<HTMLDivElement>(null)
+  
+  // 全ターン開閉の状態管理
+  const [isGlobalExpanded, setIsGlobalExpanded] = useState<boolean | undefined>(undefined)
   
   // タイムラインデータを逆順にして新しいターンを上部に表示
   const turns = [...timeline].reverse()
@@ -37,8 +47,59 @@ export const Timeline: React.FC<TimelineProps> = ({ className }) => {
     }
   }, [timeline.length])
 
+  // 全ターン開閉のトグル
+  const toggleAllTurns = () => {
+    setIsGlobalExpanded(prev => prev === true ? false : true)
+  }
+
   return (
     <div className={`timeline-infinite-scroll ${className}`}>
+      {/* ヘッダー部分 - 常に表示 */}
+      <div className="timeline-header p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {turns.length > 0 ? `タイムライン (${turns.length}ターン)` : 'タイムライン'}
+          </h2>
+          <div className="flex items-center gap-2">
+            {/* 全て開く/閉じるボタン（ターンがある場合のみ表示） */}
+            {turns.length > 0 && (
+              <NeumorphismButton
+                variant="secondary"
+                size="sm"
+                onClick={toggleAllTurns}
+                className="flex items-center gap-2"
+              >
+                {isGlobalExpanded === true ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    全て閉じる
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    全て開く
+                  </>
+                )}
+              </NeumorphismButton>
+            )}
+            
+            {/* インスペクションパネル開くボタン（パネルが閉じている時のみ表示） */}
+            {!inspectionPanelOpen && onInspectionPanelToggle && (
+              <NeumorphismButton
+                variant="secondary"
+                size="sm"
+                onClick={onInspectionPanelToggle}
+                className="flex items-center gap-2"
+                title="ファイル編集パネルを開く"
+              >
+                <File className="h-4 w-4" />
+                <span className="hidden sm:inline">File Edit</span>
+              </NeumorphismButton>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* タイムライン内容 - 無限スクロール風 */}
       <div 
         ref={timelineRef}
@@ -50,6 +111,20 @@ export const Timeline: React.FC<TimelineProps> = ({ className }) => {
               <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
               <p className="text-gray-400 dark:text-gray-500 text-lg mb-2">シミュレーションを開始してください</p>
               <p className="text-sm text-gray-500 dark:text-gray-600">ターンが進行するとここに表示されます</p>
+              {/* 空の状態でもFile Editボタンを表示 */}
+              {!inspectionPanelOpen && onInspectionPanelToggle && (
+                <div className="mt-6">
+                  <NeumorphismButton
+                    variant="primary"
+                    onClick={onInspectionPanelToggle}
+                    className="flex items-center gap-2"
+                    title="ファイル編集パネルを開く"
+                  >
+                    <File className="h-4 w-4" />
+                    ファイル編集を開始
+                  </NeumorphismButton>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -86,6 +161,7 @@ export const Timeline: React.FC<TimelineProps> = ({ className }) => {
                     turn={turn} 
                     isLatest={index === 0}
                     turnNumber={turn.step}
+                    isGlobalExpanded={isGlobalExpanded}
                   />
                 </motion.div>
               ))}

@@ -239,29 +239,147 @@
     background-color: #4a5568;
   }
 
-  /* X風レイアウト */
+  /* 3列レイアウト */
   .left-panel {
-    width: 350px;
-    min-width: 350px;
+    width: 280px;
+    min-width: 250px;
+    max-width: 350px;
     padding: 1rem;
     border-right: 1px solid #2a2a2a;
+    flex-shrink: 0;
   }
 
-  .right-panel {
+  .center-panel {
     flex: 1;
     display: flex;
     flex-direction: column;
-    min-width: 0;
+    min-width: 450px;
+    transition: margin-right 0.3s ease-in-out;
+  }
+
+  .right-panel-container {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    z-index: 40;
   }
 
   .control-panel-left {
     height: calc(100vh - 80px);
   }
 
-  .right-panel-card {
+  .center-panel-card {
     margin: 1rem;
     margin-left: 0;
     height: calc(100vh - 80px);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* インスペクションパネル */
+  .inspection-panel {
+    height: 100vh;
+    background: transparent;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .inspection-panel-collapsed {
+    position: fixed;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    z-index: 41;
+  }
+
+  .inspection-panel-toggle {
+    padding: 0.5rem !important;
+    border-radius: 50% !important;
+  }
+
+  .inspection-panel-card {
+    margin: 1rem;
+    margin-right: 1rem;
+    height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e);
+    box-shadow: 
+      20px 20px 40px #0a0a0a,
+      -20px -20px 40px #343434;
+    border: none;
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .inspection-tab-header {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #2a2a2a;
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e);
+    border-radius: 1rem 1rem 0 0;
+    padding: 0.5rem;
+    flex-shrink: 0;
+    height: 3rem;
+    min-height: 3rem;
+  }
+
+  .inspection-tab-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 0.5rem;
+    margin-right: 0.25rem;
+  }
+
+  .inspection-tab-button:hover {
+    color: #e5e5e5;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .inspection-panel-close {
+    margin-left: auto;
+  }
+
+  /* リサイズハンドル */
+  .resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: transparent;
+    cursor: col-resize;
+    z-index: 42;
+    transition: background-color 0.2s ease;
+  }
+
+  .resize-handle:hover,
+  .resize-handle.resizing {
+    background: #3b82f6;
+  }
+
+  .resize-handle::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: transparent;
   }
 
   /* タブヘッダー */
@@ -284,17 +402,10 @@
     color: #9ca3af;
     font-size: 0.875rem;
     font-weight: 500;
-    cursor: pointer;
+    cursor: default;
     transition: all 0.2s ease;
     position: relative;
-  }
-
-  .tab-button:first-child {
-    border-radius: 1rem 0 0 0;
-  }
-
-  .tab-button:last-child {
-    border-radius: 0 1rem 0 0;
+    border-radius: 1rem 1rem 0 0;
   }
 
   .tab-button:hover {
@@ -326,6 +437,11 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+  }
+
+  .timeline-header {
+    flex-shrink: 0;
+    background: inherit;
   }
 
   .timeline-scroll-container {
@@ -380,6 +496,25 @@
     border-bottom: 1px solid #e5e7eb;
   }
 
+  html:not(.dark) .inspection-tab-header {
+    background: linear-gradient(145deg, #ffffff, #f0f0f0) !important;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  html:not(.dark) .inspection-tab-button {
+    color: #6b7280;
+  }
+
+  html:not(.dark) .inspection-tab-button:hover {
+    color: #1f2937 !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+  }
+
+  html:not(.dark) .resize-handle:hover,
+  html:not(.dark) .resize-handle.resizing {
+    background: #3b82f6;
+  }
+
   /* ヘッダーのライトモード対応 */
   html:not(.dark) header {
     background: linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(248, 248, 248, 0.95)) !important;
@@ -396,14 +531,7 @@
 
   html:not(.dark) .tab-button {
     color: #6b7280;
-  }
-
-  html:not(.dark) .tab-button:first-child {
-    border-radius: 1rem 0 0 0;
-  }
-
-  html:not(.dark) .tab-button:last-child {
-    border-radius: 0 1rem 0 0;
+    border-radius: 1rem 1rem 0 0;
   }
 
   html:not(.dark) .tab-button:hover {
@@ -442,8 +570,9 @@
       padding: 0.5rem;
     }
 
-    .right-panel {
+    .center-panel {
       width: 100%;
+      margin-right: 0 !important;
     }
 
     .control-panel-left {
@@ -451,10 +580,38 @@
       min-height: 300px;
     }
 
-    .right-panel-card {
+    .center-panel-card {
       margin: 0.5rem;
       height: calc(100vh - 400px);
       min-height: 400px;
+    }
+
+    .right-panel-container {
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .inspection-panel {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 90% !important;
+      max-width: 400px;
+    }
+
+    .inspection-panel-card {
+      margin: 0.5rem;
+      height: calc(100vh - 1rem);
+    }
+
+    .inspection-panel-collapsed {
+      right: 0.5rem;
     }
 
     html:not(.dark) .left-panel {
@@ -466,13 +623,33 @@
   /* タブレット対応 */
   @media (min-width: 768px) and (max-width: 1023px) {
     .left-panel {
-      width: 300px;
-      min-width: 300px;
+      width: 280px;
+      min-width: 260px;
     }
 
-    .right-panel-card {
+    .center-panel {
+      min-width: 350px;
+    }
+
+    .center-panel-card {
       margin: 0.75rem;
       margin-left: 0;
     }
+
+    .inspection-panel {
+      width: 320px !important;
+    }
+  }
+
+  html:not(.dark) .timeline-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a0;
+  }
+
+  /* inspection-panel-cardのライトモード対応 */
+  html:not(.dark) .inspection-panel-card {
+    background: linear-gradient(145deg, #ffffff, #f0f0f0) !important;
+    box-shadow: 
+      20px 20px 40px #d1d1d1,
+      -20px -20px 40px #ffffff !important;
   }
 }

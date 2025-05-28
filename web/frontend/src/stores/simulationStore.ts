@@ -39,6 +39,7 @@ const initialState: SimulationState = {
   max_turns: 10,
   characters: [],
   timeline: [],
+  scene_name: undefined,
   config: {
     character_name: '',
     max_turns: 10,
@@ -131,6 +132,7 @@ export const useSimulationStore = create<SimulationStore>()(
             current_turn: backendState.current_turn !== undefined ? backendState.current_turn : state.current_turn,
             timeline: backendState.timeline || state.timeline,
             characters: backendState.characters || state.characters,
+            scene_name: backendState.scene_name || state.scene_name,
             config: backendState.config ? { ...state.config, ...backendState.config } : state.config,
           }),
           false,
@@ -147,6 +149,7 @@ export const useSimulationStore = create<SimulationStore>()(
               current_turn: backendState.current_turn !== undefined ? backendState.current_turn : state.current_turn,
               timeline: backendState.timeline || state.timeline,
               characters: backendState.characters || state.characters,
+              scene_name: backendState.scene_name || state.scene_name,
               config: backendState.config ? { ...state.config, ...backendState.config } : state.config,
               lastSyncTime: new Date().toISOString(),
               isInitialized: true,

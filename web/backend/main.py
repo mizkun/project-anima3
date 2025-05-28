@@ -10,9 +10,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from api.simulation import router as simulation_router
-from api.files import router as files_router
-from services.engine_wrapper import engine_wrapper
+from web.backend.api.simulation import router as simulation_router
+from web.backend.api.files import router as files_router
+from web.backend.services.engine_wrapper import engine_wrapper
 
 # ロギング設定
 logging.basicConfig(
@@ -34,7 +34,15 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
+        "http://127.0.0.1:3003",
+        "http://127.0.0.1:3004",
     ],  # Reactアプリのデフォルトポート
     allow_credentials=True,
     allow_methods=["*"],
@@ -43,7 +51,7 @@ app.add_middleware(
 
 # APIルーターを追加
 app.include_router(simulation_router)
-app.include_router(files_router)
+app.include_router(files_router, prefix="/api")
 
 
 @app.on_event("startup")

@@ -29,6 +29,7 @@ class SimulationConfig(BaseModel):
     """シミュレーション設定"""
 
     character_name: Optional[str] = ""
+    scene_id: Optional[str] = None
     llm_provider: LLMProvider
     model_name: str
     max_steps: Optional[int] = None
@@ -73,6 +74,7 @@ class SimulationState(BaseModel):
     current_step: int
     total_steps: Optional[int]
     character_name: str
+    scene_name: Optional[str] = None
     timeline: List[TimelineEntry]
     config: SimulationConfig
 

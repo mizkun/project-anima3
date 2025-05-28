@@ -7,8 +7,8 @@ from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 
-from services.engine_wrapper import engine_wrapper
-from api.models import (
+from web.backend.services.engine_wrapper import engine_wrapper
+from web.backend.api.models import (
     SimulationStartRequest,
     SimulationResponse,
     SimulationState,

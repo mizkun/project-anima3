@@ -2,9 +2,8 @@ import React, { useState } from 'react'
 import { NeumorphismButton } from '@/components/ui/neumorphism-button'
 import { useSimulationControls } from '@/hooks/useSimulationControls'
 import { SceneSelector } from './SceneSelector'
-import { ModelSelector } from './ModelSelector'
 import { InterventionPanel } from './InterventionPanel'
-import { Play, Square, Pause, SkipForward, Loader2, Settings, Zap, AlertCircle, X, Sparkles } from 'lucide-react'
+import { Play, Square, Pause, SkipForward, Loader2, AlertCircle, X, Sparkles } from 'lucide-react'
 import type { SimulationStatus } from '@/types/simulation'
 
 export const SimulationControls: React.FC = () => {
@@ -21,22 +20,14 @@ export const SimulationControls: React.FC = () => {
   } = useSimulationControls()
 
   // 新機能の状態管理
-  const [selectedScene, setSelectedScene] = useState<string | null>(null)
+  const [selectedScene, setSelectedScene] = useState<string | null>('school_rooftop_001')
   const [selectedProvider, setSelectedProvider] = useState('gemini')
   const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash')
-  const [activeTab, setActiveTab] = useState<'controls' | 'settings' | 'intervention'>('controls')
   const [isExecutingTurn, setIsExecutingTurn] = useState(false)
-
-
 
   // 新機能のハンドラー
   const handleSceneSelect = (sceneId: string) => {
     setSelectedScene(sceneId)
-  }
-
-  const handleModelChange = (provider: string, model: string) => {
-    setSelectedProvider(provider)
-    setSelectedModel(model)
   }
 
   const handleIntervention = async (type: string, content: string) => {
@@ -73,6 +64,9 @@ export const SimulationControls: React.FC = () => {
   // 総合的なローディング状態
   const isAnyLoading = isLoading || isExecutingTurn
 
+  // 実行中かどうかの判定
+  const isRunning = status === 'running' || status === 'paused' || status === 'idle'
+
   return (
     <div className="space-y-4">
       {/* タイトル部分 */}
@@ -104,123 +98,79 @@ export const SimulationControls: React.FC = () => {
         </div>
       )}
 
-      {/* タブ切り替え */}
-      <div className="neumorphism-inset rounded-xl p-2 flex gap-1">
-        <button
-          onClick={() => setActiveTab('controls')}
-          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'controls'
-              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-        >
-          <Play className="h-4 w-4 mx-auto" />
-        </button>
-        <button
-          onClick={() => setActiveTab('settings')}
-          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'settings'
-              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-        >
-          <Settings className="h-4 w-4 mx-auto" />
-        </button>
-        <button
-          onClick={() => setActiveTab('intervention')}
-          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'intervention'
-              ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-        >
-          <Zap className="h-4 w-4 mx-auto" />
-        </button>
+      {/* 制御ボタン */}
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          {/* 開始ボタン（未開始・完了・エラー時のみ表示） */}
+          {(status === 'not_started' || status === 'completed' || status === 'error') && (
+            <NeumorphismButton
+              variant="primary"
+              onClick={() => startSimulation({
+                character_name: 'default',
+                scene_id: selectedScene || 'school_rooftop_001',
+                llm_provider: selectedProvider as any,
+                model_name: selectedModel,
+                max_steps: 10,
+                max_turns: 10,
+                temperature: 0.7,
+                max_tokens: 1000
+              })}
+              disabled={isAnyLoading}
+              className="flex items-center gap-2 col-span-2"
+            >
+              <Play className="h-4 w-4" />
+              Start
+            </NeumorphismButton>
+          )}
+
+          {/* シミュレーション開始後のボタン群 */}
+          {isRunning && (
+            <>
+              {/* 次ターンボタン */}
+              <NeumorphismButton
+                variant="secondary"
+                onClick={handleExecuteNextTurn}
+                disabled={isAnyLoading}
+                className="flex items-center gap-2"
+              >
+                {isExecutingTurn ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <SkipForward className="h-4 w-4" />
+                )}
+                Next
+              </NeumorphismButton>
+
+              {/* 停止ボタン */}
+              <NeumorphismButton
+                variant="danger"
+                onClick={stopSimulation}
+                disabled={isAnyLoading}
+                className="flex items-center gap-2"
+              >
+                <Square className="h-4 w-4" />
+                Stop
+              </NeumorphismButton>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* タブコンテンツ */}
-      <div className="min-h-[300px]">
-        {activeTab === 'controls' && (
-          <div className="space-y-4">
-            {/* 制御ボタン */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* 開始ボタン（未開始・完了・エラー時のみ表示） */}
-              {(status === 'not_started' || status === 'completed' || status === 'error') && (
-                <NeumorphismButton
-                  variant="primary"
-                  onClick={() => startSimulation({
-                    character_name: 'default',
-                    llm_provider: selectedProvider as any,
-                    model_name: selectedModel,
-                    max_steps: 10,
-                    max_turns: 10,
-                    temperature: 0.7,
-                    max_tokens: 1000
-                  })}
-                  disabled={isAnyLoading}
-                  className="flex items-center gap-2 col-span-2"
-                >
-                  <Play className="h-4 w-4" />
-                  Start
-                </NeumorphismButton>
-              )}
+      {/* シーン選択 */}
+      <div className="space-y-4">
+        <SceneSelector
+          selectedScene={selectedScene}
+          onSceneSelect={handleSceneSelect}
+          disabled={isRunning || isAnyLoading}
+        />
+      </div>
 
-              {/* シミュレーション開始後のボタン群 */}
-              {(status === 'running' || status === 'paused' || status === 'idle') && (
-                <>
-                  {/* 次ターンボタン */}
-                  <NeumorphismButton
-                    variant="secondary"
-                    onClick={handleExecuteNextTurn}
-                    disabled={isAnyLoading}
-                    className="flex items-center gap-2"
-                  >
-                    {isExecutingTurn ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <SkipForward className="h-4 w-4" />
-                    )}
-                    Next
-                  </NeumorphismButton>
-
-                  {/* 停止ボタン */}
-                  <NeumorphismButton
-                    variant="danger"
-                    onClick={stopSimulation}
-                    disabled={isAnyLoading}
-                    className="flex items-center gap-2"
-                  >
-                    <Square className="h-4 w-4" />
-                    Stop
-                  </NeumorphismButton>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-          <div className="space-y-6">
-            <SceneSelector
-              selectedScene={selectedScene}
-              onSceneSelect={handleSceneSelect}
-              disabled={status === 'running' || isAnyLoading}
-            />
-            <ModelSelector
-              selectedProvider={selectedProvider}
-              selectedModel={selectedModel}
-              onModelChange={handleModelChange}
-              disabled={status === 'running' || isAnyLoading}
-            />
-          </div>
-        )}
-
-        {activeTab === 'intervention' && (
-          <InterventionPanel
-            onIntervention={handleIntervention}
-            disabled={status !== 'running' && status !== 'paused' || isAnyLoading}
-          />
-        )}
+      {/* 介入パネル */}
+      <div className="space-y-4">
+        <InterventionPanel
+          onIntervention={handleIntervention}
+          disabled={!isRunning || isAnyLoading}
+        />
       </div>
     </div>
   )

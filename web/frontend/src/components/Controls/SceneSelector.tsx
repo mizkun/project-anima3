@@ -31,10 +31,17 @@ export const SceneSelector: React.FC<SceneSelectorProps> = ({
   const fetchScenes = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/scenes')
+      const response = await fetch('/api/simulation/scenes')
       if (response.ok) {
         const data = await response.json()
-        setScenes(data.scenes || [])
+        const scenesData = data.scenes || []
+        const formattedScenes = scenesData.map((scene: any) => ({
+          id: scene.scene_id || scene.id,
+          name: scene.location || scene.name,
+          description: scene.situation || scene.description,
+          file_path: scene.file_path || ''
+        }))
+        setScenes(formattedScenes)
       } else {
         console.error('シーン一覧の取得に失敗しました')
       }
