@@ -84,8 +84,12 @@ class EngineWrapper:
 
                         scene_info = {
                             "id": scene_file.stem,
-                            "name": scene_data.get("scene_name", scene_file.stem),
-                            "description": scene_data.get("description", "説明なし"),
+                            "name": scene_data.get(
+                                "location", scene_file.stem
+                            ),  # locationを名前として使用
+                            "description": scene_data.get(
+                                "situation", "説明なし"
+                            ),  # situationを説明として使用
                             "file_path": str(scene_file),
                         }
                         scenes.append(scene_info)
@@ -284,7 +288,8 @@ class EngineWrapper:
             # シーン名を取得
             scene_name = None
             if hasattr(self.engine, "_current_scene") and self.engine._current_scene:
-                scene_name = getattr(self.engine._current_scene, "scene_name", None)
+                # SceneInfoDataからlocationを取得してシーン名として使用
+                scene_name = getattr(self.engine._current_scene, "location", None)
 
             # シーン名が取得できない場合は、シーンファイル名から推測
             if not scene_name and hasattr(self.engine, "scene_file_path"):
@@ -293,22 +298,70 @@ class EngineWrapper:
 
             # タイムラインを構築
             timeline = []
-            if self.engine._current_scene_log and self.engine._current_scene_log.turns:
-                for turn in self.engine._current_scene_log.turns:
-                    timeline.append(
-                        TimelineEntry(
-                            step=turn.turn_number,
-                            timestamp=datetime.now().isoformat(),  # 実際のタイムスタンプがない場合
-                            character=turn.character_name,
-                            action_type="turn",
-                            content=f"思考: {turn.think}\n行動: {turn.act}\n発言: {turn.talk}",
-                            metadata={
-                                "think": turn.think,
-                                "act": turn.act,
-                                "talk": turn.talk,
-                            },
+            current_scene = None
+
+            # エンジンが存在し、シーンログがある場合
+            if (
+                self.engine
+                and hasattr(self.engine, "_current_scene_log")
+                and self.engine._current_scene_log
+            ):
+                # タイムライン情報を構築
+                if self.engine._current_scene_log.turns:
+                    for turn in self.engine._current_scene_log.turns:
+                        timeline.append(
+                            TimelineEntry(
+                                step=turn.turn_number,
+                                timestamp=datetime.now().isoformat(),  # 実際のタイムスタンプがない場合
+                                character=turn.character_name,
+                                action_type="turn",
+                                content=f"思考: {turn.think}\n行動: {turn.act}\n発言: {turn.talk}",
+                                metadata={
+                                    "think": turn.think,
+                                    "act": turn.act,
+                                    "talk": turn.talk,
+                                },
+                                is_intervention=False,
+                            )
                         )
-                    )
+
+                # 介入記録をタイムラインに追加
+                if hasattr(self, "_intervention_timeline"):
+                    for intervention in self._intervention_timeline:
+                        timeline.append(
+                            TimelineEntry(
+                                step=intervention["step"],
+                                timestamp=intervention["timestamp"],
+                                character=intervention.get("target_character")
+                                or "システム",
+                                action_type="intervention",
+                                content=f"[{intervention['intervention_type']}] {intervention['content']}",
+                                metadata={
+                                    "intervention_type": intervention[
+                                        "intervention_type"
+                                    ],
+                                    "target_character": intervention.get(
+                                        "target_character"
+                                    ),
+                                },
+                                is_intervention=True,
+                            )
+                        )
+
+                # ステップ順にソート
+                timeline.sort(key=lambda x: (x.step, 0 if not x.is_intervention else 1))
+
+                # 現在のシーン情報を構築
+                scene_info = self.engine._current_scene_log.scene_info
+                current_scene = {
+                    "scene_id": scene_info.scene_id,
+                    "scene_name": scene_info.location
+                    or scene_info.scene_id,  # locationをscene_nameとして使用
+                    "participant_character_ids": scene_info.participant_character_ids,
+                    "situation": scene_info.situation,
+                    "location": scene_info.location,
+                    "time": scene_info.time,
+                }
 
             return SimulationState(
                 status=self.status,
@@ -318,6 +371,7 @@ class EngineWrapper:
                 scene_name=scene_name,
                 timeline=timeline,
                 config=self.current_config,
+                current_scene=current_scene,  # 現在のシーン情報を追加
             )
 
         except Exception as e:
@@ -344,22 +398,36 @@ class EngineWrapper:
     ) -> Dict[str, Any]:
         """介入を処理"""
         try:
-            if not self.engine or self.status != SimulationStatus.RUNNING:
+            # シミュレーションが実行中またはアイドル状態でない場合はエラー
+            if not self.engine or self.status not in [
+                SimulationStatus.RUNNING,
+                SimulationStatus.IDLE,
+            ]:
                 raise EngineWrapperError("シミュレーションが実行されていません")
 
             # 介入コマンドを構築
             if intervention_type == "update_situation":
                 command = f"update_situation {content}"
+                intervention_display_type = "全体向け介入"
+                target_character = None
             elif intervention_type == "give_revelation":
-                if not metadata or "character_id" not in metadata:
-                    raise EngineWrapperError("天啓付与にはキャラクターIDが必要です")
-                command = f"give_revelation {metadata['character_id']} {content}"
+                # contentに既にキャラクターIDが含まれている場合はそのまま使用
+                command = f"give_revelation {content}"
+                intervention_display_type = "キャラクター向け介入"
+                # キャラクターIDを抽出（最初の単語）
+                target_character = content.split()[0] if content.split() else None
             elif intervention_type == "add_character":
                 command = f"add_character {content}"
+                intervention_display_type = "キャラクター追加"
+                target_character = None
             elif intervention_type == "remove_character":
                 command = f"remove_character {content}"
+                intervention_display_type = "キャラクター削除"
+                target_character = content
             elif intervention_type == "end_scene":
                 command = "end_scene"
+                intervention_display_type = "シーン終了"
+                target_character = None
             else:
                 raise EngineWrapperError(
                     f"サポートされていない介入タイプ: {intervention_type}"
@@ -369,6 +437,11 @@ class EngineWrapper:
             success, message = self.engine.process_intervention_command(command)
 
             if success:
+                # 介入記録をタイムラインに追加
+                self._add_intervention_to_timeline(
+                    intervention_display_type, content, target_character
+                )
+
                 return {"success": True, "message": message}
             else:
                 return {"success": False, "message": message}
@@ -377,6 +450,42 @@ class EngineWrapper:
             error_msg = f"介入処理エラー: {str(e)}"
             logger.error(error_msg)
             return {"success": False, "message": error_msg}
+
+    def _add_intervention_to_timeline(
+        self,
+        intervention_type: str,
+        content: str,
+        target_character: Optional[str] = None,
+    ):
+        """介入記録をタイムラインに追加"""
+        try:
+            if not hasattr(self, "_intervention_timeline"):
+                self._intervention_timeline = []
+
+            # 現在のステップ数を取得
+            current_step = 0
+            if (
+                self.engine
+                and hasattr(self.engine, "_current_scene_log")
+                and self.engine._current_scene_log
+            ):
+                current_step = len(self.engine._current_scene_log.turns)
+
+            # 介入記録を作成
+            intervention_record = {
+                "step": current_step,
+                "timestamp": datetime.now().isoformat(),
+                "intervention_type": intervention_type,
+                "content": content,
+                "target_character": target_character,
+                "is_intervention": True,
+            }
+
+            self._intervention_timeline.append(intervention_record)
+            logger.info(f"介入記録をタイムラインに追加: {intervention_record}")
+
+        except Exception as e:
+            logger.error(f"介入記録の追加に失敗: {e}")
 
     async def stop_simulation(self) -> Dict[str, Any]:
         """シミュレーションを停止"""

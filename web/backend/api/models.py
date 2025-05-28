@@ -65,6 +65,7 @@ class TimelineEntry(BaseModel):
     action_type: str
     content: str
     metadata: Optional[Dict[str, Any]] = None
+    is_intervention: bool = False  # 介入記録かどうか
 
 
 class SimulationState(BaseModel):
@@ -77,6 +78,7 @@ class SimulationState(BaseModel):
     scene_name: Optional[str] = None
     timeline: List[TimelineEntry]
     config: SimulationConfig
+    current_scene: Optional[Dict[str, Any]] = None
 
 
 class InterventionRequest(BaseModel):
@@ -108,3 +110,13 @@ class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None
     code: Optional[str] = None
+
+
+class InterventionRecord(BaseModel):
+    """介入記録"""
+
+    intervention_type: str
+    content: str
+    target_character: Optional[str] = None
+    timestamp: str
+    step: int

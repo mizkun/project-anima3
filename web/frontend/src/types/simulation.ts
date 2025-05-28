@@ -37,6 +37,7 @@ export interface TimelineEntry {
   action_type: 'turn' | 'intervention'
   content: string
   metadata?: Record<string, any>
+  is_intervention?: boolean
 }
 
 // シミュレーション状態

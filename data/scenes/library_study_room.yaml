@@ -1,7 +1,7 @@
-scene_id: "library_study_room_001"
+scene_id: "library_study_room_002"
 location: "学校図書館の個人勉強室"
-time: "放課後"
-situation: "放課後の静かな図書館。城月燐子は個人勉強室で一人で本を読んでいたが、木下芽依が同じ勉強室に入ってきた。周囲は本棚に囲まれ、窓からは夕日が差し込んでいる。他の生徒たちの気配は遠く、二人だけの静寂な空間。"
+time: "朝の授業前"
+situation: "朝の静かな図書館。城月燐子は個人勉強室で一人で本を読んでいたが、木下芽依が同じ勉強室に入ってきた。周囲は本棚に囲まれ、窓からは夕日が差し込んでいる。他の生徒たちの気配は遠く、二人だけの静寂な空間。"
 participant_character_ids:
   - "rinko_kizuki_002"
-  - "mei_kinoshita_001" 
+  - "mei_kinoshita_001"

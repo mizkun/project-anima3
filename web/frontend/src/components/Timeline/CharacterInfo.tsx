@@ -1,56 +1,77 @@
 import React from 'react'
-import { User } from 'lucide-react'
+import { Avatar, Box, Typography } from '@mui/material'
+import { Person } from '@mui/icons-material'
 
 interface CharacterInfoProps {
   characterId: string
   characterName?: string
+  className?: string
 }
 
-export const CharacterInfo: React.FC<CharacterInfoProps> = ({ 
-  characterId, 
-  characterName 
+export const CharacterInfo: React.FC<CharacterInfoProps> = ({
+  characterId,
+  characterName,
+  className = ""
 }) => {
-  // キャラクター名の表示（IDから名前を生成、または提供された名前を使用）
-  const displayName = characterName || characterId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-  
-  // キャラクターIDから色を生成（一貫した色付けのため）
   const getCharacterColor = (id: string) => {
     const colors = [
-      'bg-blue-100 text-blue-700 border-blue-200',
-      'bg-green-100 text-green-700 border-green-200',
-      'bg-purple-100 text-purple-700 border-purple-200',
-      'bg-orange-100 text-orange-700 border-orange-200',
-      'bg-pink-100 text-pink-700 border-pink-200',
-      'bg-indigo-100 text-indigo-700 border-indigo-200',
+      'primary.main',
+      'secondary.main', 
+      'success.main',
+      'warning.main',
+      'error.main',
+      'info.main'
     ]
-    const hash = id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
-    return colors[hash % colors.length]
+    const hash = id.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0)
+      return a & a
+    }, 0)
+    return colors[Math.abs(hash) % colors.length]
   }
 
-  // アバター用の初期文字を取得
-  const getInitials = (name: string) => {
-    return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)
-  }
+  const displayName = characterName || characterId
 
   return (
-    <div className="flex items-center gap-3">
-      {/* キャラクターアバター */}
-      <div className={`neumorphism-icon w-10 h-10 flex items-center justify-center ${getCharacterColor(characterId)}`}>
-        <span className="text-sm font-bold">
-          {getInitials(displayName)}
-        </span>
-      </div>
+    <Box className={className} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Avatar 
+        sx={{ 
+          width: 40, 
+          height: 40, 
+          bgcolor: getCharacterColor(characterId),
+          fontSize: '1rem'
+        }}
+      >
+        {displayName.charAt(0).toUpperCase()}
+      </Avatar>
       
-      {/* キャラクター情報 */}
-      <div className="flex-1">
-        <h4 className="font-semibold text-gray-800">{displayName}</h4>
-        <p className="text-xs text-gray-500">ID: {characterId}</p>
-      </div>
-      
-      {/* キャラクターアイコン */}
-      <div className="neumorphism-icon p-2">
-        <User className="h-4 w-4 text-gray-600" />
-      </div>
-    </div>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            fontWeight: 'medium',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {displayName}
+        </Typography>
+        
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 0.5,
+          mt: 0.5,
+          p: 0.5,
+          bgcolor: 'action.hover',
+          borderRadius: 1
+        }}>
+          <Person sx={{ fontSize: '0.875rem', color: 'text.secondary' }} />
+          <Typography variant="caption" color="text.secondary">
+            {characterId}
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
   )
 } 

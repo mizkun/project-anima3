@@ -10,8 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from web.backend.api.simulation import router as simulation_router
-from web.backend.api.files import router as files_router
+from web.backend.api import simulation, files, export
 from web.backend.services.engine_wrapper import engine_wrapper
 
 # ロギング設定
@@ -50,8 +49,9 @@ app.add_middleware(
 )
 
 # APIルーターを追加
-app.include_router(simulation_router)
-app.include_router(files_router, prefix="/api")
+app.include_router(simulation.router, prefix="/api/simulation", tags=["simulation"])
+app.include_router(files.router, prefix="/api/files", tags=["files"])
+app.include_router(export.router, prefix="/api/export", tags=["export"])
 
 
 @app.on_event("startup")

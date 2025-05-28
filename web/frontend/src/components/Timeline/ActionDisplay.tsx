@@ -1,89 +1,92 @@
 import React from 'react'
-import { Brain, Activity, MessageCircle, Play } from 'lucide-react'
+import { Box, Typography, Chip } from '@mui/material'
+import { 
+  Chat as ChatIcon, 
+  Psychology as ThinkIcon, 
+  DirectionsRun as ActionIcon,
+  Info as InfoIcon 
+} from '@mui/icons-material'
 
 interface ActionDisplayProps {
-  actionType: 'turn' | 'intervention'
-  content: string
+  action: {
+    type: 'speak' | 'think' | 'action' | 'system'
+    content: string
+    character?: string
+  }
 }
 
-export const ActionDisplay: React.FC<ActionDisplayProps> = ({ 
-  actionType, 
-  content 
-}) => {
-  if (actionType === 'turn') {
-    // ターンの場合、思考・行動・発言を分割して表示
-    const lines = content.split('\n')
-    const thinkLine = lines.find(line => line.startsWith('思考:'))
-    const actLine = lines.find(line => line.startsWith('行動:'))
-    const talkLine = lines.find(line => line.startsWith('発言:'))
-
-    return (
-      <div className="space-y-3">
-        {thinkLine && (
-          <div className="neumorphism-inset rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="neumorphism-icon p-2 flex-shrink-0">
-                <Brain className="h-4 w-4 text-purple-600" />
-              </div>
-              <div className="flex-1">
-                <h5 className="text-sm font-semibold text-purple-700 dark:text-purple-400 mb-1">思考</h5>
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {thinkLine.replace('思考: ', '')}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {actLine && (
-          <div className="neumorphism-inset rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="neumorphism-icon p-2 flex-shrink-0">
-                <Activity className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <h5 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-1">行動</h5>
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {actLine.replace('行動: ', '')}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {talkLine && (
-          <div className="neumorphism-inset rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="neumorphism-icon p-2 flex-shrink-0">
-                <MessageCircle className="h-4 w-4 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <h5 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">発言</h5>
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {talkLine.replace('発言: ', '')}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  } else {
-    // 介入の場合
-    return (
-      <div className="space-y-3">
-        <div className="neumorphism-inset rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <div className="neumorphism-icon p-2 flex-shrink-0">
-              <Play className="h-4 w-4 text-orange-600" />
-            </div>
-            <div className="flex-1">
-              <h5 className="text-sm font-semibold text-orange-700 dark:text-orange-400 mb-1">介入</h5>
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{content}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+export const ActionDisplay: React.FC<ActionDisplayProps> = ({ action }) => {
+  const getActionIcon = () => {
+    switch (action.type) {
+      case 'speak':
+        return <ChatIcon sx={{ fontSize: '1.25rem', color: 'primary.main' }} />
+      case 'think':
+        return <ThinkIcon sx={{ fontSize: '1.25rem', color: 'secondary.main' }} />
+      case 'action':
+        return <ActionIcon sx={{ fontSize: '1.25rem', color: 'success.main' }} />
+      case 'system':
+        return <InfoIcon sx={{ fontSize: '1.25rem', color: 'info.main' }} />
+      default:
+        return <InfoIcon sx={{ fontSize: '1.25rem', color: 'text.secondary' }} />
+    }
   }
+
+  const getActionColor = () => {
+    switch (action.type) {
+      case 'speak':
+        return 'primary'
+      case 'think':
+        return 'secondary'
+      case 'action':
+        return 'success'
+      case 'system':
+        return 'info'
+      default:
+        return 'default'
+    }
+  }
+
+  const getActionLabel = () => {
+    switch (action.type) {
+      case 'speak':
+        return '発言'
+      case 'think':
+        return '思考'
+      case 'action':
+        return '行動'
+      case 'system':
+        return 'システム'
+      default:
+        return '不明'
+    }
+  }
+
+  return (
+    <Box sx={{ 
+      p: 2, 
+      bgcolor: 'background.paper',
+      border: '1px solid',
+      borderColor: 'divider',
+      borderRadius: 2
+    }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+        {getActionIcon()}
+        <Chip 
+          label={getActionLabel()} 
+          color={getActionColor() as any}
+          size="small"
+          variant="outlined"
+        />
+        {action.character && (
+          <Typography variant="caption" color="text.secondary">
+            by {action.character}
+          </Typography>
+        )}
+      </Box>
+      
+      <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+        {action.content}
+      </Typography>
+    </Box>
+  )
 } 

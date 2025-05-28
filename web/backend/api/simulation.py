@@ -20,7 +20,7 @@ from web.backend.api.models import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/simulation", tags=["simulation"])
+router = APIRouter(tags=["simulation"])
 
 
 @router.get("/status", response_model=SimulationState)

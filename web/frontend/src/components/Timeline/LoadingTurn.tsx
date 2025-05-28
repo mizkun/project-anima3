@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { NeumorphismCard } from '@/components/ui/neumorphism-card'
-import { Loader2, Brain, Activity, MessageCircle } from 'lucide-react'
+import { Card, CardContent, Box, Typography, CircularProgress } from '@mui/material'
+import { Brain, Activity, MessageCircle } from 'lucide-react'
 
 interface LoadingTurnProps {
   turnNumber: number
@@ -9,108 +9,208 @@ interface LoadingTurnProps {
 
 export const LoadingTurn: React.FC<LoadingTurnProps> = ({ turnNumber }) => {
   return (
-    <NeumorphismCard className="relative border-2 border-dashed border-blue-300">
-      {/* ターン番号とローディング状態 */}
-      <div className="flex items-center justify-between p-4 pb-2">
-        <div className="flex items-center gap-3">
-          <div className="neumorphism-status w-8 h-8 flex items-center justify-center">
-            <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-800 dark:text-gray-200">ターン {turnNumber}</h3>
-            <p className="text-xs text-blue-600 dark:text-blue-400">処理中...</p>
-          </div>
-        </div>
-        
-        <div className="neumorphism-status w-6 h-6 relative">
-          <div className="absolute inset-1 bg-blue-500 rounded-full animate-pulse"></div>
-        </div>
-      </div>
+    <Card 
+      variant="outlined" 
+      sx={{ 
+        position: 'relative',
+        border: '2px dashed',
+        borderColor: 'primary.light',
+        bgcolor: 'background.paper'
+      }}
+    >
+      <CardContent>
+        {/* ターン番号とローディング状態 */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box 
+              sx={{ 
+                width: 32, 
+                height: 32, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                bgcolor: 'primary.light',
+                borderRadius: 1
+              }}
+            >
+              <CircularProgress size={16} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle2" fontWeight="bold">ターン {turnNumber}</Typography>
+              <Typography variant="caption" color="primary">処理中...</Typography>
+            </Box>
+          </Box>
+          
+          <Box 
+            sx={{ 
+              width: 24, 
+              height: 24, 
+              position: 'relative',
+              bgcolor: 'primary.main',
+              borderRadius: '50%'
+            }}
+          >
+            <Box 
+              sx={{ 
+                position: 'absolute',
+                inset: 1,
+                bgcolor: 'primary.main',
+                borderRadius: '50%',
+                animation: 'pulse 2s infinite'
+              }} 
+            />
+          </Box>
+        </Box>
 
-      {/* 処理段階のインジケーター */}
-      <div className="px-4 pb-4">
-        <div className="space-y-3">
+        {/* 処理段階のインジケーター */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {/* 思考処理 */}
           <motion.div
-            className="neumorphism-inset rounded-xl p-4"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           >
-            <div className="flex items-center gap-3">
-              <div className="neumorphism-icon p-2">
-                <Brain className="h-4 w-4 text-purple-600" />
-              </div>
-              <div className="flex-1">
-                <h5 className="text-sm font-semibold text-purple-700 dark:text-purple-400 mb-1">思考生成中</h5>
-                <div className="flex gap-1">
-                  {[0, 1, 2].map((i) => (
-                    <motion.div
-                      key={i}
-                      className="w-2 h-2 bg-purple-400 rounded-full"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ 
-                        duration: 1, 
-                        repeat: Infinity, 
-                        delay: i * 0.2 
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+            <Card variant="outlined" sx={{ bgcolor: 'grey.50' }}>
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box 
+                    sx={{ 
+                      p: 1, 
+                      bgcolor: 'secondary.light', 
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Brain size={16} color="#9c27b0" />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" fontWeight="bold" color="secondary.main" sx={{ mb: 0.5 }}>
+                      思考生成中
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      {[0, 1, 2].map((i) => (
+                        <motion.div
+                          key={i}
+                          style={{
+                            width: 8,
+                            height: 8,
+                            backgroundColor: '#ba68c8',
+                            borderRadius: '50%'
+                          }}
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ 
+                            duration: 1, 
+                            repeat: Infinity, 
+                            delay: i * 0.2 
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
           </motion.div>
 
           {/* 行動処理 */}
           <motion.div
-            className="neumorphism-inset rounded-xl p-4 opacity-60"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
           >
-            <div className="flex items-center gap-3">
-              <div className="neumorphism-icon p-2">
-                <Activity className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <h5 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-1">行動決定中</h5>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-                  <motion.div
-                    className="bg-green-500 dark:bg-green-400 h-1 rounded-full"
-                    animate={{ width: ["0%", "100%", "0%"] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                </div>
-              </div>
-            </div>
+            <Card variant="outlined" sx={{ bgcolor: 'grey.50', opacity: 0.6 }}>
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box 
+                    sx={{ 
+                      p: 1, 
+                      bgcolor: 'success.light', 
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Activity size={16} color="#2e7d32" />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" fontWeight="bold" color="success.main" sx={{ mb: 0.5 }}>
+                      行動決定中
+                    </Typography>
+                    <Box sx={{ width: '100%', bgcolor: 'grey.300', borderRadius: 1, height: 4 }}>
+                      <motion.div
+                        style={{
+                          height: '100%',
+                          backgroundColor: '#4caf50',
+                          borderRadius: 4
+                        }}
+                        animate={{ width: ["0%", "100%", "0%"] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
           </motion.div>
 
           {/* 発言処理 */}
           <motion.div
-            className="neumorphism-inset rounded-xl p-4 opacity-40"
             animate={{ opacity: [0.2, 0.4, 0.2] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           >
-            <div className="flex items-center gap-3">
-              <div className="neumorphism-icon p-2">
-                <MessageCircle className="h-4 w-4 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <h5 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">発言生成待機中</h5>
-                <div className="flex gap-1">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-1 h-4 bg-blue-300 rounded-full opacity-30"
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+            <Card variant="outlined" sx={{ bgcolor: 'grey.50', opacity: 0.4 }}>
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box 
+                    sx={{ 
+                      p: 1, 
+                      bgcolor: 'primary.light', 
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <MessageCircle size={16} color="#1976d2" />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" fontWeight="bold" color="primary.main" sx={{ mb: 0.5 }}>
+                      発言生成待機中
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            width: 4,
+                            height: 16,
+                            bgcolor: 'primary.light',
+                            borderRadius: 1,
+                            opacity: 0.3
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
           </motion.div>
-        </div>
-      </div>
+        </Box>
+      </CardContent>
 
       {/* 処理中のオーバーレイ効果 */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-pulse rounded-2xl pointer-events-none" />
-    </NeumorphismCard>
+      <Box 
+        sx={{ 
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)',
+          animation: 'pulse 2s infinite',
+          borderRadius: 1,
+          pointerEvents: 'none'
+        }} 
+      />
+    </Card>
   )
 } 

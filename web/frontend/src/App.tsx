@@ -1,24 +1,16 @@
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { 
-  NeumorphismCard, 
-  NeumorphismCardContent, 
-  NeumorphismCardDescription, 
-  NeumorphismCardHeader, 
-  NeumorphismCardTitle 
-} from "@/components/ui/neumorphism-card"
-import { NeumorphismButton } from "@/components/ui/neumorphism-button"
-import { HamburgerMenu } from "@/components/ui/HamburgerMenu"
-import { Timeline } from "@/components/Timeline/Timeline"
-import { SimulationControls } from "@/components/Controls/SimulationControls"
-import { InspectionPanel } from "@/components/Layout/InspectionPanel"
+import React, { useState, useEffect } from 'react'
+import { ThemeProvider, CssBaseline, Box } from '@mui/material'
+import { motion } from 'framer-motion'
+import { theme } from '@/theme/materialTheme'
+import { Timeline } from '@/components/Timeline/Timeline'
+import { MinimalControls } from '@/components/Controls/MinimalControls'
+import { IntegratedInspector } from '@/components/Inspector/IntegratedInspector'
 import { useSimulationStore } from "@/stores/simulationStore"
 import { fadeIn, slideUp } from "@/lib/animations"
-import { Sparkles, Clock, File } from "lucide-react"
 
 function App() {
-  const [inspectionPanelOpen, setInspectionPanelOpen] = useState(false)
-  const [inspectionPanelWidth, setInspectionPanelWidth] = useState(350)
+  const [inspectionPanelWidth, setInspectionPanelWidth] = useState(400)
+  const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false)
   const simulationStore = useSimulationStore()
 
   // 画面サイズに応じてパネルの初期状態を調整
@@ -26,15 +18,10 @@ function App() {
     const handleResize = () => {
       const screenWidth = window.innerWidth
       
-      // 小画面では自動的にパネルを閉じる
-      if (screenWidth < 1024) {
-        setInspectionPanelOpen(false)
-      }
-      
-      // パネル幅を画面サイズに応じて調整（画面幅の25-30%程度）
-      const idealWidth = Math.floor(screenWidth * 0.28)
-      const maxWidth = Math.min(500, screenWidth * 0.35)
-      const minWidth = 300
+      // パネル幅を画面サイズに応じて調整（画面幅の35-45%程度）
+      const idealWidth = Math.floor(screenWidth * 0.4)
+      const maxWidth = Math.min(600, screenWidth * 0.45)
+      const minWidth = 350
       
       const newWidth = Math.max(minWidth, Math.min(maxWidth, idealWidth))
       
@@ -45,9 +32,9 @@ function App() {
 
     // 初期化時に適切な幅を設定
     const screenWidth = window.innerWidth
-    const idealWidth = Math.floor(screenWidth * 0.28)
-    const maxWidth = Math.min(500, screenWidth * 0.35)
-    const minWidth = 300
+    const idealWidth = Math.floor(screenWidth * 0.4)
+    const maxWidth = Math.min(600, screenWidth * 0.45)
+    const minWidth = 350
     const initialWidth = Math.max(minWidth, Math.min(maxWidth, idealWidth))
     setInspectionPanelWidth(initialWidth)
 
@@ -56,89 +43,85 @@ function App() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const handleInspectionPanelToggle = () => {
-    setInspectionPanelOpen(!inspectionPanelOpen)
+  const handleInspectionPanelWidthChange = (newWidth: number) => {
+    setInspectionPanelWidth(newWidth)
   }
 
-  const handleInspectionPanelWidthChange = (width: number) => {
-    setInspectionPanelWidth(width)
-  }
-
-  // シーン名を取得（デフォルトは「シーン」）
-  const sceneName = simulationStore.scene_name || "シーン"
+  // 折りたたみ状態に応じたマージンを計算
+  const rightMargin = isInspectorCollapsed ? 28 : inspectionPanelWidth
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* メインコンテンツエリア - 3列分割 */}
-      <div className="flex-1 flex relative">
-        {/* 左列: Control Panel */}
-        <motion.div
-          className="left-panel"
-          variants={slideUp}
-          initial="initial"
-          animate="animate"
-          transition={{ delay: 0.3 }}
-        >
-          <NeumorphismCard className="control-panel-left h-full">
-            <NeumorphismCardContent className="flex-1 overflow-hidden">
-              <SimulationControls />
-            </NeumorphismCardContent>
-          </NeumorphismCard>
-        </motion.div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: 'background.default',
+        }}
+      >
+        {/* メインコンテンツエリア - 2列分割 */}
+        <Box sx={{ flex: 1, display: 'flex', height: '100vh' }}>
+          {/* 左列: タイムライン + ミニマルコントロール */}
+          <motion.div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              marginRight: `${rightMargin}px`,
+              transition: 'margin-right 0.3s ease-in-out',
+            }}
+            variants={slideUp}
+            initial="initial"
+            animate="animate"
+            transition={{ delay: 0.3 }}
+          >
+            {/* ミニマルコントロール */}
+            <Box sx={{ flexShrink: 0, p: 1 }}>
+              <MinimalControls />
+            </Box>
 
-        {/* 中央列: Timeline */}
-        <motion.div
-          className="center-panel"
-          variants={fadeIn}
-          initial="initial"
-          animate="animate"
-          transition={{ delay: 0.4 }}
-          style={{
-            marginRight: inspectionPanelOpen ? `${inspectionPanelWidth}px` : '0px'
-          }}
-        >
-          <NeumorphismCard className="center-panel-card h-full">
-            {/* タイムラインコンテンツ */}
-            <NeumorphismCardContent className="flex-1 overflow-hidden p-0">
-              <Timeline 
-                className="h-full" 
-                onInspectionPanelToggle={handleInspectionPanelToggle}
-                inspectionPanelOpen={inspectionPanelOpen}
-              />
-            </NeumorphismCardContent>
-          </NeumorphismCard>
-        </motion.div>
+            {/* タイムライン */}
+            <Box sx={{ flex: 1, overflow: 'hidden', p: 1, pt: 0 }}>
+              <Box
+                sx={{
+                  height: '100%',
+                  backgroundColor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  overflow: 'hidden',
+                }}
+              >
+                <Timeline className="h-full" />
+              </Box>
+            </Box>
+          </motion.div>
 
-        {/* 右列: Inspection Panel */}
-        <motion.div
-          className="right-panel-container"
-          variants={fadeIn}
-          initial="initial"
-          animate="animate"
-          transition={{ delay: 0.5 }}
-        >
-          <InspectionPanel
-            isOpen={inspectionPanelOpen}
-            onToggle={handleInspectionPanelToggle}
-            width={inspectionPanelWidth}
-            onWidthChange={handleInspectionPanelWidthChange}
-            minWidth={300}
-            maxWidth={Math.min(500, window.innerWidth * 0.35)}
-          />
-        </motion.div>
-
-        {/* 左下に設定ボタン */}
-        <motion.div
-          className="fixed bottom-6 left-6 z-50"
-          variants={fadeIn}
-          initial="initial"
-          animate="animate"
-          transition={{ delay: 0.6 }}
-        >
-          <HamburgerMenu />
-        </motion.div>
-      </div>
-    </div>
+          {/* 右列: 統合インスペクター */}
+          <motion.div
+            style={{
+              position: 'fixed',
+              right: 0,
+              top: 0,
+              height: '100vh',
+              zIndex: 1000,
+            }}
+            variants={fadeIn}
+            initial="initial"
+            animate="animate"
+            transition={{ delay: 0.5 }}
+          >
+            <IntegratedInspector
+              width={inspectionPanelWidth}
+              onWidthChange={handleInspectionPanelWidthChange}
+              isCollapsed={isInspectorCollapsed}
+              onCollapseChange={setIsInspectorCollapsed}
+            />
+          </motion.div>
+        </Box>
+      </Box>
+    </ThemeProvider>
   )
 }
 

@@ -1,0 +1,7 @@
+scene_id: "new_scene_test_001"
+location: "学校の中庭"
+time: "時間を記述してください"
+situation: "状況を詳しく記述してください"
+participant_character_ids:
+  - "rinko_kizuki_002"
+  - "mei_kinoshita_001"

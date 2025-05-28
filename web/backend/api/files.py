@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-router = APIRouter(prefix="/files", tags=["files"])
+router = APIRouter(tags=["files"])
 
 # プロジェクトルートディレクトリ
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent

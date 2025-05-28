@@ -1,16 +1,20 @@
 import * as React from "react"
+import { Card, CardContent, CardHeader, CardActions } from '@mui/material'
 import { cn } from "@/lib/utils"
 
 const NeumorphismCard = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
+  React.HTMLAttributes<HTMLDivElement> & { elevation?: number }
+>(({ className, elevation = 1, ...props }, ref) => (
+  <Card
     ref={ref}
-    className={cn(
-      "neumorphism-card rounded-2xl text-gray-300 dark:text-gray-300 text-gray-700 p-1",
-      className
-    )}
+    elevation={elevation}
+    className={cn("", className)}
+    sx={{
+      backgroundColor: 'background.paper',
+      border: '1px solid',
+      borderColor: 'divider',
+    }}
     {...props}
   />
 ))
@@ -20,9 +24,9 @@ const NeumorphismCardHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
+  <CardHeader
     ref={ref}
-    className={cn("flex flex-col space-y-2 p-6", className)}
+    className={cn("", className)}
     {...props}
   />
 ))
@@ -34,10 +38,7 @@ const NeumorphismCardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn(
-      "text-xl font-bold leading-none tracking-tight text-gray-200 dark:text-gray-200 text-gray-800",
-      className
-    )}
+    className={cn("text-xl font-bold leading-none tracking-tight", className)}
     {...props}
   />
 ))
@@ -49,7 +50,8 @@ const NeumorphismCardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-gray-400 dark:text-gray-400 text-gray-600 leading-relaxed", className)}
+    className={cn("text-sm leading-relaxed", className)}
+    style={{ color: 'text.secondary' }}
     {...props}
   />
 ))
@@ -59,7 +61,7 @@ const NeumorphismCardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  <CardContent ref={ref} className={cn("", className)} {...props} />
 ))
 NeumorphismCardContent.displayName = "NeumorphismCardContent"
 
@@ -67,9 +69,9 @@ const NeumorphismCardFooter = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
+  <CardActions
     ref={ref}
-    className={cn("flex items-center p-6 pt-0", className)}
+    className={cn("", className)}
     {...props}
   />
 ))

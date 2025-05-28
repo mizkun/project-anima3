@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useSimulationStore } from '@/stores/simulationStore'
 import { useSimulationControls } from '@/hooks/useSimulationControls'
 import { TurnItem } from './TurnItem'
+import { InterventionItem } from './InterventionItem'
 import { LoadingTurn } from './LoadingTurn'
 import { NeumorphismButton } from '@/components/ui/neumorphism-button'
 import { Users, ChevronDown, ChevronUp, File } from 'lucide-react'
@@ -146,7 +147,7 @@ export const Timeline: React.FC<TimelineProps> = ({
               
               {turns.map((turn, index) => (
                 <motion.div
-                  key={`${turn.step}-${index}`}
+                  key={`${turn.step}-${turn.action_type}-${index}`}
                   initial={{ opacity: 0, y: -20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -157,12 +158,19 @@ export const Timeline: React.FC<TimelineProps> = ({
                   }}
                   className="timeline-item"
                 >
-                  <TurnItem 
-                    turn={turn} 
-                    isLatest={index === 0}
-                    turnNumber={turn.step}
-                    isGlobalExpanded={isGlobalExpanded}
-                  />
+                  {turn.is_intervention ? (
+                    <InterventionItem 
+                      intervention={turn} 
+                      turnNumber={turn.step}
+                    />
+                  ) : (
+                    <TurnItem 
+                      turn={turn} 
+                      isLatest={index === 0 && !isProcessing}
+                      turnNumber={turn.step}
+                      isGlobalExpanded={isGlobalExpanded}
+                    />
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
