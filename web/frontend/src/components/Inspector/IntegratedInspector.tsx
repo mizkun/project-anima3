@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Tabs,
-  Tab,
-  Paper,
-  Typography,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Movie as MovieIcon,
   People as PeopleIcon,
@@ -43,13 +35,22 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other })
       id={`inspector-tabpanel-${index}`}
       aria-labelledby={`inspector-tab-${index}`}
       {...other}
-      style={{ height: '100%', overflow: 'hidden' }}
+      className="h-full overflow-hidden"
     >
-      {value === index && (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-          {children}
-        </Box>
-      )}
+      <AnimatePresence mode="wait">
+        {value === index && (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="h-full flex flex-col"
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -70,7 +71,7 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState(0); // シーンタブをデフォルトで開く
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (newValue: number) => {
     setActiveTab(newValue);
   };
 
@@ -81,116 +82,114 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
   // 折りたたみ時は最小幅（ボタンのみ表示）
   const displayWidth = isCollapsed ? 28 : width;
 
+  const tabs = [
+    { icon: MovieIcon, label: 'シーン', component: SceneTab },
+    { icon: PeopleIcon, label: 'キャラクター', component: CharacterTab },
+    { icon: HistoryIcon, label: '履歴', component: SimulationTab },
+    { icon: SettingsIcon, label: '設定', component: SettingsTab },
+  ];
+
   return (
     <>
       {/* 折りたたみボタン（常に表示） */}
-      <Box
-        sx={{
-          position: 'fixed',
-          right: isCollapsed ? 4 : width - 24,
-          top: 12,
-          zIndex: 1001,
-          transition: 'right 0.3s ease-in-out',
+      <motion.div
+        className="fixed z-50"
+        style={{
+          right: isCollapsed ? 16 : width - 24,
+          top: 16,
         }}
+        animate={{ right: isCollapsed ? 16 : width - 24 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        <Tooltip title={isCollapsed ? "パネルを開く" : "パネルを閉じる"}>
-          <IconButton
-            onClick={handleToggleCollapse}
-            sx={{
-              backgroundColor: 'background.paper',
-              border: '1px solid',
-              borderColor: 'divider',
-              boxShadow: 1,
-              width: 20,
-              height: 20,
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-            }}
-            size="small"
+        <motion.button
+          className="neo-button-primary p-2 rounded-full w-10 h-10 flex items-center justify-center"
+          onClick={handleToggleCollapse}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          title={isCollapsed ? "パネルを開く" : "パネルを閉じる"}
+        >
+          <motion.div
+            animate={{ rotate: isCollapsed ? 0 : 180 }}
+            transition={{ duration: 0.3 }}
           >
             {isCollapsed ? (
-              <ChevronLeft sx={{ fontSize: 14 }} />
+              <ChevronLeft className="w-4 h-4" />
             ) : (
-              <ChevronRight sx={{ fontSize: 14 }} />
+              <ChevronRight className="w-4 h-4" />
             )}
-          </IconButton>
-        </Tooltip>
-      </Box>
+          </motion.div>
+        </motion.button>
+      </motion.div>
 
       {/* メインパネル */}
-      <Paper
-        sx={{
+      <motion.div
+        className="h-screen flex flex-col neo-card-floating overflow-hidden"
+        style={{
           width: displayWidth,
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: 'background.paper',
-          borderRadius: 0,
-          borderLeft: '1px solid',
-          borderColor: 'divider',
-          transition: 'width 0.3s ease-in-out',
-          overflow: 'hidden',
+          borderRadius: '24px 0 0 24px',
+          marginTop: 0,
+          marginBottom: 0,
+          marginRight: 0,
         }}
+        animate={{ width: displayWidth }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        {!isCollapsed && (
-          <>
-            {/* タブヘッダー */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', flexShrink: 0 }}>
-              <Tabs
-                value={activeTab}
-                onChange={handleTabChange}
-                variant="fullWidth"
-                aria-label="統合インスペクタータブ"
-              >
-                <Tab
-                  icon={<MovieIcon />}
-                  label="シーン"
-                  {...a11yProps(0)}
-                  sx={{ minHeight: 64 }}
-                />
-                <Tab
-                  icon={<PeopleIcon />}
-                  label="キャラクター"
-                  {...a11yProps(1)}
-                  sx={{ minHeight: 64 }}
-                />
-                <Tab
-                  icon={<HistoryIcon />}
-                  label="履歴"
-                  {...a11yProps(2)}
-                  sx={{ minHeight: 64 }}
-                />
-                <Tab
-                  icon={<SettingsIcon />}
-                  label="設定"
-                  {...a11yProps(3)}
-                  sx={{ minHeight: 64 }}
-                />
-              </Tabs>
-            </Box>
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              className="flex flex-col h-full"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* タブヘッダー */}
+              <div className="neo-element-subtle p-2 m-4 mb-0 rounded-t-2xl flex-shrink-0">
+                <div className="grid grid-cols-4 gap-1">
+                  {tabs.map((tab, index) => {
+                    const IconComponent = tab.icon;
+                    return (
+                      <motion.button
+                        key={index}
+                        className={`neo-button flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-300 ${
+                          activeTab === index ? 'neo-element-pressed' : ''
+                        }`}
+                        onClick={() => handleTabChange(index)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        style={{
+                          color: activeTab === index ? 'var(--neo-accent)' : 'var(--neo-text-secondary)'
+                        }}
+                        {...a11yProps(index)}
+                      >
+                        <IconComponent className="w-5 h-5" />
+                        <span className="text-xs font-medium">{tab.label}</span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
 
-            {/* タブコンテンツ */}
-            <Box sx={{ flex: 1, overflow: 'hidden' }}>
-              <TabPanel value={activeTab} index={0}>
-                <SceneTab />
-              </TabPanel>
-
-              <TabPanel value={activeTab} index={1}>
-                <CharacterTab />
-              </TabPanel>
-
-              <TabPanel value={activeTab} index={2}>
-                <SimulationTab />
-              </TabPanel>
-
-              <TabPanel value={activeTab} index={3}>
-                <SettingsTab />
-              </TabPanel>
-            </Box>
-          </>
-        )}
-      </Paper>
+              {/* タブコンテンツ */}
+              <div className="flex-1 overflow-hidden mx-4 mb-4">
+                <div 
+                  className="neo-element-pressed rounded-b-2xl h-full overflow-hidden"
+                  style={{ padding: '0' }}
+                >
+                  {tabs.map((tab, index) => {
+                    const ComponentToRender = tab.component;
+                    return (
+                      <TabPanel key={index} value={activeTab} index={index}>
+                        <ComponentToRender />
+                      </TabPanel>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </>
   );
 }; 

@@ -1,24 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Typography,
-  IconButton,
-  TextField,
-  Collapse,
-  Tooltip,
-} from '@mui/material';
-import {
   PlayArrow,
   Stop,
   SkipNext,
   ExpandMore,
   Close,
 } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useSimulationControls } from '../../hooks/useSimulationControls';
 import { useSimulationStore } from '../../stores/simulationStore';
 
@@ -219,151 +207,187 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
   const isRunning = status === 'running' || status === 'idle';
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        backgroundColor: 'background.paper',
-        borderRadius: 2,
-        boxShadow: 1,
-        mb: 2,
-      }}
+    <motion.div
+      className="neo-element p-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
     >
       {/* メインコントロール */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'nowrap' }}>
+      <div className="flex items-center gap-4 flex-wrap">
         {/* 左側のコントロールボタン */}
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="contained"
-            startIcon={<PlayArrow />}
+        <div className="flex gap-3">
+          <motion.button
+            className={`neo-button-primary flex items-center gap-2 px-6 py-3 ${isRunning || !selectedSceneId || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleStart}
             disabled={isRunning || !selectedSceneId || isLoading}
-            sx={{ minWidth: 100 }}
+            whileHover={!isRunning && selectedSceneId && !isLoading ? { scale: 1.05 } : {}}
+            whileTap={!isRunning && selectedSceneId && !isLoading ? { scale: 0.95 } : {}}
           >
-            Start
-          </Button>
+            <PlayArrow className="w-4 h-4" />
+            <span className="font-medium">Start</span>
+          </motion.button>
 
-          <Button
-            variant="outlined"
-            startIcon={<Stop />}
+          <motion.button
+            className={`neo-button flex items-center gap-2 px-6 py-3 ${!isRunning || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleStop}
             disabled={!isRunning || isLoading}
-            sx={{ minWidth: 100 }}
+            whileHover={isRunning && !isLoading ? { scale: 1.05 } : {}}
+            whileTap={isRunning && !isLoading ? { scale: 0.95 } : {}}
           >
-            Stop
-          </Button>
+            <Stop className="w-4 h-4" />
+            <span className="font-medium">Stop</span>
+          </motion.button>
 
-          <Button
-            variant="outlined"
-            startIcon={<SkipNext />}
+          <motion.button
+            className={`neo-button flex items-center gap-2 px-6 py-3 ${!isRunning || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleNextTurn}
             disabled={!isRunning || isLoading}
-            sx={{ minWidth: 120 }}
+            whileHover={isRunning && !isLoading ? { scale: 1.05 } : {}}
+            whileTap={isRunning && !isLoading ? { scale: 0.95 } : {}}
           >
-            Next Turn
-          </Button>
+            <SkipNext className="w-4 h-4" />
+            <span className="font-medium">Next Turn</span>
+          </motion.button>
 
-          <Button
-            variant="outlined"
-            startIcon={<ExpandMore />}
+          <motion.button
+            className={`neo-button flex items-center gap-2 px-6 py-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={() => setIsInterventionOpen(!isInterventionOpen)}
             disabled={isLoading}
-            sx={{ minWidth: 130 }}
+            whileHover={!isLoading ? { scale: 1.05 } : {}}
+            whileTap={!isLoading ? { scale: 0.95 } : {}}
           >
-            Intervention
-          </Button>
-        </Box>
+            <motion.div
+              animate={{ rotate: isInterventionOpen ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ExpandMore className="w-4 h-4" />
+            </motion.div>
+            <span className="font-medium">Intervention</span>
+          </motion.button>
+        </div>
 
         {/* 中央のシーン選択 */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-          <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+        <div className="flex items-center gap-3 flex-1">
+          <span className="text-sm font-medium whitespace-nowrap" style={{ color: 'var(--neo-text)' }}>
             シーン
-          </Typography>
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-            <Select
+          </span>
+          <div className="relative">
+            <select
+              className="neo-input px-4 py-2 min-w-[200px] appearance-none cursor-pointer"
               value={selectedSceneId}
               onChange={(e) => handleSceneChange(e.target.value)}
-              displayEmpty
               disabled={isRunning || isLoading}
             >
+              <option value="">シーンを選択してください</option>
               {Array.isArray(scenes) && scenes.map((scene) => (
-                <MenuItem key={scene.id} value={scene.id}>
+                <option key={scene.id} value={scene.id}>
                   {scene.id}
-                </MenuItem>
+                </option>
               ))}
-            </Select>
-          </FormControl>
-        </Box>
-      </Box>
+            </select>
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <ExpandMore className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
+            </div>
+          </div>
+        </div>
+
+        {/* ステータスインジケーター */}
+        <div className="flex items-center gap-2">
+          <motion.div
+            className="w-3 h-3 rounded-full"
+            animate={{
+              backgroundColor: isRunning ? 'var(--neo-success)' : 'var(--neo-text-secondary)',
+              scale: isRunning ? [1, 1.2, 1] : 1
+            }}
+            transition={{
+              scale: { repeat: isRunning ? Infinity : 0, duration: 1.5 }
+            }}
+          />
+          <span className="text-sm font-medium" style={{ color: 'var(--neo-text-secondary)' }}>
+            {status === 'running' ? 'Running' : status === 'idle' ? 'Ready' : 'Stopped'}
+          </span>
+        </div>
+      </div>
 
       {/* 介入パネル */}
-      <Collapse in={isInterventionOpen}>
-        <Box sx={{ 
-          mt: 2, 
-          p: 2, 
-          backgroundColor: 'background.default', 
-          borderRadius: 1,
-          border: 1,
-          borderColor: 'divider'
-        }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flex: 1 }}>
-              <FormControl size="small" sx={{ minWidth: 120 }}>
-                <InputLabel>介入タイプ</InputLabel>
-                <Select
-                  value={interventionType}
-                  onChange={(e) => setInterventionType(e.target.value as 'global' | 'character')}
-                  label="介入タイプ"
-                >
-                  <MenuItem value="global">全体向け</MenuItem>
-                  <MenuItem value="character">キャラクター向け</MenuItem>
-                </Select>
-              </FormControl>
-
-              {interventionType === 'character' && (
-                <FormControl size="small" sx={{ minWidth: 150 }}>
-                  <InputLabel>キャラクター</InputLabel>
-                  <Select
-                    value={selectedCharacterId}
-                    onChange={(e) => setSelectedCharacterId(e.target.value)}
-                    label="キャラクター"
-                  >
-                    {Array.isArray(availableCharacters) && availableCharacters.map((character) => (
-                      <MenuItem key={character.id} value={character.id}>
-                        {character.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
-            </Box>
-
-            <IconButton
-              onClick={() => setIsInterventionOpen(false)}
-              size="small"
-            >
-              <Close />
-            </IconButton>
-          </Box>
-
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            value={interventionContent}
-            onChange={(e) => setInterventionContent(e.target.value)}
-            placeholder="介入内容を入力してください..."
-            sx={{ mb: 2 }}
-          />
-
-          <Button
-            variant="contained"
-            onClick={handleIntervention}
-            disabled={!interventionContent.trim() || isLoading}
+      <AnimatePresence>
+        {isInterventionOpen && (
+          <motion.div
+            className="neo-element-pressed mt-6 p-4"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
           >
-            介入実行
-          </Button>
-        </Box>
-      </Collapse>
-    </Box>
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex gap-4 items-center flex-1">
+                <div className="relative">
+                  <select
+                    className="neo-input px-3 py-2 min-w-[120px] appearance-none cursor-pointer"
+                    value={interventionType}
+                    onChange={(e) => setInterventionType(e.target.value as 'global' | 'character')}
+                  >
+                    <option value="global">全体向け</option>
+                    <option value="character">キャラクター向け</option>
+                  </select>
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <ExpandMore className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
+                  </div>
+                </div>
+
+                {interventionType === 'character' && (
+                  <div className="relative">
+                    <select
+                      className="neo-input px-3 py-2 min-w-[150px] appearance-none cursor-pointer"
+                      value={selectedCharacterId}
+                      onChange={(e) => setSelectedCharacterId(e.target.value)}
+                    >
+                      <option value="">キャラクターを選択</option>
+                      {Array.isArray(availableCharacters) && availableCharacters.map((character) => (
+                        <option key={character.id} value={character.id}>
+                          {character.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      <ExpandMore className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <motion.button
+                className="neo-button p-2 rounded-full"
+                onClick={() => setIsInterventionOpen(false)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Close className="w-4 h-4" />
+              </motion.button>
+            </div>
+
+            <textarea
+              className="neo-input w-full p-4 resize-none"
+              rows={3}
+              value={interventionContent}
+              onChange={(e) => setInterventionContent(e.target.value)}
+              placeholder="介入内容を入力してください..."
+              style={{ marginBottom: '16px' }}
+            />
+
+            <motion.button
+              className={`neo-button-primary px-6 py-3 ${!interventionContent.trim() || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={handleIntervention}
+              disabled={!interventionContent.trim() || isLoading}
+              whileHover={interventionContent.trim() && !isLoading ? { scale: 1.05 } : {}}
+              whileTap={interventionContent.trim() && !isLoading ? { scale: 0.95 } : {}}
+            >
+              <span className="font-medium">介入実行</span>
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }; 

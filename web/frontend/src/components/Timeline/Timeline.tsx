@@ -5,7 +5,6 @@ import { useSimulationControls } from '@/hooks/useSimulationControls'
 import { TurnItem } from './TurnItem'
 import { InterventionItem } from './InterventionItem'
 import { LoadingTurn } from './LoadingTurn'
-import { NeumorphismButton } from '@/components/ui/neumorphism-button'
 import { Users, ChevronDown, ChevronUp, File } from 'lucide-react'
 
 interface TimelineProps {
@@ -54,92 +53,131 @@ export const Timeline: React.FC<TimelineProps> = ({
   }
 
   return (
-    <div className={`timeline-infinite-scroll ${className}`}>
+    <div className={`flex flex-col h-full ${className}`}>
       {/* ヘッダー部分 - 常に表示 */}
-      <div className="timeline-header p-4 border-b border-gray-200/50 dark:border-gray-700/50">
+      <motion.div 
+        className="neo-element-subtle p-6 m-4 mb-0 rounded-t-2xl flex-shrink-0"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <motion.h2 
+            className="text-xl font-bold"
+            style={{ color: 'var(--neo-text)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
             {turns.length > 0 ? `タイムライン (${turns.length}ターン)` : 'タイムライン'}
-          </h2>
-          <div className="flex items-center gap-2">
+          </motion.h2>
+          <div className="flex items-center gap-3">
             {/* 全て開く/閉じるボタン（ターンがある場合のみ表示） */}
             {turns.length > 0 && (
-              <NeumorphismButton
-                variant="secondary"
-                size="sm"
+              <motion.button
+                className="neo-button flex items-center gap-2 px-4 py-2"
                 onClick={toggleAllTurns}
-                className="flex items-center gap-2"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, duration: 0.3 }}
               >
-                {isGlobalExpanded === true ? (
-                  <>
+                <motion.div
+                  animate={{ rotate: isGlobalExpanded === true ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {isGlobalExpanded === true ? (
                     <ChevronUp className="h-4 w-4" />
-                    全て閉じる
-                  </>
-                ) : (
-                  <>
+                  ) : (
                     <ChevronDown className="h-4 w-4" />
-                    全て開く
-                  </>
-                )}
-              </NeumorphismButton>
+                  )}
+                </motion.div>
+                <span className="text-sm font-medium">
+                  {isGlobalExpanded === true ? '全て閉じる' : '全て開く'}
+                </span>
+              </motion.button>
             )}
             
             {/* インスペクションパネル開くボタン（パネルが閉じている時のみ表示） */}
             {!inspectionPanelOpen && onInspectionPanelToggle && (
-              <NeumorphismButton
-                variant="secondary"
-                size="sm"
+              <motion.button
+                className="neo-button flex items-center gap-2 px-4 py-2"
                 onClick={onInspectionPanelToggle}
-                className="flex items-center gap-2"
                 title="ファイル編集パネルを開く"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4, duration: 0.3 }}
               >
                 <File className="h-4 w-4" />
-                <span className="hidden sm:inline">File Edit</span>
-              </NeumorphismButton>
+                <span className="hidden sm:inline text-sm font-medium">File Edit</span>
+              </motion.button>
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* タイムライン内容 - 無限スクロール風 */}
+      {/* タイムライン内容 - スクロール可能エリア */}
       <div 
         ref={timelineRef}
-        className="timeline-scroll-container"
+        className="flex-1 overflow-y-auto mx-4 mb-4 neo-scrollbar"
+        style={{ 
+          borderRadius: '0 0 24px 24px',
+          background: 'var(--neo-bg)'
+        }}
       >
         {turns.length === 0 ? (
-          <div className="timeline-empty-state">
-            <div className="neumorphism-inset rounded-xl p-8 text-center">
-              <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400 dark:text-gray-500 text-lg mb-2">シミュレーションを開始してください</p>
-              <p className="text-sm text-gray-500 dark:text-gray-600">ターンが進行するとここに表示されます</p>
+          <motion.div 
+            className="neo-element-pressed p-12 m-4 rounded-2xl text-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+            >
+              <Users className="h-16 w-16 mx-auto mb-6" style={{ color: 'var(--neo-text-secondary)' }} />
+              <p className="text-xl mb-3 font-semibold" style={{ color: 'var(--neo-text-secondary)' }}>
+                シミュレーションを開始してください
+              </p>
+              <p className="text-sm mb-6" style={{ color: 'var(--neo-text-secondary)' }}>
+                ターンが進行するとここに表示されます
+              </p>
+              
               {/* 空の状態でもFile Editボタンを表示 */}
               {!inspectionPanelOpen && onInspectionPanelToggle && (
-                <div className="mt-6">
-                  <NeumorphismButton
-                    variant="primary"
-                    onClick={onInspectionPanelToggle}
-                    className="flex items-center gap-2"
-                    title="ファイル編集パネルを開く"
-                  >
-                    <File className="h-4 w-4" />
-                    ファイル編集を開始
-                  </NeumorphismButton>
-                </div>
+                <motion.button
+                  className="neo-button-primary flex items-center gap-2 px-6 py-3 mx-auto"
+                  onClick={onInspectionPanelToggle}
+                  title="ファイル編集パネルを開く"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.3 }}
+                >
+                  <File className="h-4 w-4" />
+                  <span className="font-medium">ファイル編集を開始</span>
+                </motion.button>
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         ) : (
-          <div className="timeline-content">
+          <div className="p-4 space-y-4">
             <AnimatePresence>
               {/* 処理中の表示を最上部に */}
               {isProcessing && (
                 <motion.div
                   key="loading-turn"
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="timeline-item"
+                  initial={{ opacity: 0, y: -20, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="neo-card-floating neo-pulse"
                 >
                   <LoadingTurn turnNumber={timeline.length + 1} />
                 </motion.div>
@@ -152,11 +190,12 @@ export const Timeline: React.FC<TimelineProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20, scale: 0.95 }}
                   transition={{ 
-                    duration: 0.3, 
+                    duration: 0.4, 
                     delay: index * 0.05,
                     ease: "easeOut"
                   }}
-                  className="timeline-item"
+                  className="neo-card-subtle"
+                  whileHover={{ scale: 1.02 }}
                 >
                   {turn.is_intervention ? (
                     <InterventionItem 

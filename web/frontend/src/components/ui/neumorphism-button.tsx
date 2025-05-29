@@ -1,127 +1,62 @@
-import * as React from "react"
-import { Button, IconButton } from '@mui/material'
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import React from 'react';
+import { motion } from 'framer-motion';
 
-const neumorphismButtonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      variant: {
-        default: "",
-        primary: "font-semibold",
-        secondary: "",
-        success: "font-semibold",
-        warning: "font-semibold",
-        danger: "font-semibold",
-      },
-      size: {
-        default: "",
-        sm: "text-xs",
-        lg: "text-base",
-        icon: "",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-)
-
-export interface NeumorphismButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof neumorphismButtonVariants> {
-  asChild?: boolean
+interface NeumorphismButtonProps {
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+  onClick?: () => void;
+  className?: string;
+  title?: string;
 }
 
-const NeumorphismButton = React.forwardRef<HTMLButtonElement, NeumorphismButtonProps>(
-  ({ className, variant, size, asChild = false, children, ...props }, ref) => {
-    if (asChild) {
-      const Comp = Slot
-      return (
-        <Comp
-          className={cn(neumorphismButtonVariants({ variant, size, className }))}
-          ref={ref}
-          {...props}
-        />
-      )
+export const NeumorphismButton: React.FC<NeumorphismButtonProps> = ({
+  children,
+  variant = 'secondary',
+  size = 'md',
+  disabled = false,
+  onClick,
+  className = '',
+  title,
+}) => {
+  const getVariantClasses = () => {
+    switch (variant) {
+      case 'primary':
+        return 'neo-button-primary';
+      case 'danger':
+        return 'neo-button text-red-600';
+      default:
+        return 'neo-button';
     }
+  };
 
-    // Material UI Button variant mapping
-    const getMuiVariant = () => {
-      switch (variant) {
-        case 'primary':
-        case 'success':
-        case 'warning':
-        case 'danger':
-          return 'contained'
-        case 'secondary':
-          return 'outlined'
-        default:
-          return 'text'
-      }
+  const getSizeClasses = () => {
+    switch (size) {
+      case 'sm':
+        return 'px-3 py-2 text-sm';
+      case 'lg':
+        return 'px-8 py-4 text-lg';
+      default:
+        return 'px-6 py-3 text-base';
     }
+  };
 
-    // Material UI color mapping
-    const getMuiColor = () => {
-      switch (variant) {
-        case 'primary':
-          return 'primary'
-        case 'success':
-          return 'success'
-        case 'warning':
-          return 'warning'
-        case 'danger':
-          return 'error'
-        case 'secondary':
-          return 'secondary'
-        default:
-          return 'primary'
-      }
-    }
+  const baseClasses = `${getVariantClasses()} ${getSizeClasses()} font-medium rounded-xl transition-all duration-200 ${
+    disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+  } ${className}`;
 
-    // Material UI size mapping
-    const getMuiSize = () => {
-      switch (size) {
-        case 'sm':
-          return 'small'
-        case 'lg':
-          return 'large'
-        default:
-          return 'medium'
-      }
-    }
-
-    if (size === 'icon') {
-      return (
-        <IconButton
-          ref={ref}
-          color={getMuiColor() as any}
-          size={getMuiSize()}
-          className={cn(neumorphismButtonVariants({ variant, size, className }))}
-          {...props}
-        >
-          {children}
-        </IconButton>
-      )
-    }
-
-    return (
-      <Button
-        ref={ref}
-        variant={getMuiVariant() as any}
-        color={getMuiColor() as any}
-        size={getMuiSize()}
-        className={cn(neumorphismButtonVariants({ variant, size, className }))}
-        {...props}
-      >
-        {children}
-      </Button>
-    )
-  }
-)
-NeumorphismButton.displayName = "NeumorphismButton"
-
-export { NeumorphismButton, neumorphismButtonVariants } 
+  return (
+    <motion.button
+      className={baseClasses}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      title={title}
+      whileHover={!disabled ? { scale: 1.05 } : {}}
+      whileTap={!disabled ? { scale: 0.95 } : {}}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+    >
+      {children}
+    </motion.button>
+  );
+}; 
