@@ -37,6 +37,12 @@
       -3px -3px 8px var(--neo-shadow-light);
     
     --radius: 16px;
+    
+    /* コンパクトモード用サイズ */
+    --compact-padding: 8px;
+    --compact-margin: 4px;
+    --compact-text-sm: 0.75rem;
+    --compact-text-xs: 0.625rem;
   }
 
   .dark {
@@ -69,6 +75,40 @@
     --neo-shadow-subtle: 
       3px 3px 8px var(--neo-shadow-dark),
       -3px -3px 8px var(--neo-shadow-light);
+  }
+
+  /* システムテーマ対応 */
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) {
+      --neo-bg: #2d2d30;
+      --neo-surface: #2d2d30;
+      --neo-element: #2d2d30;
+      --neo-text: #e5e5e5;
+      --neo-text-secondary: #a3a3a3;
+      --neo-accent: #818cf8;
+      --neo-accent-light: #a78bfa;
+      --neo-success: #34d399;
+      --neo-warning: #fbbf24;
+      --neo-error: #f87171;
+      
+      --neo-shadow-light: #3a3a3d;
+      --neo-shadow-dark: #1f1f22;
+      --neo-shadow-inset-light: rgba(58, 58, 61, 0.5);
+      --neo-shadow-inset-dark: rgba(31, 31, 34, 0.5);
+      
+      --neo-shadow-raised: 
+        6px 6px 16px var(--neo-shadow-dark),
+        -6px -6px 16px var(--neo-shadow-light);
+      --neo-shadow-pressed: 
+        inset 4px 4px 12px var(--neo-shadow-dark),
+        inset -4px -4px 12px var(--neo-shadow-light);
+      --neo-shadow-floating: 
+        8px 8px 20px var(--neo-shadow-dark),
+        -8px -8px 20px var(--neo-shadow-light);
+      --neo-shadow-subtle: 
+        3px 3px 8px var(--neo-shadow-dark),
+        -3px -3px 8px var(--neo-shadow-light);
+    }
   }
 }
 
@@ -522,6 +562,53 @@
     .inspection-panel {
       width: 350px;
     }
+  }
+
+  /* コンパクトモード用スタイル */
+  .compact-mode .neo-card-subtle {
+    padding: var(--compact-padding);
+    margin: var(--compact-margin) 0;
+  }
+
+  .compact-mode .timeline-item {
+    padding: var(--compact-padding);
+    margin: var(--compact-margin) 0;
+  }
+
+  .compact-mode .text-sm {
+    font-size: var(--compact-text-sm);
+  }
+
+  .compact-mode .text-xs {
+    font-size: var(--compact-text-xs);
+  }
+
+  .compact-mode .neo-button {
+    padding: 6px 12px;
+    font-size: var(--compact-text-sm);
+  }
+
+  /* タイムライン最適化 */
+  .timeline-item-compact {
+    padding: 8px 12px;
+    margin: 4px 0;
+    font-size: 0.875rem;
+  }
+
+  .timeline-item-compact .character-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .timeline-item-compact .turn-number {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+
+  .timeline-item-compact .content-text {
+    font-size: 0.8rem;
+    line-height: 1.4;
   }
 }
 

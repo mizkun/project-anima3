@@ -18,10 +18,24 @@ import {
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
-  Save as SaveIcon,
+  Save,
 } from '@mui/icons-material';
 import { PromptTab } from './PromptTab';
 import { useSimulationStore } from '@/stores/simulationStore';
+import { motion } from 'framer-motion';
+import {
+  Moon,
+  Sun,
+  Palette,
+  RotateCcw,
+  Monitor,
+  Volume2,
+  Bell,
+  Eye,
+  Zap,
+  Download,
+  Upload
+} from 'lucide-react';
 
 interface SimulationSettings {
   temperature: number;
@@ -54,210 +68,327 @@ const openaiModels = [
   'gpt-3.5-turbo',
 ];
 
-export const SettingsTab: React.FC = () => {
-  const [settings, setSettings] = useState<SimulationSettings>(defaultSettings);
-  const [saveMessage, setSaveMessage] = useState<string>('');
-  const simulationStore = useSimulationStore();
+interface SettingsTabProps {
+  onSettingsChange?: (settings: any) => void;
+}
 
-  // 設定の読み込み
-  useEffect(() => {
-    const loadSettings = () => {
+export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) => {
+  const [settings, setSettings] = useState({
+    theme: localStorage.getItem('theme') || 'light',
+    compactMode: localStorage.getItem('compactMode') === 'true',
+    showThinking: localStorage.getItem('showThinking') === 'true',
+    autoExpand: localStorage.getItem('autoExpand') === 'true',
+    soundEffects: localStorage.getItem('soundEffects') === 'true',
+    notifications: localStorage.getItem('notifications') === 'true',
+  });
+
+  const handleThemeChange = (theme: string) => {
+    setSettings(prev => ({ ...prev, theme }));
+    localStorage.setItem('theme', theme);
+    
+    // ダークモード切り替え
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    onSettingsChange?.({ ...settings, theme });
+  };
+
+  const handleSettingChange = (key: string, value: boolean) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    localStorage.setItem(key, value.toString());
+    onSettingsChange?.(newSettings);
+  };
+
+  const resetSettings = () => {
+    const defaultSettings = {
+      theme: 'light',
+      compactMode: false,
+      showThinking: false,
+      autoExpand: false,
+      soundEffects: true,
+      notifications: true,
+    };
+    setSettings(defaultSettings);
+    
+    // LocalStorageをクリア
+    Object.keys(defaultSettings).forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // ダークモード解除
+    document.documentElement.classList.remove('dark');
+    
+    onSettingsChange?.(defaultSettings);
+  };
+
+  const exportSettings = () => {
+    const dataStr = JSON.stringify(settings, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'anima-settings.json';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importSettings = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
       try {
-        const saved = localStorage.getItem('simulationSettings');
-        if (saved) {
-          const parsedSettings = JSON.parse(saved);
-          setSettings({ ...defaultSettings, ...parsedSettings });
+        const importedSettings = JSON.parse(e.target?.result as string);
+        setSettings(importedSettings);
+        
+        // LocalStorageに保存
+        Object.entries(importedSettings).forEach(([key, value]) => {
+          localStorage.setItem(key, String(value));
+        });
+        
+        // テーマ適用
+        if (importedSettings.theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
         }
+        
+        onSettingsChange?.(importedSettings);
       } catch (error) {
-        console.error('設定の読み込みに失敗しました:', error);
+        console.error('設定ファイルの読み込みに失敗しました:', error);
       }
     };
-
-    loadSettings();
-  }, []);
-
-  // 設定の保存
-  const handleSaveSettings = async () => {
-    try {
-      localStorage.setItem('simulationSettings', JSON.stringify(settings));
-      setSaveMessage('設定を保存しました');
-      setTimeout(() => setSaveMessage(''), 3000);
-    } catch (error) {
-      console.error('設定の保存に失敗しました:', error);
-      setSaveMessage('設定の保存に失敗しました');
-      setTimeout(() => setSaveMessage(''), 3000);
-    }
+    reader.readAsText(file);
   };
-
-  // 設定値の更新
-  const updateSetting = <K extends keyof SimulationSettings>(
-    key: K,
-    value: SimulationSettings[K]
-  ) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-    
-    // デバッグモードの場合はシミュレーションストアも更新
-    if (key === 'debugMode') {
-      simulationStore.setDebugMode(value as boolean);
-    }
-  };
-
-  // プロバイダー変更時のモデル自動選択
-  const handleProviderChange = (provider: string) => {
-    updateSetting('llmProvider', provider);
-    if (provider === 'gemini') {
-      updateSetting('modelName', geminiModels[0]);
-    } else if (provider === 'openai') {
-      updateSetting('modelName', openaiModels[0]);
-    }
-  };
-
-  const availableModels = settings.llmProvider === 'gemini' ? geminiModels : openaiModels;
 
   return (
-    <Box sx={{ height: '100%', overflow: 'auto', p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        設定
-      </Typography>
+    <div className="h-full flex flex-direction-column overflow-hidden" style={{ color: 'var(--neo-text)' }}>
+      <div className="neo-scrollbar flex-1 overflow-y-auto p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-6"
+        >
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--neo-text)' }}>
+              <Palette className="w-5 h-5" />
+              表示設定
+            </h3>
+            
+            {/* テーマ設定 */}
+            <div className="neo-card-subtle mb-4">
+              <div className="mb-3">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neo-text)' }}>
+                  テーマ
+                </label>
+                <div className="flex gap-2">
+                  <motion.button
+                    className={`neo-button flex items-center gap-2 px-4 py-2 ${settings.theme === 'light' ? 'neo-button-primary' : ''}`}
+                    onClick={() => handleThemeChange('light')}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Sun className="w-4 h-4" />
+                    ライト
+                  </motion.button>
+                  <motion.button
+                    className={`neo-button flex items-center gap-2 px-4 py-2 ${settings.theme === 'dark' ? 'neo-button-primary' : ''}`}
+                    onClick={() => handleThemeChange('dark')}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Moon className="w-4 h-4" />
+                    ダーク
+                  </motion.button>
+                  <motion.button
+                    className={`neo-button flex items-center gap-2 px-4 py-2 ${settings.theme === 'system' ? 'neo-button-primary' : ''}`}
+                    onClick={() => handleThemeChange('system')}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Monitor className="w-4 h-4" />
+                    システム
+                  </motion.button>
+                </div>
+              </div>
 
-      {/* シミュレーション設定 */}
-      <Accordion defaultExpanded>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1">シミュレーション設定</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* ログ出力レベル */}
-            <FormControl fullWidth>
-              <InputLabel>ログ出力レベル</InputLabel>
-              <Select
-                value={settings.logLevel}
-                onChange={(e) => updateSetting('logLevel', e.target.value)}
-                label="ログ出力レベル"
-              >
-                <MenuItem value="DEBUG">DEBUG（詳細）</MenuItem>
-                <MenuItem value="INFO">INFO（標準）</MenuItem>
-                <MenuItem value="WARNING">WARNING（警告のみ）</MenuItem>
-                <MenuItem value="ERROR">ERROR（エラーのみ）</MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* Temperature */}
-            <Box>
-              <Typography gutterBottom>
-                Temperature: {settings.temperature}
-              </Typography>
-              <Slider
-                value={settings.temperature}
-                onChange={(_, value) => updateSetting('temperature', value as number)}
-                min={0}
-                max={2}
-                step={0.1}
-                marks={[
-                  { value: 0, label: '0' },
-                  { value: 0.7, label: '0.7' },
-                  { value: 1, label: '1' },
-                  { value: 2, label: '2' },
-                ]}
-                valueLabelDisplay="auto"
-              />
-            </Box>
-
-            {/* 最大トークン数 */}
-            <Box>
-              <Typography gutterBottom>
-                最大トークン数: {settings.maxTokens}
-              </Typography>
-              <Slider
-                value={settings.maxTokens}
-                onChange={(_, value) => updateSetting('maxTokens', value as number)}
-                min={100}
-                max={4000}
-                step={100}
-                marks={[
-                  { value: 100, label: '100' },
-                  { value: 1000, label: '1000' },
-                  { value: 2000, label: '2000' },
-                  { value: 4000, label: '4000' },
-                ]}
-                valueLabelDisplay="auto"
-              />
-            </Box>
-
-            {/* デバッグモード */}
-            <Box>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.debugMode}
-                    onChange={(e) => updateSetting('debugMode', e.target.checked)}
+              {/* コンパクトモード */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
+                  <span className="text-sm" style={{ color: 'var(--neo-text)' }}>コンパクトモード</span>
+                </div>
+                <motion.button
+                  className={`neo-button w-12 h-6 rounded-full p-1 ${settings.compactMode ? 'neo-button-primary' : ''}`}
+                  onClick={() => handleSettingChange('compactMode', !settings.compactMode)}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    className="w-4 h-4 rounded-full bg-white shadow-sm"
+                    animate={{
+                      x: settings.compactMode ? 20 : 0,
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
-                }
-                label="デバッグモード（詳細ログを表示）"
-              />
-            </Box>
+                </motion.button>
+              </div>
+            </div>
+          </div>
 
-            {/* LLMプロバイダー */}
-            <FormControl fullWidth>
-              <InputLabel>LLMプロバイダー</InputLabel>
-              <Select
-                value={settings.llmProvider}
-                onChange={(e) => handleProviderChange(e.target.value)}
-                label="LLMプロバイダー"
+          {/* タイムライン設定 */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--neo-text)' }}>
+              <Eye className="w-5 h-5" />
+              タイムライン設定
+            </h3>
+            
+            <div className="neo-card-subtle space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
+                  <span className="text-sm" style={{ color: 'var(--neo-text)' }}>思考を常時表示</span>
+                </div>
+                <motion.button
+                  className={`neo-button w-12 h-6 rounded-full p-1 ${settings.showThinking ? 'neo-button-primary' : ''}`}
+                  onClick={() => handleSettingChange('showThinking', !settings.showThinking)}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    className="w-4 h-4 rounded-full bg-white shadow-sm"
+                    animate={{
+                      x: settings.showThinking ? 20 : 0,
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                </motion.button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
+                  <span className="text-sm" style={{ color: 'var(--neo-text)' }}>自動展開</span>
+                </div>
+                <motion.button
+                  className={`neo-button w-12 h-6 rounded-full p-1 ${settings.autoExpand ? 'neo-button-primary' : ''}`}
+                  onClick={() => handleSettingChange('autoExpand', !settings.autoExpand)}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    className="w-4 h-4 rounded-full bg-white shadow-sm"
+                    animate={{
+                      x: settings.autoExpand ? 20 : 0,
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                </motion.button>
+              </div>
+            </div>
+          </div>
+
+          {/* 通知設定 */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--neo-text)' }}>
+              <Bell className="w-5 h-5" />
+              通知設定
+            </h3>
+            
+            <div className="neo-card-subtle space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Volume2 className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
+                  <span className="text-sm" style={{ color: 'var(--neo-text)' }}>サウンドエフェクト</span>
+                </div>
+                <motion.button
+                  className={`neo-button w-12 h-6 rounded-full p-1 ${settings.soundEffects ? 'neo-button-primary' : ''}`}
+                  onClick={() => handleSettingChange('soundEffects', !settings.soundEffects)}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    className="w-4 h-4 rounded-full bg-white shadow-sm"
+                    animate={{
+                      x: settings.soundEffects ? 20 : 0,
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                </motion.button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
+                  <span className="text-sm" style={{ color: 'var(--neo-text)' }}>デスクトップ通知</span>
+                </div>
+                <motion.button
+                  className={`neo-button w-12 h-6 rounded-full p-1 ${settings.notifications ? 'neo-button-primary' : ''}`}
+                  onClick={() => handleSettingChange('notifications', !settings.notifications)}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    className="w-4 h-4 rounded-full bg-white shadow-sm"
+                    animate={{
+                      x: settings.notifications ? 20 : 0,
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                </motion.button>
+              </div>
+            </div>
+          </div>
+
+          {/* 設定の管理 */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--neo-text)' }}>
+              <Save className="w-5 h-5" />
+              設定の管理
+            </h3>
+            
+            <div className="neo-card-subtle space-y-3">
+              <div className="flex gap-2">
+                <motion.button
+                  className="neo-button flex items-center gap-2 px-4 py-2 flex-1"
+                  onClick={exportSettings}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Download className="w-4 h-4" />
+                  エクスポート
+                </motion.button>
+                <motion.label
+                  className="neo-button flex items-center gap-2 px-4 py-2 flex-1 cursor-pointer"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Upload className="w-4 h-4" />
+                  インポート
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={importSettings}
+                    className="hidden"
+                  />
+                </motion.label>
+              </div>
+              
+              <motion.button
+                className="neo-button flex items-center gap-2 px-4 py-2 w-full"
+                onClick={resetSettings}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ color: 'var(--neo-error)' }}
               >
-                <MenuItem value="gemini">Gemini</MenuItem>
-                <MenuItem value="openai">OpenAI</MenuItem>
-              </Select>
-            </FormControl>
-
-            {/* モデル選択 */}
-            <FormControl fullWidth>
-              <InputLabel>モデル</InputLabel>
-              <Select
-                value={settings.modelName}
-                onChange={(e) => updateSetting('modelName', e.target.value)}
-                label="モデル"
-              >
-                {availableModels.map((model) => (
-                  <MenuItem key={model} value={model}>
-                    {model}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {/* 保存ボタン */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-              <Button
-                variant="contained"
-                startIcon={<SaveIcon />}
-                onClick={handleSaveSettings}
-              >
-                設定を保存
-              </Button>
-            </Box>
-
-            {/* 保存メッセージ */}
-            {saveMessage && (
-              <Alert severity={saveMessage.includes('失敗') ? 'error' : 'success'}>
-                {saveMessage}
-              </Alert>
-            )}
-          </Box>
-        </AccordionDetails>
-      </Accordion>
-
-      <Divider sx={{ my: 2 }} />
-
-      {/* プロンプト編集 */}
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="subtitle1">プロンプト編集</Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ p: 0 }}>
-          <PromptTab />
-        </AccordionDetails>
-      </Accordion>
-    </Box>
+                <RotateCcw className="w-4 h-4" />
+                設定をリセット
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 }; 

@@ -1,25 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Card,
-  CardContent,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
-import {
-  Send as SendIcon,
-  Psychology as PsychologyIcon,
-  Update as UpdateIcon,
-  PersonAdd as PersonAddIcon,
-  AutoStories as AutoStoriesIcon,
-} from '@mui/icons-material';
+  Send,
+  Brain,
+  Zap,
+  UserPlus,
+  AlertTriangle,
+  Check
+} from 'lucide-react';
 import { useSimulationStore } from '@/stores/simulationStore';
 
 interface InterventionType {
@@ -41,7 +29,7 @@ const INTERVENTION_TYPES: InterventionType[] = [
     id: 'global_intervention',
     name: '全体向け介入',
     description: '状況や環境の変化を追加',
-    icon: <UpdateIcon />,
+    icon: <Zap className="w-4 h-4" />,
     placeholder: '例: 突然雨が降り始めた、新しいキャラクターが現れた',
     backendType: 'update_situation'
   },
@@ -49,7 +37,7 @@ const INTERVENTION_TYPES: InterventionType[] = [
     id: 'character_intervention',
     name: 'キャラクター向け介入',
     description: '特定キャラクターに情報や気づきを与える',
-    icon: <PsychologyIcon />,
+    icon: <Brain className="w-4 h-4" />,
     placeholder: '例: 燐子は芽依の本当の気持ちに気づく',
     backendType: 'give_revelation'
   }
@@ -65,202 +53,299 @@ export const InterventionTab: React.FC<InterventionTabProps> = ({
   const [availableCharacters, setAvailableCharacters] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [simulationStatus, setSimulationStatus] = useState<string>('stopped');
 
   const selectedTypeData = INTERVENTION_TYPES.find(type => type.id === selectedType);
   const isCharacterIntervention = selectedType === 'character_intervention';
   const needsCharacterSelection = isCharacterIntervention;
 
-  // シミュレーション状態を定期的に確認
+  // シミュレーション状態を監視
   useEffect(() => {
     const checkStatus = async () => {
       try {
         const response = await fetch('/api/simulation/status');
         const data = await response.json();
         setSimulationStatus(data.status);
-        
-        // 参加キャラクターの情報も取得
-        if (data.current_scene && data.current_scene.participant_character_ids) {
-          setAvailableCharacters(data.current_scene.participant_character_ids);
-          if (data.current_scene.participant_character_ids.length > 0 && !selectedCharacter) {
-            setSelectedCharacter(data.current_scene.participant_character_ids[0]);
-          }
-        }
       } catch (error) {
-        console.error('シミュレーション状態の取得に失敗:', error);
+        console.error('ステータス取得エラー:', error);
+        setSimulationStatus('stopped');
       }
     };
 
     checkStatus();
-    const interval = setInterval(checkStatus, 2000); // 2秒ごとに状態確認
-
+    const interval = setInterval(checkStatus, 2000);
     return () => clearInterval(interval);
+  }, []);
+
+  // 利用可能キャラクターの取得
+  useEffect(() => {
+    const fetchCharacters = async () => {
+      try {
+        const response = await fetch('/api/files?directory=data/characters');
+        const data = await response.json();
+        if (data.success && data.files) {
+          const characters = data.files
+            .filter((file: any) => file.name.endsWith('.yaml'))
+            .map((file: any) => file.name.replace('.yaml', ''));
+          setAvailableCharacters(characters);
+          if (characters.length > 0 && !selectedCharacter) {
+            setSelectedCharacter(characters[0]);
+          }
+        }
+      } catch (error) {
+        console.error('キャラクター一覧の取得に失敗しました:', error);
+      }
+    };
+
+    fetchCharacters();
   }, [selectedCharacter]);
 
-  const isSimulationRunning = simulationStatus === 'running' || simulationStatus === 'idle';
+  const isSimulationRunning = simulationStatus === 'running' || simulationStatus === 'waiting_for_intervention';
 
   const handleSubmit = async () => {
-    if (!content.trim() || isSubmitting || !isSimulationRunning) return;
-    
-    // キャラクター向け介入の場合はキャラクターが選択されている必要がある
+    if (!content.trim()) {
+      setError('介入内容を入力してください');
+      return;
+    }
+
     if (needsCharacterSelection && !selectedCharacter) {
-      setError(`${selectedTypeData?.name}にはキャラクターの選択が必要です`);
+      setError('対象キャラクターを選択してください');
       return;
     }
 
     setIsSubmitting(true);
     setError(null);
-    
+    setSuccess(null);
+
     try {
-      let finalContent = content.trim();
+      const selectedTypeData = INTERVENTION_TYPES.find(type => type.id === selectedType);
+      const interventionData = {
+        type: selectedTypeData?.backendType || 'update_situation',
+        content: content.trim(),
+        ...(needsCharacterSelection && { target_character: selectedCharacter })
+      };
+
+      const response = await fetch('/api/simulation/intervention', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(interventionData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || result.success === false) {
+        throw new Error(result.message || '介入の実行に失敗しました');
+      }
+
+      setSuccess('介入を実行しました');
+      setContent('');
       
-      // キャラクター向け介入の場合はキャラクターIDを含める
-      if (needsCharacterSelection && selectedCharacter) {
-        finalContent = `${selectedCharacter} ${finalContent}`;
-      }
-
+      // 親コンポーネントのコールバックを呼び出し
       if (onIntervention) {
-        await onIntervention(selectedTypeData?.backendType || selectedType, finalContent);
-        setContent('');
-      } else {
-        // デフォルトの介入処理（APIコール）
-        const response = await fetch('/api/simulation/intervention', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            type: selectedTypeData?.backendType || selectedType, 
-            content: finalContent
-          }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok || result.success === false) {
-          throw new Error(result.message || '介入の実行に失敗しました');
-        }
-        
-        setContent('');
+        onIntervention(selectedTypeData?.backendType || 'update_situation', content.trim());
       }
-    } catch (error) {
-      console.error('介入の実行に失敗しました:', error);
-      setError(error instanceof Error ? error.message : '介入の実行に失敗しました');
+
+      // 成功メッセージを3秒後に消去
+      setTimeout(() => setSuccess(null), 3000);
+
+    } catch (error: any) {
+      console.error('介入エラー:', error);
+      setError(error.message || '介入の実行に失敗しました');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
+  const canSubmit = content.trim() && !isSubmitting && isSimulationRunning && (!needsCharacterSelection || selectedCharacter);
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 2, p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        ユーザー介入
-      </Typography>
-
-      {/* シミュレーション状態の表示 */}
-      {!isSimulationRunning && (
-        <Alert severity="warning">
-          シミュレーションが実行されていません。介入を行うには、まずシミュレーションを開始してください。
-        </Alert>
-      )}
-
-      {/* 介入タイプ選択 */}
-      <FormControl fullWidth>
-        <InputLabel>介入タイプ</InputLabel>
-        <Select
-          value={selectedType}
-          label="介入タイプ"
-          onChange={(e) => setSelectedType(e.target.value)}
-          disabled={disabled || !isSimulationRunning}
+    <div className="h-full flex flex-col p-4" style={{ color: 'var(--neo-text)' }}>
+      <div className="flex-1 overflow-y-auto space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          {INTERVENTION_TYPES.map((type) => (
-            <MenuItem key={type.id} value={type.id}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {type.icon}
-                <Box>
-                  <Typography variant="body2">{type.name}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {type.description}
-                  </Typography>
-                </Box>
-              </Box>
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+          <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--neo-text)' }}>
+            ユーザー介入
+          </h3>
 
-      {/* キャラクター選択（キャラクター向け介入の場合） */}
-      {needsCharacterSelection && (
-        <FormControl fullWidth>
-          <InputLabel>対象キャラクター</InputLabel>
-          <Select
-            value={selectedCharacter}
-            label="対象キャラクター"
-            onChange={(e) => setSelectedCharacter(e.target.value)}
-            disabled={disabled || !isSimulationRunning}
-          >
-            {availableCharacters.map((characterId) => (
-              <MenuItem key={characterId} value={characterId}>
-                {characterId}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      )}
+          {/* シミュレーション状態の表示 */}
+          {!isSimulationRunning && (
+            <div className="neo-card-subtle p-4 mb-4 border-l-4" style={{ borderLeftColor: 'var(--neo-warning)' }}>
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 mt-0.5" style={{ color: 'var(--neo-warning)' }} />
+                <div>
+                  <div className="font-medium text-sm mb-1" style={{ color: 'var(--neo-warning)' }}>
+                    シミュレーション停止中
+                  </div>
+                  <div className="text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
+                    介入を行うには、まずシミュレーションを開始してください。
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-      {/* 介入内容入力 */}
-      <TextField
-        label="介入内容"
-        multiline
-        rows={4}
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        onKeyDown={handleKeyPress}
-        placeholder={selectedTypeData?.placeholder || '介入内容を入力してください...'}
-        disabled={disabled || isSubmitting || !isSimulationRunning}
-        fullWidth
-        helperText={`Ctrl+Enter で送信 | ${content.length}/500文字`}
-        error={content.length > 500}
-      />
+          {/* 介入タイプ選択 */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neo-text)' }}>
+              介入タイプ
+            </label>
+            <div className="space-y-2">
+              {INTERVENTION_TYPES.map((type) => (
+                <motion.button
+                  key={type.id}
+                  className={`w-full neo-card-subtle text-left p-3 rounded-lg transition-all ${
+                    selectedType === type.id ? 'ring-2 ring-blue-400' : ''
+                  }`}
+                  onClick={() => setSelectedType(type.id)}
+                  disabled={disabled || !isSimulationRunning}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{
+                    background: selectedType === type.id ? 'var(--neo-accent)20' : 'var(--neo-element)',
+                    opacity: disabled || !isSimulationRunning ? 0.6 : 1,
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="neo-element p-2 rounded"
+                      style={{ background: 'var(--neo-accent)', color: 'white' }}
+                    >
+                      {type.icon}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm" style={{ color: 'var(--neo-text)' }}>
+                        {type.name}
+                      </div>
+                      <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
+                        {type.description}
+                      </div>
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </div>
 
-      {/* エラー表示 */}
-      {error && (
-        <Alert severity="error" onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
+          {/* キャラクター選択（キャラクター向け介入の場合） */}
+          {needsCharacterSelection && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neo-text)' }}>
+                対象キャラクター
+              </label>
+              <div className="neo-input-container">
+                <select
+                  className="neo-input w-full"
+                  value={selectedCharacter}
+                  onChange={(e) => setSelectedCharacter(e.target.value)}
+                  disabled={disabled || !isSimulationRunning}
+                  style={{
+                    background: 'var(--neo-element)',
+                    color: 'var(--neo-text)',
+                    border: 'none',
+                    outline: 'none',
+                  }}
+                >
+                  <option value="">キャラクターを選択</option>
+                  {availableCharacters.map((character) => (
+                    <option key={character} value={character}>
+                      {character}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
 
-      {/* 実行ボタン */}
-      <Button
-        variant="contained"
-        onClick={handleSubmit}
-        disabled={disabled || isSubmitting || !content.trim() || content.length > 500 || !isSimulationRunning}
-        startIcon={isSubmitting ? <CircularProgress size={20} /> : <SendIcon />}
-        fullWidth
-      >
-        {isSubmitting ? '実行中...' : '介入実行'}
-      </Button>
+          {/* 介入内容入力 */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neo-text)' }}>
+              介入内容
+            </label>
+            <textarea
+              className="neo-input w-full resize-none"
+              rows={4}
+              placeholder={selectedTypeData?.placeholder || '介入内容を入力してください'}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              disabled={disabled || !isSimulationRunning}
+              style={{
+                background: 'var(--neo-element)',
+                color: 'var(--neo-text)',
+                border: 'none',
+                outline: 'none',
+              }}
+            />
+          </div>
 
-      {/* 使用方法のヒント */}
-      <Card variant="outlined" sx={{ mt: 'auto' }}>
-        <CardContent sx={{ py: 1.5 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            使用方法
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            • シミュレーション実行中に物語に介入できます<br/>
-            • 全体向け介入: 状況や環境の変化を追加<br/>
-            • キャラクター向け介入: 特定キャラクターに情報や気づきを与える
-          </Typography>
-        </CardContent>
-      </Card>
-    </Box>
+          {/* エラーメッセージ */}
+          {error && (
+            <motion.div 
+              className="neo-card-subtle p-3 mb-4 border-l-4"
+              style={{ borderLeftColor: 'var(--neo-error)' }}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 mt-0.5" style={{ color: 'var(--neo-error)' }} />
+                <div className="text-sm" style={{ color: 'var(--neo-error)' }}>
+                  {error}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* 成功メッセージ */}
+          {success && (
+            <motion.div 
+              className="neo-card-subtle p-3 mb-4 border-l-4"
+              style={{ borderLeftColor: 'var(--neo-success)' }}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-start gap-2">
+                <Check className="w-4 h-4 mt-0.5" style={{ color: 'var(--neo-success)' }} />
+                <div className="text-sm" style={{ color: 'var(--neo-success)' }}>
+                  {success}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
+      </div>
+
+      {/* 送信ボタン */}
+      <div className="pt-4">
+        <motion.button
+          className={`neo-button w-full flex items-center justify-center gap-2 py-3 ${
+            canSubmit ? 'neo-button-primary' : ''
+          }`}
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+          whileHover={canSubmit ? { scale: 1.02 } : undefined}
+          whileTap={canSubmit ? { scale: 0.98 } : undefined}
+          style={{
+            opacity: canSubmit ? 1 : 0.6,
+            cursor: canSubmit ? 'pointer' : 'not-allowed',
+          }}
+        >
+          {isSubmitting ? (
+            <motion.div
+              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            />
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
+          {isSubmitting ? '送信中...' : '介入を実行'}
+        </motion.button>
+      </div>
+    </div>
   );
 }; 

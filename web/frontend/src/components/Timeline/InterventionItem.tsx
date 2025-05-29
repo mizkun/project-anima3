@@ -1,17 +1,11 @@
 import React from 'react'
+import { motion } from 'framer-motion'
 import { 
-  Card, 
-  CardContent, 
-  Box, 
-  Typography, 
-  Chip
-} from '@mui/material'
-import { 
-  Update as UpdateIcon,
-  Psychology as PsychologyIcon,
-  PersonAdd as PersonAddIcon,
-  Settings as SettingsIcon
-} from '@mui/icons-material'
+  Zap,
+  Brain,
+  UserPlus,
+  Settings
+} from 'lucide-react'
 import type { TimelineEntry } from '@/types/simulation'
 
 interface InterventionItemProps {
@@ -27,98 +21,122 @@ export const InterventionItem: React.FC<InterventionItemProps> = ({
   const getInterventionIcon = (interventionType: string) => {
     switch (interventionType) {
       case '全体向け介入':
-        return <UpdateIcon sx={{ fontSize: 16 }} />
+        return <Zap className="w-4 h-4" />
       case 'キャラクター向け介入':
-        return <PsychologyIcon sx={{ fontSize: 16 }} />
+        return <Brain className="w-4 h-4" />
       case 'キャラクター追加':
-        return <PersonAddIcon sx={{ fontSize: 16 }} />
+        return <UserPlus className="w-4 h-4" />
       case 'キャラクター削除':
-        return <PersonAddIcon sx={{ fontSize: 16 }} />
+        return <UserPlus className="w-4 h-4" />
       default:
-        return <SettingsIcon sx={{ fontSize: 16 }} />
+        return <Settings className="w-4 h-4" />
     }
   }
 
   const getInterventionColor = (interventionType: string) => {
     switch (interventionType) {
       case '全体向け介入':
-        return 'warning'
+        return 'var(--neo-warning)'
       case 'キャラクター向け介入':
-        return 'secondary'
+        return 'var(--neo-accent-light)'
       case 'キャラクター追加':
-        return 'success'
+        return 'var(--neo-success)'
       case 'キャラクター削除':
-        return 'error'
+        return 'var(--neo-error)'
       default:
-        return 'default'
+        return 'var(--neo-text-secondary)'
     }
   }
 
   const interventionType = intervention.metadata?.intervention_type || '介入'
   const targetCharacter = intervention.metadata?.target_character
+  const iconColor = getInterventionColor(interventionType)
 
   return (
-    <Card 
-      variant="outlined"
-      sx={{ 
-        width: '100%',
-        position: 'relative',
-        borderColor: 'warning.main',
-        borderStyle: 'dashed',
-        bgcolor: 'warning.50',
-        '&:hover': {
-          bgcolor: 'warning.100'
-        }
+    <motion.div 
+      className="neo-card-subtle relative border-l-4"
+      style={{
+        margin: '0 0 8px 0',
+        padding: '12px',
+        background: 'var(--neo-element)',
+        borderLeftColor: iconColor,
       }}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={{ scale: 1.005 }}
     >
-      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-          {/* 介入アイコンとタイプ */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 'fit-content' }}>
-            <Chip
-              icon={getInterventionIcon(interventionType)}
-              label="介入"
-              size="small"
-              color={getInterventionColor(interventionType) as any}
-              variant="filled"
-              sx={{ 
-                fontSize: '0.75rem',
-                fontWeight: 'bold'
-              }}
-            />
-          </Box>
+      {/* ヘッダー部分 */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <motion.div
+            className="neo-element w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ 
+              background: iconColor,
+              color: 'white'
+            }}
+            whileHover={{ scale: 1.1 }}
+          >
+            {getInterventionIcon(interventionType)}
+          </motion.div>
+          <div>
+            <div className="text-sm font-semibold" style={{ color: 'var(--neo-text)' }}>
+              ユーザー介入
+            </div>
+            <div className="text-xs" style={{ color: iconColor }}>
+              ターン {turnNumber}
+            </div>
+          </div>
+        </div>
 
-          {/* 介入内容 */}
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <Typography variant="subtitle2" fontWeight="bold" color="warning.dark">
-                {interventionType}
-              </Typography>
-              {targetCharacter && (
-                <Chip 
-                  label={targetCharacter} 
-                  size="small" 
-                  variant="outlined"
-                  sx={{ fontSize: '0.7rem' }}
-                />
-              )}
-            </Box>
-            
-            <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-              {intervention.content.replace(/^\[.*?\]\s*/, '')} {/* [介入タイプ]プレフィックスを除去 */}
-            </Typography>
+        <motion.div
+          className="neo-element-subtle px-2 py-1 rounded-md text-xs font-medium"
+          style={{ 
+            color: iconColor,
+            background: `${iconColor}20`
+          }}
+          whileHover={{ scale: 1.05 }}
+        >
+          {interventionType}
+        </motion.div>
+      </div>
 
-            {/* タイムスタンプ */}
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              {new Date(intervention.timestamp).toLocaleTimeString('ja-JP', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-              })}
-            </Typography>
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
+      {/* ターゲットキャラクター表示 */}
+      {targetCharacter && (
+        <div className="mb-3">
+          <div className="flex items-center gap-2">
+            <div className="text-xs font-medium" style={{ color: 'var(--neo-text-secondary)' }}>
+              対象:
+            </div>
+            <div 
+              className="neo-element-subtle px-2 py-1 rounded text-xs"
+              style={{ color: 'var(--neo-text)' }}
+            >
+              {targetCharacter}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 介入内容 */}
+      <div className="text-sm leading-relaxed" style={{ color: 'var(--neo-text)' }}>
+        {intervention.content}
+      </div>
+
+      {/* 介入効果のインジケーター */}
+      <motion.div
+        className="absolute top-2 right-2 w-2 h-2 rounded-full"
+        style={{ background: iconColor }}
+        animate={{ 
+          scale: [1, 1.3, 1],
+          opacity: [0.7, 1, 0.7]
+        }}
+        transition={{ 
+          duration: 2, 
+          repeat: Infinity, 
+          ease: "easeInOut" 
+        }}
+      />
+    </motion.div>
   )
 } 

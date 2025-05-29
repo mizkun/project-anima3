@@ -11,6 +11,33 @@ function App() {
   const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false)
   const simulationStore = useSimulationStore()
 
+  // テーマの初期化
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'light'
+    const compactMode = localStorage.getItem('compactMode') === 'true'
+    
+    // テーマ適用
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark')
+      document.documentElement.classList.add('light')
+    } else if (savedTheme === 'system') {
+      // システムテーマに従う
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      if (prefersDark) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.add('light')
+      }
+    }
+
+    // コンパクトモード適用
+    if (compactMode) {
+      document.documentElement.classList.add('compact-mode')
+    }
+  }, [])
+
   // 画面サイズに応じてパネルの初期状態を調整
   useEffect(() => {
     const handleResize = () => {
@@ -50,9 +77,9 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--neo-bg)' }}>
-      {/* ヘッダーバー（オプション） */}
+      {/* ヘッダーバー（コンパクト化） */}
       <motion.header 
-        className="neo-element-subtle px-6 py-4 mx-4 mt-4 rounded-lg"
+        className="neo-element-subtle px-4 py-2 mx-4 mt-4 rounded-lg"
         variants={fadeIn}
         initial="initial"
         animate="animate"
@@ -60,22 +87,22 @@ function App() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: 'var(--neo-text)' }}>
+            <h1 className="text-lg font-bold" style={{ color: 'var(--neo-text)' }}>
               Project Anima
             </h1>
-            <p className="text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
+            <p className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
               AI Character Simulation Platform
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <motion.div 
-              className="neo-element w-3 h-3 rounded-full"
+              className="neo-element w-2 h-2 rounded-full"
               animate={{ 
                 backgroundColor: simulationStore.status === 'running' ? 'var(--neo-success)' : 'var(--neo-text-secondary)'
               }}
               transition={{ duration: 0.3 }}
             />
-            <span className="text-sm font-medium" style={{ color: 'var(--neo-text-secondary)' }}>
+            <span className="text-xs font-medium" style={{ color: 'var(--neo-text-secondary)' }}>
               {simulationStore.status === 'running' ? 'Running' : 'Idle'}
             </span>
           </div>
@@ -83,7 +110,7 @@ function App() {
       </motion.header>
 
       {/* メインコンテンツエリア - 2列分割 */}
-      <div className="flex-1 flex" style={{ height: 'calc(100vh - 100px)' }}>
+      <div className="flex-1 flex" style={{ height: 'calc(100vh - 80px)' }}>
         {/* 左列: タイムライン + ミニマルコントロール */}
         <motion.div
           className="flex-1 flex flex-col transition-all duration-300 ease-in-out"
@@ -93,10 +120,11 @@ function App() {
           animate="animate"
           transition={{ delay: 0.3 }}
         >
-          {/* ミニマルコントロール */}
-          <div className="flex-shrink-0 p-4">
+          {/* ミニマルコントロール（コンパクト化） */}
+          <div className="flex-shrink-0 p-3">
             <motion.div 
               className="neo-card-floating"
+              style={{ padding: '12px' }}
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
@@ -105,7 +133,7 @@ function App() {
           </div>
 
           {/* タイムライン */}
-          <div className="flex-1 overflow-hidden px-4 pb-4">
+          <div className="flex-1 overflow-hidden px-3 pb-3">
             <motion.div
               className="neo-card-floating h-full overflow-hidden"
               whileHover={{ scale: 1.005 }}

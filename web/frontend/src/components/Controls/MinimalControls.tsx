@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { useSimulationStore } from '@/stores/simulationStore';
 import {
-  PlayArrow,
+  PlayArrow as PlayArrowIcon,
   Stop,
   SkipNext,
   ExpandMore,
   Close,
 } from '@mui/icons-material';
+import { 
+  Play,
+  Square,
+  SkipForward,
+  Sparkles,
+  AlertCircle,
+  X,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSimulationControls } from '../../hooks/useSimulationControls';
-import { useSimulationStore } from '../../stores/simulationStore';
 
 interface MinimalControlsProps {
   // onSettingsClickプロパティを削除
@@ -207,106 +215,150 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
   const isRunning = status === 'running' || status === 'idle';
 
   return (
-    <motion.div
-      className="neo-element p-6"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      {/* メインコントロール */}
-      <div className="flex items-center gap-4 flex-wrap">
-        {/* 左側のコントロールボタン */}
-        <div className="flex gap-3">
-          <motion.button
-            className={`neo-button-primary flex items-center gap-2 px-6 py-3 ${isRunning || !selectedSceneId || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={handleStart}
-            disabled={isRunning || !selectedSceneId || isLoading}
-            whileHover={!isRunning && selectedSceneId && !isLoading ? { scale: 1.05 } : {}}
-            whileTap={!isRunning && selectedSceneId && !isLoading ? { scale: 0.95 } : {}}
-          >
-            <PlayArrow className="w-4 h-4" />
-            <span className="font-medium">Start</span>
-          </motion.button>
+    <div className="w-full" style={{ color: 'var(--neo-text)' }}>
+      <div className="space-y-3">
+        {/* シーン選択とキャラクター表示 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--neo-text-secondary)' }}>
+              シーン
+            </label>
+            <div className="neo-input-container">
+              <select
+                className="neo-input w-full text-sm"
+                value={selectedSceneId || ''}
+                onChange={(e) => handleSceneChange(e.target.value)}
+                style={{
+                  background: 'var(--neo-element)',
+                  color: 'var(--neo-text)',
+                  padding: '8px 12px',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <option value="">シーンを選択</option>
+                {scenes.map((scene) => (
+                  <option key={scene.id} value={scene.id}>
+                    {scene.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-          <motion.button
-            className={`neo-button flex items-center gap-2 px-6 py-3 ${!isRunning || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={handleStop}
-            disabled={!isRunning || isLoading}
-            whileHover={isRunning && !isLoading ? { scale: 1.05 } : {}}
-            whileTap={isRunning && !isLoading ? { scale: 0.95 } : {}}
-          >
-            <Stop className="w-4 h-4" />
-            <span className="font-medium">Stop</span>
-          </motion.button>
-
-          <motion.button
-            className={`neo-button flex items-center gap-2 px-6 py-3 ${!isRunning || isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={handleNextTurn}
-            disabled={!isRunning || isLoading}
-            whileHover={isRunning && !isLoading ? { scale: 1.05 } : {}}
-            whileTap={isRunning && !isLoading ? { scale: 0.95 } : {}}
-          >
-            <SkipNext className="w-4 h-4" />
-            <span className="font-medium">Next Turn</span>
-          </motion.button>
-
-          <motion.button
-            className={`neo-button flex items-center gap-2 px-6 py-3 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={() => setIsInterventionOpen(!isInterventionOpen)}
-            disabled={isLoading}
-            whileHover={!isLoading ? { scale: 1.05 } : {}}
-            whileTap={!isLoading ? { scale: 0.95 } : {}}
-          >
-            <motion.div
-              animate={{ rotate: isInterventionOpen ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--neo-text-secondary)' }}>
+              参加キャラクター
+            </label>
+            <div 
+              className="neo-element-subtle p-2 rounded text-xs"
+              style={{ minHeight: '32px', display: 'flex', alignItems: 'center' }}
             >
-              <ExpandMore className="w-4 h-4" />
-            </motion.div>
-            <span className="font-medium">Intervention</span>
-          </motion.button>
-        </div>
-
-        {/* 中央のシーン選択 */}
-        <div className="flex items-center gap-3 flex-1">
-          <span className="text-sm font-medium whitespace-nowrap" style={{ color: 'var(--neo-text)' }}>
-            シーン
-          </span>
-          <div className="relative">
-            <select
-              className="neo-input px-4 py-2 min-w-[200px] appearance-none cursor-pointer"
-              value={selectedSceneId}
-              onChange={(e) => handleSceneChange(e.target.value)}
-              disabled={isRunning || isLoading}
-            >
-              <option value="">シーンを選択してください</option>
-              {Array.isArray(scenes) && scenes.map((scene) => (
-                <option key={scene.id} value={scene.id}>
-                  {scene.id}
-                </option>
-              ))}
-            </select>
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <ExpandMore className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
+              {availableCharacters.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {availableCharacters.map((character) => (
+                    <span
+                      key={character.id}
+                      className="neo-element-subtle px-2 py-0.5 rounded text-xs"
+                      style={{ 
+                        background: 'var(--neo-accent)', 
+                        color: 'white',
+                        fontSize: '0.7rem'
+                      }}
+                    >
+                      {character.name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span style={{ color: 'var(--neo-text-secondary)' }}>
+                  シーンを選択してください
+                </span>
+              )}
             </div>
           </div>
         </div>
 
-        {/* ステータスインジケーター */}
-        <div className="flex items-center gap-2">
-          <motion.div
-            className="w-3 h-3 rounded-full"
-            animate={{
-              backgroundColor: isRunning ? 'var(--neo-success)' : 'var(--neo-text-secondary)',
-              scale: isRunning ? [1, 1.2, 1] : 1
+        {/* コントロールボタン */}
+        <div className="flex gap-2 flex-wrap">
+          {status === 'idle' ? (
+            <motion.button
+              className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+              onClick={handleStart}
+              disabled={!selectedSceneId || availableCharacters.length === 0}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                opacity: !selectedSceneId || availableCharacters.length === 0 ? 0.6 : 1,
+                cursor: !selectedSceneId || availableCharacters.length === 0 ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <Play className="w-4 h-4" />
+              開始
+            </motion.button>
+          ) : (
+            <motion.button
+              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+              onClick={handleStop}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{ color: 'var(--neo-error)' }}
+            >
+              <Square className="w-4 h-4" />
+              停止
+            </motion.button>
+          )}
+
+          {status === 'running' && (
+            <motion.button
+              className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+              onClick={handleNextTurn}
+              disabled={isLoading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isLoading ? (
+                <motion.div
+                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                />
+              ) : (
+                <SkipForward className="w-4 h-4" />
+              )}
+              次ターン
+            </motion.button>
+          )}
+
+          <motion.button
+            className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+            onClick={() => setIsInterventionOpen(!isInterventionOpen)}
+            disabled={status !== 'running'}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            style={{
+              opacity: status !== 'running' ? 0.6 : 1,
+              cursor: status !== 'running' ? 'not-allowed' : 'pointer',
             }}
-            transition={{
-              scale: { repeat: isRunning ? Infinity : 0, duration: 1.5 }
-            }}
-          />
-          <span className="text-sm font-medium" style={{ color: 'var(--neo-text-secondary)' }}>
-            {status === 'running' ? 'Running' : status === 'idle' ? 'Ready' : 'Stopped'}
-          </span>
+          >
+            <Sparkles className="w-4 h-4" />
+            介入
+          </motion.button>
+        </div>
+
+        {/* ステータス表示 */}
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <motion.div
+              className="w-2 h-2 rounded-full"
+              animate={{
+                backgroundColor: status === 'running' ? 'var(--neo-success)' : 'var(--neo-text-secondary)'
+              }}
+              transition={{ duration: 0.3 }}
+            />
+            <span style={{ color: 'var(--neo-text-secondary)' }}>
+              {status === 'running' ? '実行中' : status === 'idle' ? '待機中' : '停止中'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -388,6 +440,6 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }; 
