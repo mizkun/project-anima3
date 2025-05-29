@@ -29,9 +29,9 @@ class ContextBuilder:
     """
 
     # 情報量制御のためのデフォルト設定
-    MAX_EXPERIENCES = 3  # 表示する最大経験数
-    MAX_GOALS = 3  # 表示する最大目標数
-    MAX_MEMORIES = 5  # 表示する最大記憶数
+    # MAX_EXPERIENCES = 3  # 表示する最大経験数 - 制限撤廃
+    # MAX_GOALS = 3  # 表示する最大目標数 - 制限撤廃
+    # MAX_MEMORIES = 5  # 表示する最大記憶数 - 制限撤廃
     MAX_TURNS = 5  # 表示する最大ターン数
     MAX_SIGNIFICANT_TURNS = 10  # 重要な出来事として表示する最大ターン数
 
@@ -289,43 +289,43 @@ class ContextBuilder:
 
         context = "【経験と記憶】\n"
 
-        # 経験情報の整形（重要度順に制限）
+        # 経験情報の整形（重要度順にソート、制限なし）
         if long_term_data.experiences:
             # 重要度の高い順にソート
             sorted_experiences = sorted(
                 long_term_data.experiences, key=lambda x: x.importance, reverse=True
             )
-            # 表示数を制限
-            limited_experiences = sorted_experiences[: self.MAX_EXPERIENCES]
+            # 制限を削除 - すべての経験を表示
+            # limited_experiences = sorted_experiences[: self.MAX_EXPERIENCES]
 
             context += "【過去の重要な経験】\n"
-            for exp in limited_experiences:
+            for exp in sorted_experiences:
                 context += f"- {exp.event} (重要度: {exp.importance}/10)\n"
         else:
             context += "【過去の重要な経験】\n特に記録されている経験はありません。\n"
 
-        # 目標情報の整形（重要度順に制限）
+        # 目標情報の整形（重要度順にソート、制限なし）
         if long_term_data.goals:
             # 重要度の高い順にソート
             sorted_goals = sorted(
                 long_term_data.goals, key=lambda x: x.importance, reverse=True
             )
-            # 表示数を制限
-            limited_goals = sorted_goals[: self.MAX_GOALS]
+            # 制限を削除 - すべての目標を表示
+            # limited_goals = sorted_goals[: self.MAX_GOALS]
 
             context += "\n【現在の目標/願望】\n"
-            for goal in limited_goals:
+            for goal in sorted_goals:
                 context += f"- {goal.goal} (重要度: {goal.importance}/10)\n"
         else:
             context += "\n【現在の目標/願望】\n特に記録されている目標はありません。\n"
 
-        # 記憶情報の整形（最新順に制限）
+        # 記憶情報の整形（制限なし）
         if long_term_data.memories:
-            # 最新の記憶だけを取得（ここでは簡易的に実装、実際にはタイムスタンプ等で判断する必要がある）
-            limited_memories = long_term_data.memories[-self.MAX_MEMORIES :]
+            # 制限を削除 - すべての記憶を表示
+            # limited_memories = long_term_data.memories[-self.MAX_MEMORIES :]
 
             context += "\n【記憶】\n"
-            for memory in limited_memories:
+            for memory in long_term_data.memories:
                 # 関連キャラクター名の取得を試みる
                 related_names = []
                 for char_id in memory.related_character_ids:

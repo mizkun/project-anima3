@@ -195,6 +195,32 @@ class InformationUpdater:
                 f"長期情報更新用のコンテキストを構築しました: {update_context.keys()}"
             )
 
+            # プロンプトテンプレートを読み込んで値を埋め込み、コンソールに出力
+            try:
+                with open(prompt_template_path, "r", encoding="utf-8") as f:
+                    prompt_template = f.read()
+
+                # プロンプトテンプレートに値を埋め込み
+                final_prompt = prompt_template
+                for key, value in update_context.items():
+                    final_prompt = final_prompt.replace(f"{{{{{key}}}}}", str(value))
+
+                # コンソールにプロンプトを出力
+                print("\n" + "=" * 80)
+                print("【長期記憶更新プロンプト】")
+                print(f"キャラクターID: {character_id}")
+                print("=" * 80)
+                print(final_prompt)
+                print("=" * 80 + "\n")
+
+                logger.info(
+                    f"長期記憶更新プロンプトをコンソールに出力しました（キャラクター: {character_id}）"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"プロンプトのコンソール出力でエラーが発生しました: {str(e)}"
+                )
+
             # LLMに長期情報の更新提案を生成させる
             update_proposal = llm_adapter.update_character_long_term_info(
                 character_id, update_context, prompt_template_path

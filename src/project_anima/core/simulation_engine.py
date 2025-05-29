@@ -486,6 +486,31 @@ class SimulationEngine:
             # プロンプトテンプレートのパスを設定
             prompt_file_path = os.path.join(self.prompts_dir_path, "think_generate.txt")
 
+            # プロンプトテンプレートを読み込んで値を埋め込み、コンソールに出力
+            try:
+                with open(prompt_file_path, "r", encoding="utf-8") as f:
+                    prompt_template = f.read()
+
+                # プロンプトテンプレートに値を埋め込み
+                final_prompt = prompt_template
+                for key, value in context_dict.items():
+                    final_prompt = final_prompt.replace(f"{{{{{key}}}}}", str(value))
+
+                # キャラクター名も埋め込み
+                final_prompt = final_prompt.replace(
+                    "{{character_name}}", character_name
+                )
+
+                # コンソールにプロンプトを出力
+                print("\n" + "=" * 80)
+                print(f"🤖 PROMPT FOR {character_name} (ID: {character_id})")
+                print("=" * 80)
+                print(final_prompt)
+                print("=" * 80 + "\n")
+
+            except Exception as e:
+                logger.warning(f"プロンプト表示エラー: {str(e)}")
+
             # LLM思考生成
             try:
                 # LLMAdapterを使って思考を生成
