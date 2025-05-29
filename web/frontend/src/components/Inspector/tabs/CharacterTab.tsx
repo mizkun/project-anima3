@@ -1,43 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Box,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemButton,
-  Typography,
-  Button,
-  TextField,
-  Alert,
-  CircularProgress,
-  Divider,
-  Card,
-  CardContent,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Tabs,
-  Tab,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
-import {
-  Edit as EditIcon,
-  Save as SaveIcon,
-  Refresh as RefreshIcon,
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Code as CodeIcon,
-  Person as PersonIcon,
-  Psychology as PsychologyIcon,
-  Memory as MemoryIcon,
-  Flag as TargetIcon,
-  ExpandMore as ExpandMoreIcon,
-} from '@mui/icons-material';
+  Edit,
+  Save,
+  RefreshCw,
+  Plus,
+  Trash2,
+  Code,
+  User,
+  Brain,
+  Archive,
+  Target,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Search,
+} from 'lucide-react';
 
 interface CharacterData {
   character_id: string;
@@ -203,6 +181,7 @@ const generateLongTermYaml = (data: CharacterData): string => {
 export const CharacterTab: React.FC = () => {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
+  const [editData, setEditData] = useState<CharacterData>({ character_id: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -210,9 +189,10 @@ export const CharacterTab: React.FC = () => {
   const [showYamlDialog, setShowYamlDialog] = useState(false);
   const [yamlContent, setYamlContent] = useState<string>('');
   const [yamlType, setYamlType] = useState<'immutable' | 'longterm'>('immutable');
-  
-  // 編集用の状態
-  const [editData, setEditData] = useState<CharacterData>({ character_id: '' });
+  const [activeTab, setActiveTab] = useState(0);
+
+  // 選択されたキャラクターのデータを取得
+  const selectedCharacterData = characters.find(c => c.character_id === selectedCharacter);
 
   // キャラクター一覧を取得
   const fetchCharacters = async () => {
@@ -279,14 +259,27 @@ export const CharacterTab: React.FC = () => {
     setSelectedCharacter(filePath);
   };
 
+  // キャラクター選択ハンドラー
+  const handleCharacterSelect = (characterId: string) => {
+    setSelectedCharacter(characterId);
+    const character = characters.find(c => c.character_id === characterId);
+    if (character) {
+      setEditData(character.data);
+    }
+    setIsEditing(false);
+    setActiveTab(0);
+  };
+
   // 編集開始ハンドラー
   const handleStartEdit = () => {
     setIsEditing(true);
+    setError(null);
   };
 
   // 編集キャンセルハンドラー
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setError(null);
     if (selectedCharacter) {
       const character = characters.find(c => c.character_id === selectedCharacter);
       if (character) {
@@ -419,37 +412,30 @@ export const CharacterTab: React.FC = () => {
     }
   };
 
-  // キャラクター選択ハンドラー
-  const handleCharacterSelect = (characterId: string) => {
-    setSelectedCharacter(characterId);
-    const character = characters.find(c => c.character_id === characterId);
-    if (character) {
-      setEditData(character.data);
-    }
-    setIsEditing(false);
-  };
-
   // 経験追加
   const handleAddExperience = () => {
+    const newExperience = { event: '新しい経験', importance: 5 };
     setEditData(prev => ({
       ...prev,
-      experiences: [...(prev.experiences || []), { event: '', importance: 5 }]
+      experiences: [...(prev.experiences || []), newExperience]
     }));
   };
 
   // 目標追加
   const handleAddGoal = () => {
+    const newGoal = { goal: '新しい目標', importance: 5 };
     setEditData(prev => ({
       ...prev,
-      goals: [...(prev.goals || []), { goal: '', importance: 5 }]
+      goals: [...(prev.goals || []), newGoal]
     }));
   };
 
   // 記憶追加
   const handleAddMemory = () => {
+    const newMemory = { memory: '新しい記憶', scene_id_of_memory: '', related_character_ids: [] };
     setEditData(prev => ({
       ...prev,
-      memories: [...(prev.memories || []), { memory: '', scene_id_of_memory: '', related_character_ids: [] }]
+      memories: [...(prev.memories || []), newMemory]
     }));
   };
 
@@ -465,474 +451,598 @@ export const CharacterTab: React.FC = () => {
   };
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="h-full flex flex-col overflow-hidden" style={{ color: 'var(--neo-text)' }}>
       {/* ヘッダー */}
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6">キャラクター管理</Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              startIcon={<AddIcon />}
-              onClick={createNewCharacter}
-              disabled={isSaving}
-              size="small"
-              variant="outlined"
-            >
-              新規作成
-            </Button>
-            <Button
-              startIcon={<RefreshIcon />}
+      <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <User className="w-5 h-5" />
+            キャラクター設定
+          </h3>
+          <div className="flex gap-2">
+            <motion.button
+              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
               onClick={fetchCharacters}
               disabled={isLoading}
-              size="small"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               更新
-            </Button>
-          </Box>
-        </Box>
-      </Box>
+            </motion.button>
+            <motion.button
+              className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+              onClick={createNewCharacter}
+              disabled={isSaving}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Plus className="w-4 h-4" />
+              新規作成
+            </motion.button>
+          </div>
+        </div>
+        
+        {/* エラー表示 */}
+        {error && (
+          <motion.div
+            className="neo-element-pressed p-3 rounded-lg mb-4"
+            style={{ background: 'var(--neo-error)', color: 'white' }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="text-sm">{error}</div>
+          </motion.div>
+        )}
+      </div>
 
-      {/* エラー表示 */}
-      {error && (
-        <Box sx={{ p: 2 }}>
-          <Alert severity="error" onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        </Box>
-      )}
-
-      <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="flex-1 flex overflow-hidden">
         {/* キャラクター一覧 */}
-        <Box sx={{ width: '25%', borderRight: 1, borderColor: 'divider', overflow: 'auto' }}>
-          {isLoading && characters.length === 0 ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : (
-            <List dense>
-              {characters.map((character) => (
-                <ListItem key={character.character_id} disablePadding>
-                  <ListItemButton
-                    selected={selectedCharacter === character.character_id}
-                    onClick={() => handleCharacterSelect(character.character_id)}
-                    sx={{ py: 0.5 }}
-                  >
-                    <Box sx={{ width: '100%' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.25 }}>
-                        {character.data.name || character.character_id}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                        {character.character_id}
-                      </Typography>
-                      {character.data.occupation && (
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                          {character.data.occupation}
-                        </Typography>
-                      )}
-                    </Box>
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </Box>
-
-        {/* キャラクター編集エリア */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {selectedCharacter ? (
-            <>
-              {/* 編集ツールバー */}
-              <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider', display: 'flex', gap: 1, justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  {!isEditing ? (
-                    <Button
-                      startIcon={<EditIcon />}
-                      onClick={() => setIsEditing(true)}
-                      size="small"
-                      variant="outlined"
+        <div className="w-1/3 border-r overflow-hidden" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+          <div className="h-full flex flex-col">
+            <div className="p-3 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Search className="w-4 h-4" />
+                キャラクター一覧
+              </h4>
+            </div>
+            <div className="flex-1 overflow-y-auto neo-scrollbar">
+              {isLoading ? (
+                <div className="p-4 text-center">
+                  <motion.div
+                    className="w-6 h-6 border-2 border-current border-t-transparent rounded-full mx-auto"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  />
+                  <div className="text-sm mt-2" style={{ color: 'var(--neo-text-secondary)' }}>
+                    読み込み中...
+                  </div>
+                </div>
+              ) : characters.length === 0 ? (
+                <div className="p-4 text-center text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
+                  キャラクターファイルがありません
+                </div>
+              ) : (
+                <div className="p-2 space-y-1">
+                  {characters.map((character) => (
+                    <motion.button
+                      key={character.character_id}
+                      className={`w-full text-left p-3 rounded-lg transition-colors ${
+                        selectedCharacter === character.character_id ? 'neo-button-primary' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      onClick={() => handleCharacterSelect(character.character_id)}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
                     >
-                      編集
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        startIcon={<SaveIcon />}
-                        onClick={saveCharacterData}
-                        disabled={isSaving}
-                        size="small"
-                        variant="contained"
-                      >
-                        {isSaving ? '保存中...' : '保存'}
-                      </Button>
-                      <Button
-                        onClick={handleCancelEdit}
-                        disabled={isSaving}
-                        size="small"
-                      >
-                        キャンセル
-                      </Button>
-                    </>
-                  )}
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton
-                    onClick={() => handleShowYaml('immutable')}
-                    size="small"
-                    title="Immutable YAML表示"
-                  >
-                    <PersonIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => handleShowYaml('longterm')}
-                    size="small"
-                    title="Long-term YAML表示"
-                  >
-                    <PsychologyIcon />
-                  </IconButton>
-                </Box>
-              </Box>
+                      <div className="text-sm font-medium">{character.data.name || character.character_id}</div>
+                      <div className="text-xs mt-1" style={{ color: 'var(--neo-text-secondary)' }}>
+                        {character.data.occupation || 'ID: ' + character.character_id}
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-              {/* キャラクター編集フォーム */}
-              <Box sx={{ flex: 1, p: 2, overflow: 'auto' }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {/* 基本情報 */}
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                        <PersonIcon sx={{ mr: 1 }} />
-                        基本情報
-                      </Typography>
-                      
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <TextField
-                          label="キャラクターID"
-                          value={editData.character_id || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, character_id: e.target.value }))}
-                          disabled={!isEditing}
-                          fullWidth
-                          size="small"
-                        />
-                        
-                        <TextField
-                          label="名前"
-                          value={editData.name || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
-                          disabled={!isEditing}
-                          fullWidth
-                          size="small"
-                        />
-                        
-                        <Box sx={{ display: 'flex', gap: 2 }}>
-                          <TextField
-                            label="年齢"
-                            type="number"
-                            value={editData.age || ''}
-                            onChange={(e) => setEditData(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }))}
-                            disabled={!isEditing}
-                            size="small"
-                            sx={{ width: '120px' }}
-                          />
+        {/* 編集エリア */}
+        <div className="flex-1 overflow-hidden">
+          {selectedCharacter ? (
+            <div className="h-full flex flex-col">
+              {/* 編集ヘッダー */}
+              <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-medium">{editData.name || editData.character_id}</h4>
+                  <div className="flex gap-2">
+                    {isEditing ? (
+                      <>
+                        <motion.button
+                          className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                          onClick={handleCancelEdit}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          キャンセル
+                        </motion.button>
+                        <motion.button
+                          className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+                          onClick={saveCharacterData}
+                          disabled={isSaving}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {isSaving ? (
+                            <motion.div
+                              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            />
+                          ) : (
+                            <Save className="w-4 h-4" />
+                          )}
+                          保存
+                        </motion.button>
+                      </>
+                    ) : (
+                      <>
+                        <motion.button
+                          className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                          onClick={() => handleShowYaml('immutable')}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Code className="w-4 h-4" />
+                          YAML表示
+                        </motion.button>
+                        <motion.button
+                          className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+                          onClick={handleStartEdit}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Edit className="w-4 h-4" />
+                          編集
+                        </motion.button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* タブ切り替え */}
+              <div className="flex-shrink-0 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+                <div className="flex">
+                  <motion.button
+                    className={`px-4 py-2 text-sm border-b-2 transition-colors ${
+                      activeTab === 0 
+                        ? 'border-blue-500 text-blue-500' 
+                        : 'border-transparent hover:border-gray-300'
+                    }`}
+                    onClick={() => setActiveTab(0)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <User className="w-4 h-4 inline mr-1" />
+                    基本情報
+                  </motion.button>
+                  <motion.button
+                    className={`px-4 py-2 text-sm border-b-2 transition-colors ${
+                      activeTab === 1 
+                        ? 'border-blue-500 text-blue-500' 
+                        : 'border-transparent hover:border-gray-300'
+                    }`}
+                    onClick={() => setActiveTab(1)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Brain className="w-4 h-4 inline mr-1" />
+                    記憶・経験
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* 編集フォーム */}
+              <div className="flex-1 overflow-y-auto neo-scrollbar p-4">
+                <AnimatePresence mode="wait">
+                  {activeTab === 0 && (
+                    <motion.div
+                      key="basic"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-6"
+                    >
+                      {/* 基本情報フォーム */}
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">キャラクターID</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                className="neo-input w-full"
+                                value={editData.character_id || ''}
+                                onChange={(e) => setEditData(prev => ({ ...prev, character_id: e.target.value }))}
+                                placeholder="character_001"
+                              />
+                            ) : (
+                              <div className="neo-element-subtle p-3 rounded-lg">
+                                {editData.character_id || '未設定'}
+                              </div>
+                            )}
+                          </div>
                           
-                          <TextField
-                            label="職業・役職"
-                            value={editData.occupation || ''}
-                            onChange={(e) => setEditData(prev => ({ ...prev, occupation: e.target.value }))}
-                            disabled={!isEditing}
-                            fullWidth
-                            size="small"
-                          />
-                        </Box>
-                        
-                        <TextField
-                          label="基本性格"
-                          value={editData.base_personality || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, base_personality: e.target.value }))}
-                          disabled={!isEditing}
-                          fullWidth
-                          multiline
-                          rows={3}
-                          size="small"
-                        />
-                        
-                        <TextField
-                          label="話し方"
-                          value={editData.speech_pattern || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, speech_pattern: e.target.value }))}
-                          disabled={!isEditing}
-                          fullWidth
-                          multiline
-                          rows={2}
-                          size="small"
-                        />
-                        
-                        <TextField
-                          label="外見"
-                          value={editData.appearance || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, appearance: e.target.value }))}
-                          disabled={!isEditing}
-                          fullWidth
-                          multiline
-                          rows={2}
-                          size="small"
-                        />
-                      </Box>
-                    </CardContent>
-                  </Card>
-
-                  {/* 経験 */}
-                  <Accordion>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography sx={{ display: 'flex', alignItems: 'center' }}>
-                        <MemoryIcon sx={{ mr: 1 }} />
-                        経験 ({editData.experiences?.length || 0})
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {editData.experiences?.map((exp, index) => (
-                          <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                            <TextField
-                              label="経験"
-                              value={exp.event}
-                              onChange={(e) => {
-                                const newExperiences = [...(editData.experiences || [])];
-                                newExperiences[index].event = e.target.value;
-                                setEditData(prev => ({ ...prev, experiences: newExperiences }));
-                              }}
-                              disabled={!isEditing}
-                              fullWidth
-                              multiline
-                              rows={2}
-                              size="small"
-                            />
-                            <TextField
-                              label="重要度"
-                              type="number"
-                              value={exp.importance}
-                              onChange={(e) => {
-                                const newExperiences = [...(editData.experiences || [])];
-                                newExperiences[index].importance = parseInt(e.target.value) || 5;
-                                setEditData(prev => ({ ...prev, experiences: newExperiences }));
-                              }}
-                              disabled={!isEditing}
-                              size="small"
-                              sx={{ width: '100px' }}
-                              inputProps={{ min: 1, max: 10 }}
-                            />
-                            {isEditing && (
-                              <IconButton
-                                onClick={() => {
-                                  const newExperiences = editData.experiences?.filter((_, i) => i !== index) || [];
-                                  setEditData(prev => ({ ...prev, experiences: newExperiences }));
-                                }}
-                                size="small"
-                              >
-                                <DeleteIcon />
-                              </IconButton>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">名前</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                className="neo-input w-full"
+                                value={editData.name || ''}
+                                onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+                                placeholder="キャラクター名"
+                              />
+                            ) : (
+                              <div className="neo-element-subtle p-3 rounded-lg">
+                                {editData.name || '未設定'}
+                              </div>
                             )}
-                          </Box>
-                        ))}
-                        {isEditing && (
-                          <Button
-                            startIcon={<AddIcon />}
-                            onClick={handleAddExperience}
-                            size="small"
-                            variant="outlined"
-                          >
-                            経験を追加
-                          </Button>
-                        )}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
+                          </div>
+                        </div>
 
-                  {/* 目標 */}
-                  <Accordion>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography sx={{ display: 'flex', alignItems: 'center' }}>
-                        <TargetIcon sx={{ mr: 1 }} />
-                        目標 ({editData.goals?.length || 0})
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {editData.goals?.map((goal, index) => (
-                          <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                            <TextField
-                              label="目標"
-                              value={goal.goal}
-                              onChange={(e) => {
-                                const newGoals = [...(editData.goals || [])];
-                                newGoals[index].goal = e.target.value;
-                                setEditData(prev => ({ ...prev, goals: newGoals }));
-                              }}
-                              disabled={!isEditing}
-                              fullWidth
-                              multiline
-                              rows={2}
-                              size="small"
-                            />
-                            <TextField
-                              label="重要度"
-                              type="number"
-                              value={goal.importance}
-                              onChange={(e) => {
-                                const newGoals = [...(editData.goals || [])];
-                                newGoals[index].importance = parseInt(e.target.value) || 5;
-                                setEditData(prev => ({ ...prev, goals: newGoals }));
-                              }}
-                              disabled={!isEditing}
-                              size="small"
-                              sx={{ width: '100px' }}
-                              inputProps={{ min: 1, max: 10 }}
-                            />
-                            {isEditing && (
-                              <IconButton
-                                onClick={() => {
-                                  const newGoals = editData.goals?.filter((_, i) => i !== index) || [];
-                                  setEditData(prev => ({ ...prev, goals: newGoals }));
-                                }}
-                                size="small"
-                              >
-                                <DeleteIcon />
-                              </IconButton>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">年齢</label>
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                className="neo-input w-full"
+                                value={editData.age || ''}
+                                onChange={(e) => setEditData(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }))}
+                                placeholder="16"
+                              />
+                            ) : (
+                              <div className="neo-element-subtle p-3 rounded-lg">
+                                {editData.age || '未設定'}
+                              </div>
                             )}
-                          </Box>
-                        ))}
-                        {isEditing && (
-                          <Button
-                            startIcon={<AddIcon />}
-                            onClick={handleAddGoal}
-                            size="small"
-                            variant="outlined"
-                          >
-                            目標を追加
-                          </Button>
-                        )}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium mb-2">職業・役職</label>
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                className="neo-input w-full"
+                                value={editData.occupation || ''}
+                                onChange={(e) => setEditData(prev => ({ ...prev, occupation: e.target.value }))}
+                                placeholder="高校生"
+                              />
+                            ) : (
+                              <div className="neo-element-subtle p-3 rounded-lg">
+                                {editData.occupation || '未設定'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
 
-                  {/* 記憶 */}
-                  <Accordion>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography sx={{ display: 'flex', alignItems: 'center' }}>
-                        <PsychologyIcon sx={{ mr: 1 }} />
-                        記憶 ({editData.memories?.length || 0})
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {editData.memories?.map((memory, index) => (
-                          <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-                            <TextField
-                              label="記憶"
-                              value={memory.memory}
-                              onChange={(e) => {
-                                const newMemories = [...(editData.memories || [])];
-                                newMemories[index].memory = e.target.value;
-                                setEditData(prev => ({ ...prev, memories: newMemories }));
-                              }}
-                              disabled={!isEditing}
-                              fullWidth
-                              multiline
+                        <div>
+                          <label className="block text-sm font-medium mb-2">基本性格</label>
+                          {isEditing ? (
+                            <textarea
+                              className="neo-input w-full"
+                              rows={4}
+                              value={editData.base_personality || ''}
+                              onChange={(e) => setEditData(prev => ({ ...prev, base_personality: e.target.value }))}
+                              placeholder="キャラクターの基本的な性格を説明してください..."
+                            />
+                          ) : (
+                            <div className="neo-element-subtle p-3 rounded-lg">
+                              {editData.base_personality || '未設定'}
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium mb-2">話し方</label>
+                          {isEditing ? (
+                            <textarea
+                              className="neo-input w-full"
                               rows={3}
-                              size="small"
+                              value={editData.speech_pattern || ''}
+                              onChange={(e) => setEditData(prev => ({ ...prev, speech_pattern: e.target.value }))}
+                              placeholder="話し方の特徴を説明してください..."
                             />
-                            <TextField
-                              label="シーンID"
-                              value={memory.scene_id_of_memory}
-                              onChange={(e) => {
-                                const newMemories = [...(editData.memories || [])];
-                                newMemories[index].scene_id_of_memory = e.target.value;
-                                setEditData(prev => ({ ...prev, memories: newMemories }));
-                              }}
-                              disabled={!isEditing}
-                              fullWidth
-                              size="small"
+                          ) : (
+                            <div className="neo-element-subtle p-3 rounded-lg">
+                              {editData.speech_pattern || '未設定'}
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium mb-2">外見</label>
+                          {isEditing ? (
+                            <textarea
+                              className="neo-input w-full"
+                              rows={3}
+                              value={editData.appearance || ''}
+                              onChange={(e) => setEditData(prev => ({ ...prev, appearance: e.target.value }))}
+                              placeholder="外見の特徴を説明してください..."
                             />
-                            {isEditing && (
-                              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                <IconButton
-                                  onClick={() => {
-                                    const newMemories = editData.memories?.filter((_, i) => i !== index) || [];
-                                    setEditData(prev => ({ ...prev, memories: newMemories }));
-                                  }}
-                                  size="small"
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Box>
-                            )}
-                          </Box>
-                        ))}
-                        {isEditing && (
-                          <Button
-                            startIcon={<AddIcon />}
-                            onClick={handleAddMemory}
-                            size="small"
-                            variant="outlined"
-                          >
-                            記憶を追加
-                          </Button>
-                        )}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                </Box>
-              </Box>
-            </>
+                          ) : (
+                            <div className="neo-element-subtle p-3 rounded-lg">
+                              {editData.appearance || '未設定'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {activeTab === 1 && (
+                    <motion.div
+                      key="memory"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-6"
+                    >
+                      {/* 経験セクション */}
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="text-md font-medium flex items-center gap-2">
+                            <Archive className="w-4 h-4" />
+                            経験
+                          </h5>
+                          {isEditing && (
+                            <motion.button
+                              className="neo-button flex items-center gap-1 px-2 py-1 text-xs"
+                              onClick={handleAddExperience}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <Plus className="w-3 h-3" />
+                              追加
+                            </motion.button>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          {(editData.experiences || []).map((exp, index) => (
+                            <div key={index} className="neo-element-subtle p-3 rounded-lg">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  {isEditing ? (
+                                    <input
+                                      type="text"
+                                      className="neo-input w-full mb-2"
+                                      value={exp.event}
+                                      onChange={(e) => {
+                                        const newExperiences = [...(editData.experiences || [])];
+                                        newExperiences[index] = { ...exp, event: e.target.value };
+                                        setEditData(prev => ({ ...prev, experiences: newExperiences }));
+                                      }}
+                                      placeholder="経験内容"
+                                    />
+                                  ) : (
+                                    <div className="text-sm mb-1">{exp.event}</div>
+                                  )}
+                                  <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
+                                    重要度: {exp.importance}/10
+                                  </div>
+                                </div>
+                                {isEditing && (
+                                  <motion.button
+                                    className="text-red-500 hover:text-red-700 p-1"
+                                    onClick={() => {
+                                      const newExperiences = (editData.experiences || []).filter((_, i) => i !== index);
+                                      setEditData(prev => ({ ...prev, experiences: newExperiences }));
+                                    }}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </motion.button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 目標セクション */}
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="text-md font-medium flex items-center gap-2">
+                            <Target className="w-4 h-4" />
+                            目標
+                          </h5>
+                          {isEditing && (
+                            <motion.button
+                              className="neo-button flex items-center gap-1 px-2 py-1 text-xs"
+                              onClick={handleAddGoal}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <Plus className="w-3 h-3" />
+                              追加
+                            </motion.button>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          {(editData.goals || []).map((goal, index) => (
+                            <div key={index} className="neo-element-subtle p-3 rounded-lg">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  {isEditing ? (
+                                    <input
+                                      type="text"
+                                      className="neo-input w-full mb-2"
+                                      value={goal.goal}
+                                      onChange={(e) => {
+                                        const newGoals = [...(editData.goals || [])];
+                                        newGoals[index] = { ...goal, goal: e.target.value };
+                                        setEditData(prev => ({ ...prev, goals: newGoals }));
+                                      }}
+                                      placeholder="目標内容"
+                                    />
+                                  ) : (
+                                    <div className="text-sm mb-1">{goal.goal}</div>
+                                  )}
+                                  <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
+                                    重要度: {goal.importance}/10
+                                  </div>
+                                </div>
+                                {isEditing && (
+                                  <motion.button
+                                    className="text-red-500 hover:text-red-700 p-1"
+                                    onClick={() => {
+                                      const newGoals = (editData.goals || []).filter((_, i) => i !== index);
+                                      setEditData(prev => ({ ...prev, goals: newGoals }));
+                                    }}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </motion.button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 記憶セクション */}
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="text-md font-medium flex items-center gap-2">
+                            <Brain className="w-4 h-4" />
+                            記憶
+                          </h5>
+                          {isEditing && (
+                            <motion.button
+                              className="neo-button flex items-center gap-1 px-2 py-1 text-xs"
+                              onClick={handleAddMemory}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <Plus className="w-3 h-3" />
+                              追加
+                            </motion.button>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          {(editData.memories || []).map((memory, index) => (
+                            <div key={index} className="neo-element-subtle p-3 rounded-lg">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  {isEditing ? (
+                                    <div className="space-y-2">
+                                      <input
+                                        type="text"
+                                        className="neo-input w-full"
+                                        value={memory.memory}
+                                        onChange={(e) => {
+                                          const newMemories = [...(editData.memories || [])];
+                                          newMemories[index] = { ...memory, memory: e.target.value };
+                                          setEditData(prev => ({ ...prev, memories: newMemories }));
+                                        }}
+                                        placeholder="記憶内容"
+                                      />
+                                      <input
+                                        type="text"
+                                        className="neo-input w-full"
+                                        value={memory.scene_id_of_memory}
+                                        onChange={(e) => {
+                                          const newMemories = [...(editData.memories || [])];
+                                          newMemories[index] = { ...memory, scene_id_of_memory: e.target.value };
+                                          setEditData(prev => ({ ...prev, memories: newMemories }));
+                                        }}
+                                        placeholder="シーンID"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <div className="text-sm mb-1">{memory.memory}</div>
+                                      <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
+                                        シーン: {memory.scene_id_of_memory}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                {isEditing && (
+                                  <motion.button
+                                    className="text-red-500 hover:text-red-700 p-1"
+                                    onClick={() => {
+                                      const newMemories = (editData.memories || []).filter((_, i) => i !== index);
+                                      setEditData(prev => ({ ...prev, memories: newMemories }));
+                                    }}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </motion.button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
           ) : (
-            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center" style={{ color: 'var(--neo-text-secondary)' }}>
                 編集するキャラクターを選択してください
-              </Typography>
-            </Box>
+              </div>
+            </div>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* YAML表示ダイアログ */}
-      <Dialog
-        open={showYamlDialog}
-        onClose={() => setShowYamlDialog(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          {yamlType === 'immutable' ? 'Immutable YAML' : 'Long-term YAML'}
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            multiline
-            fullWidth
-            value={yamlContent}
-            onChange={(e) => setYamlContent(e.target.value)}
-            variant="outlined"
-            sx={{
-              '& .MuiInputBase-root': {
-                fontFamily: 'monospace',
-                fontSize: '0.875rem',
-              },
-            }}
-            rows={15}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowYamlDialog(false)}>
-            閉じる
-          </Button>
-          <Button
-            onClick={() => {
-              // YAMLから編集データを更新する処理は複雑なので、今回は省略
-              setShowYamlDialog(false);
-            }}
-            variant="contained"
+      <AnimatePresence>
+        {showYamlDialog && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowYamlDialog(false)}
           >
-            適用
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+            <motion.div
+              className="neo-card-floating p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">{yamlType === 'immutable' ? 'Immutable' : 'Long-term'} YAML</h3>
+                <motion.button
+                  className="neo-button p-2 rounded-full"
+                  onClick={() => setShowYamlDialog(false)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  ×
+                </motion.button>
+              </div>
+              <div className="neo-element-pressed p-4 rounded-lg overflow-y-auto max-h-96">
+                <pre className="text-sm font-mono whitespace-pre-wrap" style={{ color: 'var(--neo-text)' }}>
+                  {yamlContent}
+                </pre>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }; 

@@ -1,40 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Box,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemButton,
-  Typography,
-  Button,
-  TextField,
-  Alert,
-  CircularProgress,
-  Divider,
-  Card,
-  CardContent,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
-import {
-  Edit as EditIcon,
-  Save as SaveIcon,
-  Refresh as RefreshIcon,
-  Add as AddIcon,
-  LocationOn as LocationIcon,
-  Schedule as TimeIcon,
-  People as PeopleIcon,
-  Delete as DeleteIcon,
-  Code as CodeIcon,
-} from '@mui/icons-material';
+  Edit,
+  Save,
+  RefreshCw,
+  Plus,
+  MapPin,
+  Clock,
+  Users,
+  Trash2,
+  Code,
+  FileText,
+  Search,
+} from 'lucide-react';
 
 interface SceneFile {
   name: string;
@@ -203,79 +181,138 @@ export const SceneTab: React.FC = () => {
     try {
       const yamlContent = generateYamlContent(editData);
       
-      const response = await fetch(`/api/files/${encodeURIComponent(selectedFile)}`, {
+      const response = await fetch(`/api/files/${selectedFile}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({ content: yamlContent }),
+        body: yamlContent,
       });
-      
-      const data = await response.json();
-      
+
       if (response.ok) {
         setIsEditing(false);
-        // ファイル一覧を更新してパースされたデータも最新にする
-        await fetchSceneFiles();
+        await fetchSceneFiles(); // ファイル一覧を再取得
       } else {
-        throw new Error(data.message || 'ファイルの保存に失敗しました');
+        const data = await response.json();
+        throw new Error(data.message || '保存に失敗しました');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
+      setError(err instanceof Error ? err.message : '保存中にエラーが発生しました');
     } finally {
       setIsSaving(false);
     }
   };
 
-  // 新規ファイル作成
+  // 新しいファイルを作成
   const createNewFile = async () => {
-    const fileName = prompt('新しいシーンファイル名を入力してください（.yamlは自動で追加されます）:');
+    const fileName = prompt('新しいシーンファイル名を入力してください（.yamlは自動で付加されます）:');
     if (!fileName) return;
     
     const fullFileName = fileName.endsWith('.yaml') ? fileName : `${fileName}.yaml`;
-    const filePath = `data/scenes/${fullFileName}`;
     
-    // シーンファイルのテンプレートデータ
-    const templateData = {
-      scene_id: `${fileName.replace('.yaml', '')}_001`,
-      location: '場所を記述してください',
-      time: '時間を記述してください',
-      situation: '状況を詳しく記述してください',
-      participant_character_ids: [],
-    };
-    
-    const template = generateYamlContent(templateData);
-
     setIsSaving(true);
     setError(null);
     try {
-      const response = await fetch('/api/files', {
-        method: 'POST',
+      const defaultContent = `scene_id: "${fileName.replace('.yaml', '')}"
+location: ""
+time: ""
+situation: ""
+participant_character_ids: []
+`;
+
+      const response = await fetch(`/api/files/data/scenes/${fullFileName}`, {
+        method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({ 
-          path: filePath,
-          content: template 
-        }),
+        body: defaultContent,
       });
-      
-      const data = await response.json();
-      
+
       if (response.ok) {
         await fetchSceneFiles();
-        setSelectedFile(filePath);
-        setEditData(templateData);
-        setYamlContent(template);
-        setIsEditing(true);
+        setSelectedFile(`data/scenes/${fullFileName}`);
       } else {
-        throw new Error(data.message || 'ファイルの作成に失敗しました');
+        const data = await response.json();
+        throw new Error(data.message || 'ファイル作成に失敗しました');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
+      setError(err instanceof Error ? err.message : 'ファイル作成中にエラーが発生しました');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // ファイル選択時の処理
+  const handleFileSelect = (filePath: string) => {
+    setSelectedFile(filePath);
+    setIsEditing(false);
+    setError(null);
+    
+    const file = sceneFiles.find(f => f.path === filePath);
+    if (file) {
+      setEditData({
+        scene_id: file.scene_id,
+        location: file.location,
+        time: file.time,
+        situation: file.situation,
+        participant_character_ids: file.participant_character_ids ? [...file.participant_character_ids] : [],
+      });
+    }
+  };
+
+  // 編集開始
+  const handleStartEdit = () => {
+    setIsEditing(true);
+    setError(null);
+  };
+
+  // 編集キャンセル
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setError(null);
+    
+    // 元のデータに戻す
+    const file = sceneFiles.find(f => f.path === selectedFile);
+    if (file) {
+      setEditData({
+        scene_id: file.scene_id,
+        location: file.location,
+        time: file.time,
+        situation: file.situation,
+        participant_character_ids: file.participant_character_ids ? [...file.participant_character_ids] : [],
+      });
+    }
+  };
+
+  // キャラクター追加
+  const handleAddCharacter = () => {
+    if (!selectedCharacterId.trim()) return;
+    
+    const currentIds = editData.participant_character_ids || [];
+    if (!currentIds.includes(selectedCharacterId)) {
+      setEditData({
+        ...editData,
+        participant_character_ids: [...currentIds, selectedCharacterId],
+      });
+    }
+    setSelectedCharacterId('');
+  };
+
+  // キャラクター削除
+  const handleRemoveCharacter = (index: number) => {
+    const currentIds = editData.participant_character_ids || [];
+    const newIds = currentIds.filter((_, i) => i !== index);
+    setEditData({
+      ...editData,
+      participant_character_ids: newIds,
+    });
+  };
+
+  // YAML表示
+  const handleShowYaml = () => {
+    const content = generateYamlContent(editData);
+    setYamlContent(content);
+    setShowYamlDialog(true);
   };
 
   // 初期化
@@ -284,349 +321,373 @@ export const SceneTab: React.FC = () => {
     fetchCharacters();
   }, []);
 
-  // ファイル選択ハンドラー
-  const handleFileSelect = (filePath: string) => {
-    setSelectedFile(filePath);
-    const selectedScene = sceneFiles.find(f => f.path === filePath);
-    if (selectedScene) {
-      setEditData({
-        scene_id: selectedScene.scene_id || '',
-        location: selectedScene.location || '',
-        time: selectedScene.time || '',
-        situation: selectedScene.situation || '',
-        participant_character_ids: selectedScene.participant_character_ids || [],
-      });
-      setYamlContent(selectedScene.content || '');
-    }
-    setIsEditing(false);
-  };
-
-  // 編集開始ハンドラー
-  const handleStartEdit = () => {
-    setIsEditing(true);
-  };
-
-  // 編集キャンセルハンドラー
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    const selectedScene = sceneFiles.find(f => f.path === selectedFile);
-    if (selectedScene) {
-      setEditData({
-        scene_id: selectedScene.scene_id || '',
-        location: selectedScene.location || '',
-        time: selectedScene.time || '',
-        situation: selectedScene.situation || '',
-        participant_character_ids: selectedScene.participant_character_ids || [],
-      });
-    }
-  };
-
-  // キャラクターID追加
-  const handleAddCharacter = () => {
-    if (selectedCharacterId.trim()) {
-      // 重複チェック
-      const currentIds = editData.participant_character_ids || [];
-      if (!currentIds.includes(selectedCharacterId)) {
-        setEditData(prev => ({
-          ...prev,
-          participant_character_ids: [...currentIds, selectedCharacterId]
-        }));
-      }
-      setSelectedCharacterId('');
-    }
-  };
-
-  // キャラクターID削除
-  const handleRemoveCharacter = (index: number) => {
-    setEditData(prev => ({
-      ...prev,
-      participant_character_ids: prev.participant_character_ids?.filter((_, i) => i !== index) || []
-    }));
-  };
-
-  // YAML表示
-  const handleShowYaml = () => {
-    setYamlContent(generateYamlContent(editData));
-    setShowYamlDialog(true);
-  };
+  const selectedFileData = sceneFiles.find(f => f.path === selectedFile);
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div className="h-full flex flex-col overflow-hidden" style={{ color: 'var(--neo-text)' }}>
       {/* ヘッダー */}
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6">シーン管理</Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              startIcon={<AddIcon />}
-              onClick={createNewFile}
-              disabled={isSaving}
-              size="small"
-              variant="outlined"
-            >
-              新規作成
-            </Button>
-            <Button
-              startIcon={<RefreshIcon />}
+      <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            シーン設定
+          </h3>
+          <div className="flex gap-2">
+            <motion.button
+              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
               onClick={fetchSceneFiles}
               disabled={isLoading}
-              size="small"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               更新
-            </Button>
-          </Box>
-        </Box>
-      </Box>
+            </motion.button>
+            <motion.button
+              className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+              onClick={createNewFile}
+              disabled={isSaving}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Plus className="w-4 h-4" />
+              新規作成
+            </motion.button>
+          </div>
+        </div>
+        
+        {/* エラー表示 */}
+        {error && (
+          <motion.div
+            className="neo-element-pressed p-3 rounded-lg mb-4"
+            style={{ background: 'var(--neo-error)', color: 'white' }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="text-sm">{error}</div>
+          </motion.div>
+        )}
+      </div>
 
-      {/* エラー表示 */}
-      {error && (
-        <Box sx={{ p: 2 }}>
-          <Alert severity="error" onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        </Box>
-      )}
-
-      <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="flex-1 flex overflow-hidden">
         {/* ファイル一覧 */}
-        <Box sx={{ width: '25%', borderRight: 1, borderColor: 'divider', overflow: 'auto' }}>
-          {isLoading && sceneFiles.length === 0 ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : (
-            <List dense>
-              {sceneFiles.map((file) => (
-                <ListItem key={file.path} disablePadding>
-                  <ListItemButton
-                    selected={selectedFile === file.path}
-                    onClick={() => handleFileSelect(file.path)}
-                    sx={{ py: 0.5 }}
-                  >
-                    <Box sx={{ width: '100%' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.25 }}>
-                        {file.scene_id || file.name}
-                      </Typography>
-                      {file.location && (
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                          {file.location}
-                        </Typography>
-                      )}
-                    </Box>
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          )}
-        </Box>
-
-        {/* シーン編集エリア */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {selectedFile ? (
-            <>
-              {/* 編集ツールバー */}
-              <Box sx={{ p: 1, borderBottom: 1, borderColor: 'divider', display: 'flex', gap: 1, justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  {!isEditing ? (
-                    <Button
-                      startIcon={<EditIcon />}
-                      onClick={handleStartEdit}
-                      size="small"
-                      variant="outlined"
-                    >
-                      編集
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        startIcon={<SaveIcon />}
-                        onClick={saveSceneData}
-                        disabled={isSaving}
-                        size="small"
-                        variant="contained"
-                      >
-                        {isSaving ? '保存中...' : '保存'}
-                      </Button>
-                      <Button
-                        onClick={handleCancelEdit}
-                        disabled={isSaving}
-                        size="small"
-                      >
-                        キャンセル
-                      </Button>
-                    </>
-                  )}
-                </Box>
-                <IconButton
-                  onClick={handleShowYaml}
-                  size="small"
-                  title="YAML表示"
-                >
-                  <CodeIcon />
-                </IconButton>
-              </Box>
-
-              {/* シーン編集フォーム */}
-              <Box sx={{ flex: 1, p: 2, overflow: 'auto' }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {/* シーンID */}
-                  <TextField
-                    label="シーンID"
-                    value={editData.scene_id || ''}
-                    onChange={(e) => setEditData(prev => ({ ...prev, scene_id: e.target.value }))}
-                    disabled={!isEditing}
-                    fullWidth
-                    size="small"
+        <div className="w-1/3 border-r overflow-hidden" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+          <div className="h-full flex flex-col">
+            <div className="p-3 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Search className="w-4 h-4" />
+                シーンファイル
+              </h4>
+            </div>
+            <div className="flex-1 overflow-y-auto neo-scrollbar">
+              {isLoading ? (
+                <div className="p-4 text-center">
+                  <motion.div
+                    className="w-6 h-6 border-2 border-current border-t-transparent rounded-full mx-auto"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   />
+                  <div className="text-sm mt-2" style={{ color: 'var(--neo-text-secondary)' }}>
+                    読み込み中...
+                  </div>
+                </div>
+              ) : sceneFiles.length === 0 ? (
+                <div className="p-4 text-center text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
+                  シーンファイルがありません
+                </div>
+              ) : (
+                <div className="p-2 space-y-1">
+                  {sceneFiles.map((file) => (
+                    <motion.button
+                      key={file.path}
+                      className={`w-full text-left p-3 rounded-lg transition-colors ${
+                        selectedFile === file.path ? 'neo-button-primary' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      onClick={() => handleFileSelect(file.path)}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <div className="text-sm font-medium">{file.name}</div>
+                      <div className="text-xs mt-1" style={{ color: 'var(--neo-text-secondary)' }}>
+                        {file.scene_id || 'ID未設定'}
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 編集エリア */}
+        <div className="flex-1 overflow-hidden">
+          {selectedFileData ? (
+            <div className="h-full flex flex-col">
+              {/* 編集ヘッダー */}
+              <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-medium">{selectedFileData.name}</h4>
+                  <div className="flex gap-2">
+                    {isEditing ? (
+                      <>
+                        <motion.button
+                          className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                          onClick={handleCancelEdit}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          キャンセル
+                        </motion.button>
+                        <motion.button
+                          className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+                          onClick={saveSceneData}
+                          disabled={isSaving}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {isSaving ? (
+                            <motion.div
+                              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            />
+                          ) : (
+                            <Save className="w-4 h-4" />
+                          )}
+                          保存
+                        </motion.button>
+                      </>
+                    ) : (
+                      <>
+                        <motion.button
+                          className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                          onClick={handleShowYaml}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Code className="w-4 h-4" />
+                          YAML表示
+                        </motion.button>
+                        <motion.button
+                          className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+                          onClick={handleStartEdit}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Edit className="w-4 h-4" />
+                          編集
+                        </motion.button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 編集フォーム */}
+              <div className="flex-1 overflow-y-auto neo-scrollbar p-4">
+                <div className="space-y-6">
+                  {/* シーンID */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      <MapPin className="w-4 h-4 inline mr-1" />
+                      シーンID
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="neo-input w-full"
+                        value={editData.scene_id || ''}
+                        onChange={(e) => setEditData({ ...editData, scene_id: e.target.value })}
+                        placeholder="scene_001"
+                      />
+                    ) : (
+                      <div className="neo-element-subtle p-3 rounded-lg">
+                        {selectedFileData.scene_id || '未設定'}
+                      </div>
+                    )}
+                  </div>
 
                   {/* 場所 */}
-                  <TextField
-                    label="場所"
-                    value={editData.location || ''}
-                    onChange={(e) => setEditData(prev => ({ ...prev, location: e.target.value }))}
-                    disabled={!isEditing}
-                    fullWidth
-                    size="small"
-                    InputProps={{
-                      startAdornment: <LocationIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-                    }}
-                  />
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      <MapPin className="w-4 h-4 inline mr-1" />
+                      場所
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="neo-input w-full"
+                        value={editData.location || ''}
+                        onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                        placeholder="学校の屋上"
+                      />
+                    ) : (
+                      <div className="neo-element-subtle p-3 rounded-lg">
+                        {selectedFileData.location || '未設定'}
+                      </div>
+                    )}
+                  </div>
 
                   {/* 時間 */}
-                  <TextField
-                    label="時間"
-                    value={editData.time || ''}
-                    onChange={(e) => setEditData(prev => ({ ...prev, time: e.target.value }))}
-                    disabled={!isEditing}
-                    fullWidth
-                    size="small"
-                    InputProps={{
-                      startAdornment: <TimeIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-                    }}
-                  />
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      <Clock className="w-4 h-4 inline mr-1" />
+                      時間
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="neo-input w-full"
+                        value={editData.time || ''}
+                        onChange={(e) => setEditData({ ...editData, time: e.target.value })}
+                        placeholder="放課後の夕方"
+                      />
+                    ) : (
+                      <div className="neo-element-subtle p-3 rounded-lg">
+                        {selectedFileData.time || '未設定'}
+                      </div>
+                    )}
+                  </div>
 
                   {/* 状況 */}
-                  <TextField
-                    label="状況"
-                    value={editData.situation || ''}
-                    onChange={(e) => setEditData(prev => ({ ...prev, situation: e.target.value }))}
-                    disabled={!isEditing}
-                    fullWidth
-                    multiline
-                    rows={4}
-                    size="small"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      状況
+                    </label>
+                    {isEditing ? (
+                      <textarea
+                        className="neo-input w-full"
+                        rows={4}
+                        value={editData.situation || ''}
+                        onChange={(e) => setEditData({ ...editData, situation: e.target.value })}
+                        placeholder="シーンの状況を説明してください..."
+                      />
+                    ) : (
+                      <div className="neo-element-subtle p-3 rounded-lg">
+                        {selectedFileData.situation || '未設定'}
+                      </div>
+                    )}
+                  </div>
 
                   {/* 参加キャラクター */}
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                      <PeopleIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      <Users className="w-4 h-4 inline mr-1" />
                       参加キャラクター
-                    </Typography>
+                    </label>
                     
-                    {/* キャラクターリスト */}
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                      {editData.participant_character_ids?.map((charId, index) => {
-                        const character = characters.find(c => c.character_id === charId);
-                        const displayName = character ? (character.name || charId) : charId;
-                        
-                        return (
-                          <Chip
-                            key={index}
-                            label={displayName}
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                            onDelete={isEditing ? () => handleRemoveCharacter(index) : undefined}
-                            deleteIcon={<DeleteIcon />}
-                          />
-                        );
-                      })}
-                    </Box>
+                    {/* キャラクター一覧表示 */}
+                    <div className="neo-element-subtle p-3 rounded-lg mb-3">
+                      {(editData.participant_character_ids || []).length === 0 ? (
+                        <div className="text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
+                          参加キャラクターはいません
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {(editData.participant_character_ids || []).map((characterId, index) => {
+                            const character = characters.find(c => c.character_id === characterId);
+                            return (
+                              <div
+                                key={index}
+                                className="neo-element flex items-center gap-2 px-3 py-1 rounded-full text-sm"
+                              >
+                                <span>{character?.name || characterId}</span>
+                                {isEditing && (
+                                  <motion.button
+                                    className="text-red-500 hover:text-red-700"
+                                    onClick={() => handleRemoveCharacter(index)}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </motion.button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
 
-                    {/* キャラクター追加 */}
+                    {/* キャラクター追加フォーム */}
                     {isEditing && (
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <FormControl fullWidth size="small">
-                          <InputLabel id="character-select-label">キャラクターを選択</InputLabel>
-                          <Select
-                            labelId="character-select-label"
-                            id="character-select"
+                      <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                          <select
+                            className="neo-input w-full appearance-none cursor-pointer"
                             value={selectedCharacterId}
-                            label="キャラクター"
                             onChange={(e) => setSelectedCharacterId(e.target.value)}
                           >
+                            <option value="">キャラクターを選択</option>
                             {characters.map((character) => (
-                              <MenuItem key={character.character_id} value={character.character_id}>
+                              <option key={character.character_id} value={character.character_id}>
                                 {character.name || character.character_id}
-                              </MenuItem>
+                              </option>
                             ))}
-                          </Select>
-                        </FormControl>
-                        <Button
+                          </select>
+                        </div>
+                        <motion.button
+                          className="neo-button neo-button-primary px-4 py-2"
                           onClick={handleAddCharacter}
                           disabled={!selectedCharacterId.trim()}
-                          size="small"
-                          variant="outlined"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                         >
                           追加
-                        </Button>
-                      </Box>
+                        </motion.button>
+                      </div>
                     )}
-                  </Box>
-                </Box>
-              </Box>
-            </>
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : (
-            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center" style={{ color: 'var(--neo-text-secondary)' }}>
                 編集するシーンファイルを選択してください
-              </Typography>
-            </Box>
+              </div>
+            </div>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* YAML表示ダイアログ */}
-      <Dialog
-        open={showYamlDialog}
-        onClose={() => setShowYamlDialog(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>YAML表示</DialogTitle>
-        <DialogContent>
-          <TextField
-            multiline
-            fullWidth
-            value={yamlContent}
-            onChange={(e) => setYamlContent(e.target.value)}
-            variant="outlined"
-            sx={{
-              '& .MuiInputBase-root': {
-                fontFamily: 'monospace',
-                fontSize: '0.875rem',
-              },
-            }}
-            rows={15}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowYamlDialog(false)}>
-            閉じる
-          </Button>
-          <Button
-            onClick={() => {
-              const parsedData = parseYamlContent(yamlContent);
-              setEditData(parsedData);
-              setShowYamlDialog(false);
-            }}
-            variant="contained"
+      <AnimatePresence>
+        {showYamlDialog && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowYamlDialog(false)}
           >
-            適用
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+            <motion.div
+              className="neo-card-floating p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">YAML コンテンツ</h3>
+                <motion.button
+                  className="neo-button p-2 rounded-full"
+                  onClick={() => setShowYamlDialog(false)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  ×
+                </motion.button>
+              </div>
+              <div className="neo-element-pressed p-4 rounded-lg overflow-y-auto max-h-96">
+                <pre className="text-sm font-mono whitespace-pre-wrap" style={{ color: 'var(--neo-text)' }}>
+                  {yamlContent}
+                </pre>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }; 
