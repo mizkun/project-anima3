@@ -91,7 +91,7 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
 
   return (
     <>
-      {/* 折りたたみボタン（常に表示） */}
+      {/* 折りたたみボタン（常に表示） - 控えめなスタイル */}
       <motion.div
         className="fixed z-50"
         style={{
@@ -102,27 +102,35 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
         <motion.button
-          className="p-2 rounded-full w-10 h-10 flex items-center justify-center"
+          className="p-1.5 rounded-lg w-8 h-8 flex items-center justify-center text-sm"
           onClick={handleToggleCollapse}
           style={{
-            background: 'var(--neo-accent)',
-            color: 'white',
-            boxShadow: 'var(--neo-shadow-floating)',
+            background: 'var(--neo-element)',
+            color: 'var(--neo-text)',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+            border: '1px solid var(--neo-border)',
           }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ 
+            scale: 1.05,
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+          }}
+          whileTap={{ scale: 0.95 }}
           title={isCollapsed ? "パネルを開く" : "パネルを閉じる"}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--neo-accent)';
+            e.currentTarget.style.color = 'white';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--neo-element)';
+            e.currentTarget.style.color = 'var(--neo-text)';
+          }}
         >
-          <motion.div
-            animate={{ rotate: isCollapsed ? 0 : 180 }}
-            transition={{ duration: 0.3 }}
-          >
-            {isCollapsed ? (
-              <ChevronLeft className="w-4 h-4" />
-            ) : (
-              <ChevronRight className="w-4 h-4" />
-            )}
-          </motion.div>
+          {/* 回転アニメーションを削除し、直接的にアイコンを表示 */}
+          {isCollapsed ? (
+            <ChevronLeft className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5" />
+          )}
         </motion.button>
       </motion.div>
 

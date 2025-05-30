@@ -127,18 +127,30 @@ async def process_intervention(request: dict):
     try:
         intervention_type = request.get("type")
         content = request.get("content")
+        target_character = request.get("target_character")
 
         if not intervention_type or not content:
             raise HTTPException(status_code=400, detail="type and content are required")
 
-        result = await engine_wrapper.process_intervention(intervention_type, content)
+        # target_characterが指定されている場合はメタデータに含める
+        metadata = {}
+        if target_character:
+            metadata["target_character"] = target_character
+
+        result = await engine_wrapper.process_intervention(
+            intervention_type, content, metadata
+        )
 
         if result["success"]:
             return SimulationResponse(
                 success=True,
                 status=engine_wrapper.status,
                 message=result["message"],
-                data={"type": intervention_type, "content": content},
+                data={
+                    "type": intervention_type,
+                    "content": content,
+                    "target_character": target_character,
+                },
             )
         else:
             return SimulationResponse(

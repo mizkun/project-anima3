@@ -420,11 +420,18 @@ class EngineWrapper:
                 intervention_display_type = "全体向け介入"
                 target_character = None
             elif intervention_type == "give_revelation":
-                # contentに既にキャラクターIDが含まれている場合はそのまま使用
-                command = f"give_revelation {content}"
+                # metadataからtarget_characterを取得
+                target_character = (
+                    metadata.get("target_character") if metadata else None
+                )
+                if not target_character:
+                    raise EngineWrapperError(
+                        "キャラクター向け介入にはtarget_characterが必要です"
+                    )
+
+                # コマンドを正しく構築（キャラクターID + スペース + 内容）
+                command = f"give_revelation {target_character} {content}"
                 intervention_display_type = "キャラクター向け介入"
-                # キャラクターIDを抽出（最初の単語）
-                target_character = content.split()[0] if content.split() else None
             elif intervention_type == "add_character":
                 command = f"add_character {content}"
                 intervention_display_type = "キャラクター追加"
