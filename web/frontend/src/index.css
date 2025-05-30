@@ -279,7 +279,7 @@
   .left-panel {
     width: 65%;
     min-width: 400px;
-    padding: 16px;
+    padding: 16px 8px 16px 16px;
     flex-shrink: 0;
     background: var(--neo-bg);
   }
@@ -305,7 +305,7 @@
   .control-panel-left {
     height: calc(100vh - 80px);
     @apply neo-card;
-    margin: 16px;
+    margin: 0 8px 0 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;

@@ -344,9 +344,14 @@ participant_character_ids: []
               更新
             </motion.button>
             <motion.button
-              className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
               onClick={createNewFile}
               disabled={isSaving}
+              style={{
+                background: 'var(--neo-accent)',
+                color: 'white',
+                boxShadow: 'var(--neo-shadow-floating)',
+              }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -439,9 +444,14 @@ participant_character_ids: []
                           キャンセル
                         </motion.button>
                         <motion.button
-                          className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+                          className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
                           onClick={saveSceneData}
                           disabled={isSaving}
+                          style={{
+                            background: 'var(--neo-accent)',
+                            color: 'white',
+                            boxShadow: 'var(--neo-shadow-floating)',
+                          }}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
@@ -469,8 +479,13 @@ participant_character_ids: []
                           YAML表示
                         </motion.button>
                         <motion.button
-                          className="neo-button neo-button-primary flex items-center gap-2 px-3 py-2 text-sm"
+                          className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
                           onClick={handleStartEdit}
+                          style={{
+                            background: 'var(--neo-accent)',
+                            color: 'white',
+                            boxShadow: 'var(--neo-shadow-floating)',
+                          }}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >

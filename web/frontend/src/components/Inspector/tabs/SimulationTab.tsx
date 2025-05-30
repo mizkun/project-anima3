@@ -1,27 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Box,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemButton,
-  Typography,
-  Button,
-  Alert,
-  CircularProgress,
-  Card,
-  CardContent,
-  Chip,
-  Divider,
-  IconButton,
-} from '@mui/material';
-import {
-  PlayArrow as PlayIcon,
-  Refresh as RefreshIcon,
-  History as HistoryIcon,
-  Download as DownloadIcon,
-  ArrowBack as ArrowBackIcon,
-} from '@mui/icons-material';
+  Play,
+  RefreshCw,
+  History,
+  Download,
+  ArrowLeft,
+  FileText,
+  Clock,
+  Users,
+  MessageSquare,
+  Settings,
+  CheckCircle,
+  AlertTriangle,
+} from 'lucide-react';
 
 interface SimulationHistoryItem {
   id: string;
@@ -179,14 +171,14 @@ export const SimulationTab: React.FC = () => {
   }, []);
 
   // ステータスの表示色を取得
-  const getStatusColor = (status: string) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'success';
+        return <CheckCircle className="w-4 h-4" style={{ color: 'var(--neo-success)' }} />;
       case 'empty':
-        return 'warning';
+        return <AlertTriangle className="w-4 h-4" style={{ color: 'var(--neo-warning)' }} />;
       default:
-        return 'default';
+        return <History className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />;
     }
   };
 
@@ -204,176 +196,192 @@ export const SimulationTab: React.FC = () => {
 
   if (isLoading && simulationHistory.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
-        <CircularProgress />
-      </Box>
+      <div className="h-full flex items-center justify-center" style={{ color: 'var(--neo-text)' }}>
+        <motion.div
+          className="w-8 h-8 border-2 border-current border-t-transparent rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
     );
   }
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="h6" gutterBottom>
-        シミュレーション履歴
-      </Typography>
+    <div className="h-full flex flex-col overflow-hidden" style={{ color: 'var(--neo-text)' }}>
+      {/* ヘッダー */}
+      <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <History className="w-5 h-5" />
+            シミュレーション履歴
+          </h3>
+          <button
+            className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+            onClick={fetchSimulationHistory}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            更新
+          </button>
+        </div>
+        
+        {/* エラー表示 */}
+        {error && (
+          <motion.div
+            className="neo-element-pressed p-3 rounded-lg mt-4"
+            style={{ background: 'var(--neo-error)', color: 'white' }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="text-sm">{error}</div>
+          </motion.div>
+        )}
+      </div>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Box sx={{ display: 'flex', height: '100%', gap: 2 }}>
+      <div className="flex-1 flex overflow-hidden">
         {/* 左側：履歴一覧 */}
-        <Box sx={{ width: 300, display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-            <Typography variant="subtitle2">履歴一覧</Typography>
-            <IconButton size="small" onClick={fetchSimulationHistory} disabled={isLoading}>
-              <RefreshIcon />
-            </IconButton>
-          </Box>
+        <div className="w-80 border-r overflow-hidden" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+          <div className="h-full flex flex-col">
+            <div className="p-3 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+              <h4 className="text-sm font-medium">履歴一覧</h4>
+            </div>
+            <div className="flex-1 overflow-y-auto neo-scrollbar">
+              {simulationHistory.length === 0 ? (
+                <div className="p-4 text-center text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
+                  履歴がありません
+                </div>
+              ) : (
+                <div className="p-2 space-y-1">
+                  {simulationHistory.map((run) => (
+                    <div
+                      key={run.id}
+                      className={`w-full text-left p-3 rounded-lg cursor-pointer transition-colors ${
+                        selectedHistory?.id === run.id ? 'neo-button-primary' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                      onClick={() => {
+                        setSelectedHistory(run);
+                        fetchHistoryDetail(run.id);
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="text-sm font-medium">{run.location}</div>
+                        <div className="flex items-center gap-1">
+                          {getStatusIcon(run.status)}
+                          <span className="text-xs">{getStatusText(run.status)}</span>
+                        </div>
+                      </div>
+                      <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
+                        <div>{run.timestamp}</div>
+                        <div>{run.turn_count}ターン実行</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-          <List sx={{ flex: 1, overflow: 'auto', border: 1, borderColor: 'divider', borderRadius: 1 }}>
-            {simulationHistory.length === 0 ? (
-              <ListItem>
-                <ListItemText primary="履歴がありません" />
-              </ListItem>
-            ) : (
-              simulationHistory.map((run) => (
-                <ListItem key={run.id} disablePadding>
-                  <ListItemButton
-                    selected={selectedHistory?.id === run.id}
-                    onClick={() => {
-                      setSelectedHistory(run);
-                      fetchHistoryDetail(run.id);
-                    }}
-                  >
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="body2">{run.location}</Typography>
-                          <Chip 
-                            label={getStatusText(run.status)} 
-                            color={getStatusColor(run.status) as any}
-                            size="small"
-                          />
-                        </Box>
-                      }
-                      secondary={
-                        <Box>
-                          <Typography variant="caption" display="block">
-                            {run.timestamp}
-                          </Typography>
-                          <Typography variant="caption" display="block">
-                            {run.turn_count}ターン実行
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))
-            )}
-          </List>
-        </Box>
-
-        {/* 右側：詳細・エクスポートエリア */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+        {/* 右側：詳細エリア */}
+        <div className="flex-1 overflow-hidden">
           {view === 'detail' && historyDetail ? (
-            // 選択された履歴の詳細
-            <Box sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <IconButton onClick={() => setView('list')} sx={{ mr: 1 }}>
-                  <ArrowBackIcon />
-                </IconButton>
-                <Typography variant="h6">シミュレーション詳細</Typography>
-              </Box>
+            <div className="h-full flex flex-col">
+              {/* 詳細ヘッダー */}
+              <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <button
+                    className="neo-button p-2 rounded-full"
+                    onClick={() => setView('list')}
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <h4 className="text-lg font-medium">シミュレーション詳細</h4>
+                </div>
+                
+                {/* アクションボタン */}
+                <div className="flex gap-2">
+                  <button
+                    className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                    onClick={() => resumeSimulation(selectedHistory?.id || '')}
+                    disabled={isLoading}
+                  >
+                    <Play className="w-4 h-4" />
+                    再開
+                  </button>
+                  <button
+                    className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                    onClick={() => exportHistory(selectedHistory?.id || '')}
+                  >
+                    <Download className="w-4 h-4" />
+                    エクスポート
+                  </button>
+                </div>
+              </div>
 
-              <Card sx={{ mb: 2 }}>
-                <CardContent>
-                  <Typography variant="body2" gutterBottom>
-                    <strong>シーン:</strong> {historyDetail.scene_info.location}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    <strong>シーンID:</strong> {historyDetail.scene_info.scene_id}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    <strong>時間:</strong> {historyDetail.scene_info.time}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    <strong>状況:</strong> {historyDetail.scene_info.situation}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    <strong>参加キャラクター:</strong> {historyDetail.scene_info.participant_character_ids.join(', ')}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    <strong>ターン数:</strong> {historyDetail.turns.length}
-                  </Typography>
-                  <Typography variant="body2" gutterBottom>
-                    <strong>介入数:</strong> {historyDetail.interventions_in_scene.length}
-                  </Typography>
-                </CardContent>
-              </Card>
+              {/* 詳細内容 */}
+              <div className="flex-1 overflow-y-auto neo-scrollbar p-4">
+                <div className="space-y-4">
+                  {/* シーン情報 */}
+                  <div className="neo-card-flat p-4">
+                    <h5 className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      シーン情報
+                    </h5>
+                    <div className="space-y-2 text-sm">
+                      <div><strong>シーン:</strong> {historyDetail.scene_info.location}</div>
+                      <div><strong>シーンID:</strong> {historyDetail.scene_info.scene_id}</div>
+                      <div><strong>時間:</strong> {historyDetail.scene_info.time}</div>
+                      <div><strong>状況:</strong> {historyDetail.scene_info.situation}</div>
+                      <div><strong>参加キャラクター:</strong> {historyDetail.scene_info.participant_character_ids.join(', ')}</div>
+                      <div className="flex gap-4 mt-3">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{historyDetail.turns.length}ターン</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <MessageSquare className="w-4 h-4" />
+                          <span>{historyDetail.interventions_in_scene.length}介入</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* ターン詳細 */}
-              <Card sx={{ mb: 2 }}>
-                <CardContent>
-                  <Typography variant="subtitle2" gutterBottom>
-                    ターン詳細
-                  </Typography>
-                  <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
-                    {historyDetail.turns.map((turn, index) => (
-                      <Box key={index} sx={{ mb: 2, p: 1, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-                        <Typography variant="caption" color="primary">
-                          ターン {turn.turn_number}: {turn.character_name}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          <strong>思考:</strong> {turn.think.substring(0, 100)}...
-                        </Typography>
-                        <Typography variant="body2">
-                          <strong>行動:</strong> {turn.act.substring(0, 100)}...
-                        </Typography>
-                        {turn.talk && (
-                          <Typography variant="body2">
-                            <strong>発言:</strong> {turn.talk}
-                          </Typography>
-                        )}
-                      </Box>
-                    ))}
-                  </Box>
-                </CardContent>
-              </Card>
-
-              {/* アクションボタン */}
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  startIcon={<PlayIcon />}
-                  onClick={() => resumeSimulation(selectedHistory?.id || '')}
-                  disabled={isLoading}
-                  size="small"
-                  variant="outlined"
-                >
-                  再開
-                </Button>
-                <Button
-                  startIcon={<DownloadIcon />}
-                  onClick={() => exportHistory(selectedHistory?.id || '')}
-                  size="small"
-                  variant="outlined"
-                >
-                  エクスポート
-                </Button>
-              </Box>
-            </Box>
+                  {/* ターン詳細 */}
+                  <div className="neo-card-flat p-4">
+                    <h5 className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      ターン詳細
+                    </h5>
+                    <div className="space-y-3 max-h-96 overflow-y-auto neo-scrollbar">
+                      {historyDetail.turns.map((turn, index) => (
+                        <div key={index} className="neo-element-subtle p-3 rounded-lg">
+                          <div className="text-xs font-medium mb-2" style={{ color: 'var(--neo-accent)' }}>
+                            ターン {turn.turn_number}: {turn.character_name}
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div><strong>思考:</strong> {turn.think.length > 100 ? `${turn.think.substring(0, 100)}...` : turn.think}</div>
+                            <div><strong>行動:</strong> {turn.act.length > 100 ? `${turn.act.substring(0, 100)}...` : turn.act}</div>
+                            {turn.talk && (
+                              <div><strong>発言:</strong> {turn.talk}</div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : (
-            // 履歴が選択されていない場合
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-              <Typography variant="body2" color="text.secondary">
-                履歴を選択してください
-              </Typography>
-            </Box>
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center" style={{ color: 'var(--neo-text-secondary)' }}>
+                <History className="w-8 h-8 mx-auto mb-2" />
+                <div className="text-sm">履歴を選択してください</div>
+              </div>
+            </div>
           )}
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }; 

@@ -189,8 +189,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                 </label>
                 <div className="flex gap-2">
                   <motion.button
-                    className={`neo-button flex items-center gap-2 px-4 py-2 ${settings.theme === 'light' ? 'neo-button-primary' : ''}`}
+                    className="neo-button flex items-center gap-2 px-4 py-2"
                     onClick={() => handleThemeChange('light')}
+                    style={{
+                      ...(settings.theme === 'light' && {
+                        background: 'var(--neo-accent)',
+                        color: 'white',
+                        boxShadow: 'var(--neo-shadow-floating)',
+                      })
+                    }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -198,8 +205,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                     ライト
                   </motion.button>
                   <motion.button
-                    className={`neo-button flex items-center gap-2 px-4 py-2 ${settings.theme === 'dark' ? 'neo-button-primary' : ''}`}
+                    className="neo-button flex items-center gap-2 px-4 py-2"
                     onClick={() => handleThemeChange('dark')}
+                    style={{
+                      ...(settings.theme === 'dark' && {
+                        background: 'var(--neo-accent)',
+                        color: 'white',
+                        boxShadow: 'var(--neo-shadow-floating)',
+                      })
+                    }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -207,8 +221,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                     ダーク
                   </motion.button>
                   <motion.button
-                    className={`neo-button flex items-center gap-2 px-4 py-2 ${settings.theme === 'system' ? 'neo-button-primary' : ''}`}
+                    className="neo-button flex items-center gap-2 px-4 py-2"
                     onClick={() => handleThemeChange('system')}
+                    style={{
+                      ...(settings.theme === 'system' && {
+                        background: 'var(--neo-accent)',
+                        color: 'white',
+                        boxShadow: 'var(--neo-shadow-floating)',
+                      })
+                    }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -225,8 +246,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                   <span className="text-sm" style={{ color: 'var(--neo-text)' }}>コンパクトモード</span>
                 </div>
                 <motion.button
-                  className={`neo-button w-12 h-6 rounded-full p-1 ${settings.compactMode ? 'neo-button-primary' : ''}`}
+                  className="neo-button w-12 h-6 rounded-full p-1"
                   onClick={() => handleSettingChange('compactMode', !settings.compactMode)}
+                  style={{
+                    ...(settings.compactMode && {
+                      background: 'var(--neo-accent)',
+                      boxShadow: 'var(--neo-shadow-floating)',
+                    })
+                  }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <motion.div
@@ -255,8 +282,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                   <span className="text-sm" style={{ color: 'var(--neo-text)' }}>思考を常時表示</span>
                 </div>
                 <motion.button
-                  className={`neo-button w-12 h-6 rounded-full p-1 ${settings.showThinking ? 'neo-button-primary' : ''}`}
+                  className="neo-button w-12 h-6 rounded-full p-1"
                   onClick={() => handleSettingChange('showThinking', !settings.showThinking)}
+                  style={{
+                    ...(settings.showThinking && {
+                      background: 'var(--neo-accent)',
+                      boxShadow: 'var(--neo-shadow-floating)',
+                    })
+                  }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <motion.div
@@ -275,8 +308,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                   <span className="text-sm" style={{ color: 'var(--neo-text)' }}>自動展開</span>
                 </div>
                 <motion.button
-                  className={`neo-button w-12 h-6 rounded-full p-1 ${settings.autoExpand ? 'neo-button-primary' : ''}`}
+                  className="neo-button w-12 h-6 rounded-full p-1"
                   onClick={() => handleSettingChange('autoExpand', !settings.autoExpand)}
+                  style={{
+                    ...(settings.autoExpand && {
+                      background: 'var(--neo-accent)',
+                      boxShadow: 'var(--neo-shadow-floating)',
+                    })
+                  }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <motion.div
@@ -305,8 +344,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                   <span className="text-sm" style={{ color: 'var(--neo-text)' }}>サウンドエフェクト</span>
                 </div>
                 <motion.button
-                  className={`neo-button w-12 h-6 rounded-full p-1 ${settings.soundEffects ? 'neo-button-primary' : ''}`}
+                  className="neo-button w-12 h-6 rounded-full p-1"
                   onClick={() => handleSettingChange('soundEffects', !settings.soundEffects)}
+                  style={{
+                    ...(settings.soundEffects && {
+                      background: 'var(--neo-accent)',
+                      boxShadow: 'var(--neo-shadow-floating)',
+                    })
+                  }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <motion.div
@@ -325,8 +370,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                   <span className="text-sm" style={{ color: 'var(--neo-text)' }}>デスクトップ通知</span>
                 </div>
                 <motion.button
-                  className={`neo-button w-12 h-6 rounded-full p-1 ${settings.notifications ? 'neo-button-primary' : ''}`}
+                  className="neo-button w-12 h-6 rounded-full p-1"
                   onClick={() => handleSettingChange('notifications', !settings.notifications)}
+                  style={{
+                    ...(settings.notifications && {
+                      background: 'var(--neo-accent)',
+                      boxShadow: 'var(--neo-shadow-floating)',
+                    })
+                  }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <motion.div

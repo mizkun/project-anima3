@@ -121,11 +121,10 @@ function App() {
           transition={{ delay: 0.3 }}
         >
           {/* ミニマルコントロール（コンパクト化） */}
-          <div className="flex-shrink-0 p-3">
+          <div className="flex-shrink-0 p-3 pb-0">
             <motion.div 
               className="neo-card-floating"
               style={{ padding: '12px' }}
-              whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <MinimalControls />
@@ -133,14 +132,8 @@ function App() {
           </div>
 
           {/* タイムライン */}
-          <div className="flex-1 overflow-hidden px-3 pb-3">
-            <motion.div
-              className="neo-card-floating h-full overflow-hidden"
-              whileHover={{ scale: 1.005 }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            >
-              <Timeline className="h-full" />
-            </motion.div>
+          <div className="flex-1 overflow-hidden p-3">
+            <Timeline className="h-full" />
           </div>
         </motion.div>
 

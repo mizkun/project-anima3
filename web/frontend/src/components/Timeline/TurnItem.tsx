@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CharacterInfo } from './CharacterInfo'
-import { ChevronDown, ChevronUp, Brain, Activity, MessageCircle, MoreHorizontal, Archive, RotateCcw } from 'lucide-react'
+import { Plus, Minus, Brain, Activity, MessageCircle, MoreHorizontal, Archive, RotateCcw } from 'lucide-react'
 import type { TimelineEntry } from '@/types/simulation'
 import { useSimulationStore } from '@/stores/simulationStore'
 
@@ -54,13 +54,14 @@ export const TurnItem: React.FC<TurnItemProps> = ({
 
   return (
     <motion.div 
-      className={`neo-card-subtle relative ${isLatest ? 'ring-2 ring-blue-400' : ''}`}
+      className="neo-card-subtle relative"
       style={{
         margin: '0 0 8px 0',
         padding: '12px',
         background: 'var(--neo-element)',
         ...(isLatest && {
           boxShadow: 'var(--neo-shadow-floating)',
+          border: '2px solid var(--neo-accent)',
         })
       }}
       whileHover={{ scale: 1.005 }}
@@ -73,13 +74,12 @@ export const TurnItem: React.FC<TurnItemProps> = ({
       >
         <div className="flex items-center gap-3">
           <motion.div
-            className={`neo-element w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-              isLatest ? 'neo-button-primary text-white' : ''
-            }`}
+            className={`neo-element w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold`}
             whileHover={{ scale: 1.1 }}
             style={{
               background: isLatest ? 'var(--neo-accent)' : 'var(--neo-element)',
               color: isLatest ? 'white' : 'var(--neo-text)',
+              boxShadow: isLatest ? 'var(--neo-shadow-floating)' : 'var(--neo-shadow-raised)',
             }}
           >
             {turnNumber}
@@ -125,9 +125,9 @@ export const TurnItem: React.FC<TurnItemProps> = ({
             whileTap={{ scale: 0.95 }}
           >
             {isExpanded ? (
-              <ChevronUp className="w-4 h-4" />
+              <Minus className="w-4 h-4" />
             ) : (
-              <ChevronDown className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
             )}
           </motion.button>
           

@@ -84,7 +84,7 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
 
   const tabs = [
     { icon: MovieIcon, label: 'シーン', component: SceneTab },
-    { icon: PeopleIcon, label: 'キャラクター', component: CharacterTab },
+    { icon: PeopleIcon, label: 'キャラ', component: CharacterTab },
     { icon: HistoryIcon, label: '履歴', component: SimulationTab },
     { icon: SettingsIcon, label: '設定', component: SettingsTab },
   ];
@@ -102,8 +102,13 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
         <motion.button
-          className="neo-button-primary p-2 rounded-full w-10 h-10 flex items-center justify-center"
+          className="p-2 rounded-full w-10 h-10 flex items-center justify-center"
           onClick={handleToggleCollapse}
+          style={{
+            background: 'var(--neo-accent)',
+            color: 'white',
+            boxShadow: 'var(--neo-shadow-floating)',
+          }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           title={isCollapsed ? "パネルを開く" : "パネルを閉じる"}
@@ -143,48 +148,45 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
             >
-              {/* タブヘッダー */}
-              <div className="neo-element-subtle p-2 m-4 mb-0 rounded-t-2xl flex-shrink-0">
-                <div className="grid grid-cols-4 gap-1">
+              {/* タブヘッダー - カードを削除してシンプルに */}
+              <div className="p-4 flex-shrink-0">
+                <div className="flex justify-center gap-4">
                   {tabs.map((tab, index) => {
                     const IconComponent = tab.icon;
                     return (
-                      <motion.button
+                      <button
                         key={index}
-                        className={`neo-button flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-300 ${
-                          activeTab === index ? 'neo-element-pressed' : ''
+                        className={`p-3 rounded-xl transition-all duration-300 ${
+                          activeTab === index 
+                            ? 'neo-element-pressed' 
+                            : 'hover:neo-element-subtle'
                         }`}
                         onClick={() => handleTabChange(index)}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
                         style={{
                           color: activeTab === index ? 'var(--neo-accent)' : 'var(--neo-text-secondary)'
                         }}
+                        title={tab.label}
                         {...a11yProps(index)}
                       >
-                        <IconComponent className="w-5 h-5" />
-                        <span className="text-xs font-medium">{tab.label}</span>
-                      </motion.button>
+                        <IconComponent 
+                          className={activeTab === index ? 'w-6 h-6' : 'w-5 h-5'} 
+                        />
+                      </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* タブコンテンツ */}
-              <div className="flex-1 overflow-hidden mx-4 mb-4">
-                <div 
-                  className="neo-element-pressed rounded-b-2xl h-full overflow-hidden"
-                  style={{ padding: '0' }}
-                >
-                  {tabs.map((tab, index) => {
-                    const ComponentToRender = tab.component;
-                    return (
-                      <TabPanel key={index} value={activeTab} index={index}>
-                        <ComponentToRender />
-                      </TabPanel>
-                    );
-                  })}
-                </div>
+              {/* タブコンテンツ - カードを削除して直接表示 */}
+              <div className="flex-1 overflow-hidden">
+                {tabs.map((tab, index) => {
+                  const ComponentToRender = tab.component;
+                  return (
+                    <TabPanel key={index} value={activeTab} index={index}>
+                      <ComponentToRender />
+                    </TabPanel>
+                  );
+                })}
               </div>
             </motion.div>
           )}
