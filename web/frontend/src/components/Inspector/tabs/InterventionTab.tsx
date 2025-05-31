@@ -60,7 +60,7 @@ export const InterventionTab: React.FC<InterventionTabProps> = ({
   const isCharacterIntervention = selectedType === 'character_intervention';
   const needsCharacterSelection = isCharacterIntervention;
 
-  // シミュレーション状態を監視
+  // シミュレーション状態を初回のみ取得
   useEffect(() => {
     const checkStatus = async () => {
       try {
@@ -74,8 +74,6 @@ export const InterventionTab: React.FC<InterventionTabProps> = ({
     };
 
     checkStatus();
-    const interval = setInterval(checkStatus, 2000);
-    return () => clearInterval(interval);
   }, []);
 
   // 利用可能キャラクターの取得

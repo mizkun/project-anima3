@@ -41,32 +41,6 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
     });
   }, [status, isLoading]);
   
-  // 定期的にバックエンド状態をチェック（デバッグ用）
-  useEffect(() => {
-    const intervalId = setInterval(async () => {
-      try {
-        const response = await fetch('/api/simulation/status');
-        const data = await response.json();
-        console.log('=== バックエンド状態チェック ===', {
-          backendStatus: data.status,
-          frontendStatus: status,
-          statusMatch: data.status === status,
-          timestamp: new Date().toISOString()
-        });
-        
-        // 状態が不一致の場合は同期
-        if (data.status !== status) {
-          console.log('状態不一致を検出、同期を実行します');
-          useSimulationStore.getState().updateFromBackend(data);
-        }
-      } catch (error) {
-        console.error('バックエンド状態チェックエラー:', error);
-      }
-    }, 3000); // 3秒ごと
-    
-    return () => clearInterval(intervalId);
-  }, [status]);
-  
   const [selectedSceneId, setSelectedSceneId] = useState<string>('');
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [availableCharacters, setAvailableCharacters] = useState<Character[]>([]);
