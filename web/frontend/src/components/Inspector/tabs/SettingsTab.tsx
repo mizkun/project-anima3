@@ -36,6 +36,7 @@ import {
   Download,
   Upload
 } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface SimulationSettings {
   temperature: number;
@@ -73,8 +74,10 @@ interface SettingsTabProps {
 }
 
 export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) => {
+  const { theme, setTheme } = useTheme();
+  
   const [settings, setSettings] = useState({
-    theme: localStorage.getItem('theme') || 'light',
+    theme: theme,
     compactMode: localStorage.getItem('compactMode') === 'true',
     showThinking: localStorage.getItem('showThinking') === 'true',
     autoExpand: localStorage.getItem('autoExpand') === 'true',
@@ -82,18 +85,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
     notifications: localStorage.getItem('notifications') === 'true',
   });
 
-  const handleThemeChange = (theme: string) => {
+  // テーマが外部から変更された場合に同期
+  useEffect(() => {
     setSettings(prev => ({ ...prev, theme }));
-    localStorage.setItem('theme', theme);
-    
-    // ダークモード切り替え
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
-    onSettingsChange?.({ ...settings, theme });
+  }, [theme]);
+
+  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+    setTheme(newTheme);
+    const newSettings = { ...settings, theme: newTheme };
+    setSettings(newSettings);
+    onSettingsChange?.(newSettings);
   };
 
   const handleSettingChange = (key: string, value: boolean) => {
@@ -103,9 +104,41 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
     onSettingsChange?.(newSettings);
   };
 
+  // 改善されたトグルスイッチコンポーネント
+  const ToggleSwitch: React.FC<{ 
+    checked: boolean; 
+    onChange: (checked: boolean) => void;
+    label: string;
+    icon: React.ReactNode;
+  }> = ({ checked, onChange, label, icon }) => (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {icon}
+        <span className="text-sm" style={{ color: 'var(--neo-text)' }}>{label}</span>
+      </div>
+      <motion.button
+        className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+        onClick={() => onChange(!checked)}
+        style={{
+          backgroundColor: checked ? 'var(--neo-accent)' : 'var(--neo-shadow-dark)',
+          boxShadow: checked ? 'var(--neo-shadow-floating)' : 'var(--neo-shadow-subtle)',
+        }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <motion.span
+          className="inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out"
+          animate={{
+            x: checked ? 20 : 4,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
+      </motion.button>
+    </div>
+  );
+
   const resetSettings = () => {
     const defaultSettings = {
-      theme: 'light',
+      theme: 'light' as const,
       compactMode: false,
       showThinking: false,
       autoExpand: false,
@@ -116,11 +149,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
     
     // LocalStorageをクリア
     Object.keys(defaultSettings).forEach(key => {
-      localStorage.removeItem(key);
+      if (key !== 'theme') {
+        localStorage.removeItem(key);
+      }
     });
     
-    // ダークモード解除
-    document.documentElement.classList.remove('dark');
+    // テーマをライトモードに戻す
+    setTheme('light');
     
     onSettingsChange?.(defaultSettings);
   };
@@ -148,15 +183,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
         
         // LocalStorageに保存
         Object.entries(importedSettings).forEach(([key, value]) => {
-          localStorage.setItem(key, String(value));
+          if (key === 'theme') {
+            setTheme(value as 'light' | 'dark' | 'system');
+          } else {
+            localStorage.setItem(key, String(value));
+          }
         });
-        
-        // テーマ適用
-        if (importedSettings.theme === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
         
         onSettingsChange?.(importedSettings);
       } catch (error) {
@@ -240,31 +272,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
               </div>
 
               {/* コンパクトモード */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
-                  <span className="text-sm" style={{ color: 'var(--neo-text)' }}>コンパクトモード</span>
-                </div>
-                <motion.button
-                  className="neo-button w-12 h-6 rounded-full p-1"
-                  onClick={() => handleSettingChange('compactMode', !settings.compactMode)}
-                  style={{
-                    ...(settings.compactMode && {
-                      background: 'var(--neo-accent)',
-                      boxShadow: 'var(--neo-shadow-floating)',
-                    })
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <motion.div
-                    className="w-4 h-4 rounded-full bg-white shadow-sm"
-                    animate={{
-                      x: settings.compactMode ? 20 : 0,
-                    }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                </motion.button>
-              </div>
+              <ToggleSwitch
+                checked={settings.compactMode}
+                onChange={(checked) => handleSettingChange('compactMode', checked)}
+                label="コンパクトモード"
+                icon={<Zap className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
+              />
             </div>
           </div>
 
@@ -276,57 +289,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
             </h3>
             
             <div className="neo-card-subtle space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
-                  <span className="text-sm" style={{ color: 'var(--neo-text)' }}>思考を常時表示</span>
-                </div>
-                <motion.button
-                  className="neo-button w-12 h-6 rounded-full p-1"
-                  onClick={() => handleSettingChange('showThinking', !settings.showThinking)}
-                  style={{
-                    ...(settings.showThinking && {
-                      background: 'var(--neo-accent)',
-                      boxShadow: 'var(--neo-shadow-floating)',
-                    })
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <motion.div
-                    className="w-4 h-4 rounded-full bg-white shadow-sm"
-                    animate={{
-                      x: settings.showThinking ? 20 : 0,
-                    }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                </motion.button>
-              </div>
+              <ToggleSwitch
+                checked={settings.showThinking}
+                onChange={(checked) => handleSettingChange('showThinking', checked)}
+                label="思考を常時表示"
+                icon={<Eye className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
+              />
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
-                  <span className="text-sm" style={{ color: 'var(--neo-text)' }}>自動展開</span>
-                </div>
-                <motion.button
-                  className="neo-button w-12 h-6 rounded-full p-1"
-                  onClick={() => handleSettingChange('autoExpand', !settings.autoExpand)}
-                  style={{
-                    ...(settings.autoExpand && {
-                      background: 'var(--neo-accent)',
-                      boxShadow: 'var(--neo-shadow-floating)',
-                    })
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <motion.div
-                    className="w-4 h-4 rounded-full bg-white shadow-sm"
-                    animate={{
-                      x: settings.autoExpand ? 20 : 0,
-                    }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                </motion.button>
-              </div>
+              <ToggleSwitch
+                checked={settings.autoExpand}
+                onChange={(checked) => handleSettingChange('autoExpand', checked)}
+                label="自動展開"
+                icon={<Zap className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
+              />
             </div>
           </div>
 
@@ -338,68 +313,30 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
             </h3>
             
             <div className="neo-card-subtle space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Volume2 className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
-                  <span className="text-sm" style={{ color: 'var(--neo-text)' }}>サウンドエフェクト</span>
-                </div>
-                <motion.button
-                  className="neo-button w-12 h-6 rounded-full p-1"
-                  onClick={() => handleSettingChange('soundEffects', !settings.soundEffects)}
-                  style={{
-                    ...(settings.soundEffects && {
-                      background: 'var(--neo-accent)',
-                      boxShadow: 'var(--neo-shadow-floating)',
-                    })
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <motion.div
-                    className="w-4 h-4 rounded-full bg-white shadow-sm"
-                    animate={{
-                      x: settings.soundEffects ? 20 : 0,
-                    }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                </motion.button>
-              </div>
+              <ToggleSwitch
+                checked={settings.soundEffects}
+                onChange={(checked) => handleSettingChange('soundEffects', checked)}
+                label="サウンドエフェクト"
+                icon={<Volume2 className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
+              />
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
-                  <span className="text-sm" style={{ color: 'var(--neo-text)' }}>デスクトップ通知</span>
-                </div>
-                <motion.button
-                  className="neo-button w-12 h-6 rounded-full p-1"
-                  onClick={() => handleSettingChange('notifications', !settings.notifications)}
-                  style={{
-                    ...(settings.notifications && {
-                      background: 'var(--neo-accent)',
-                      boxShadow: 'var(--neo-shadow-floating)',
-                    })
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <motion.div
-                    className="w-4 h-4 rounded-full bg-white shadow-sm"
-                    animate={{
-                      x: settings.notifications ? 20 : 0,
-                    }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                </motion.button>
-              </div>
+              <ToggleSwitch
+                checked={settings.notifications}
+                onChange={(checked) => handleSettingChange('notifications', checked)}
+                label="デスクトップ通知"
+                icon={<Bell className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
+              />
             </div>
           </div>
 
           {/* 設定の管理 */}
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--neo-text)' }}>
-              <Save className="w-5 h-5" />
+              <Download className="w-5 h-5" />
               設定の管理
             </h3>
             
-            <div className="neo-card-subtle space-y-3">
+            <div className="neo-card-subtle space-y-4">
               <div className="flex gap-2">
                 <motion.button
                   className="neo-button flex items-center gap-2 px-4 py-2 flex-1"
@@ -410,6 +347,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                   <Download className="w-4 h-4" />
                   エクスポート
                 </motion.button>
+                
                 <motion.label
                   className="neo-button flex items-center gap-2 px-4 py-2 flex-1 cursor-pointer"
                   whileHover={{ scale: 1.02 }}
@@ -429,9 +367,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
               <motion.button
                 className="neo-button flex items-center gap-2 px-4 py-2 w-full"
                 onClick={resetSettings}
+                style={{
+                  background: 'var(--neo-error)',
+                  color: 'white',
+                }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                style={{ color: 'var(--neo-error)' }}
               >
                 <RotateCcw className="w-4 h-4" />
                 設定をリセット

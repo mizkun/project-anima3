@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
-type Theme = 'light' | 'dark'
+type Theme = 'light' | 'dark' | 'system'
 
 interface ThemeContextType {
   theme: Theme
@@ -22,35 +22,79 @@ interface ThemeProviderProps {
   children: React.ReactNode
 }
 
+const applyTheme = (theme: Theme) => {
+  // 既存のすべてのテーマクラスを削除
+  document.documentElement.classList.remove('light', 'dark')
+  
+  if (theme === 'system') {
+    // システムテーマを確認
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    if (prefersDark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.add('light')
+    }
+  } else {
+    // 明示的なテーマを適用
+    document.documentElement.classList.add(theme)
+  }
+  
+  console.log(`Theme applied: ${theme}, HTML classes:`, document.documentElement.className)
+}
+
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    // ローカルストレージから初期テーマを取得、デフォルトはダーク
+    // ローカルストレージから初期テーマを取得、デフォルトはライト
     const savedTheme = localStorage.getItem('theme') as Theme
-    return savedTheme || 'dark'
+    console.log('Initial theme from localStorage:', savedTheme)
+    return savedTheme || 'light'
   })
 
   const setTheme = (newTheme: Theme) => {
+    console.log(`Setting theme to: ${newTheme}`)
     setThemeState(newTheme)
     localStorage.setItem('theme', newTheme)
-    
-    // HTMLのクラスを更新
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
+    applyTheme(newTheme)
   }
 
   const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light')
+    // ライト ↔ ダークの切り替え（systemは無視）
+    if (theme === 'light') {
+      setTheme('dark')
+    } else {
+      setTheme('light')
+    }
   }
 
-  // 初期化時にHTMLクラスを設定
+  // コンポーネントマウント時にテーマを強制適用
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
+    console.log('ThemeProvider mounted, applying theme:', theme)
+    applyTheme(theme)
+    
+    // コンパクトモードの設定も復元
+    const compactMode = localStorage.getItem('compactMode') === 'true'
+    if (compactMode) {
+      document.documentElement.classList.add('compact-mode')
+    }
+  }, [])
+
+  // テーマが変更された時の処理
+  useEffect(() => {
+    console.log('Theme changed to:', theme)
+    applyTheme(theme)
+  }, [theme])
+
+  // システムテーマの変更を監視
+  useEffect(() => {
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      const handleChange = () => {
+        console.log('System theme changed')
+        applyTheme('system')
+      }
+      
+      mediaQuery.addEventListener('change', handleChange)
+      return () => mediaQuery.removeEventListener('change', handleChange)
     }
   }, [theme])
 

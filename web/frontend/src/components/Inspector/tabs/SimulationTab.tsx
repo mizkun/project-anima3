@@ -5,7 +5,6 @@ import {
   RefreshCw,
   History,
   Download,
-  ArrowLeft,
   FileText,
   Clock,
   Users,
@@ -238,83 +237,69 @@ export const SimulationTab: React.FC = () => {
         )}
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* 左側：履歴一覧 */}
-        <div className="w-80 border-r overflow-hidden" style={{ borderColor: 'var(--neo-text-secondary)' }}>
-          <div className="h-full flex flex-col">
-            <div className="p-3 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
-              <h4 className="text-sm font-medium">履歴一覧</h4>
-            </div>
-            <div className="flex-1 overflow-y-auto neo-scrollbar">
-              {simulationHistory.length === 0 ? (
-                <div className="p-4 text-center text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
-                  履歴がありません
-                </div>
-              ) : (
-                <div className="p-2 space-y-1">
-                  {simulationHistory.map((run) => (
-                    <div
-                      key={run.id}
-                      className={`w-full text-left p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedHistory?.id === run.id ? 'neo-button-primary' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                      onClick={() => {
-                        setSelectedHistory(run);
-                        fetchHistoryDetail(run.id);
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="text-sm font-medium">{run.location}</div>
-                        <div className="flex items-center gap-1">
-                          {getStatusIcon(run.status)}
-                          <span className="text-xs">{getStatusText(run.status)}</span>
-                        </div>
-                      </div>
-                      <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
-                        <div>{run.timestamp}</div>
-                        <div>{run.turn_count}ターン実行</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* シミュレーション履歴セレクタ */}
+        <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium mb-2">
+                <History className="w-4 h-4 inline mr-1" />
+                シミュレーション履歴
+              </label>
+              <select
+                className="neo-input w-full"
+                value={selectedHistory?.id || ''}
+                onChange={(e) => {
+                  const selected = simulationHistory.find(h => h.id === e.target.value);
+                  setSelectedHistory(selected || null);
+                  if (selected) {
+                    fetchHistoryDetail(selected.id);
+                    setView('detail');
+                  } else {
+                    setView('list');
+                    setHistoryDetail(null);
+                  }
+                }}
+                disabled={isLoading}
+              >
+                <option value="">履歴を選択...</option>
+                {simulationHistory.map((run) => (
+                  <option key={run.id} value={run.id}>
+                    {run.location} - {run.timestamp} ({run.turn_count}ターン, {getStatusText(run.status)})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
 
-        {/* 右側：詳細エリア */}
+        {/* 詳細エリア */}
         <div className="flex-1 overflow-hidden">
           {view === 'detail' && historyDetail ? (
             <div className="h-full flex flex-col">
               {/* 詳細ヘッダー */}
               <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <button
-                    className="neo-button p-2 rounded-full"
-                    onClick={() => setView('list')}
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                  </button>
+                <div className="flex items-center justify-between mb-2">
                   <h4 className="text-lg font-medium">シミュレーション詳細</h4>
-                </div>
-                
-                {/* アクションボタン */}
-                <div className="flex gap-2">
-                  <button
-                    className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
-                    onClick={() => resumeSimulation(selectedHistory?.id || '')}
-                    disabled={isLoading}
-                  >
-                    <Play className="w-4 h-4" />
-                    再開
-                  </button>
-                  <button
-                    className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
-                    onClick={() => exportHistory(selectedHistory?.id || '')}
-                  >
-                    <Download className="w-4 h-4" />
-                    エクスポート
-                  </button>
+                  
+                  {/* アクションボタン */}
+                  <div className="flex gap-2">
+                    <button
+                      className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                      onClick={() => resumeSimulation(selectedHistory?.id || '')}
+                      disabled={isLoading}
+                    >
+                      <Play className="w-4 h-4" />
+                      再開
+                    </button>
+                    <button
+                      className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                      onClick={() => exportHistory(selectedHistory?.id || '')}
+                    >
+                      <Download className="w-4 h-4" />
+                      エクスポート
+                    </button>
+                  </div>
                 </div>
               </div>
 

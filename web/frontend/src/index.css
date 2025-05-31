@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* ニューモーフィズム カラーパレット */
+    /* ライトモード ニューモーフィズム カラーパレット */
     --neo-bg: #f0f0f3;
     --neo-surface: #f0f0f3;
     --neo-element: #f0f0f3;
@@ -16,13 +16,13 @@
     --neo-warning: #f59e0b;
     --neo-error: #ef4444;
     
-    /* ニューモーフィズム シャドウ */
+    /* ライトモード ニューモーフィズム シャドウ */
     --neo-shadow-light: #ffffff;
     --neo-shadow-dark: #a3a3a3;
     --neo-shadow-inset-light: rgba(255, 255, 255, 0.5);
     --neo-shadow-inset-dark: rgba(163, 163, 163, 0.5);
     
-    /* ニューモーフィズム シャドウパターン */
+    /* ライトモード ニューモーフィズム シャドウパターン */
     --neo-shadow-raised: 
       6px 6px 16px var(--neo-shadow-dark),
       -6px -6px 16px var(--neo-shadow-light);
@@ -43,6 +43,38 @@
     --compact-margin: 4px;
     --compact-text-sm: 0.75rem;
     --compact-text-xs: 0.625rem;
+  }
+
+  .light {
+    /* ライトモード ニューモーフィズム - より明確に定義 */
+    --neo-bg: #f0f0f3 !important;
+    --neo-surface: #f0f0f3 !important;
+    --neo-element: #f0f0f3 !important;
+    --neo-text: #333333 !important;
+    --neo-text-secondary: #666666 !important;
+    --neo-accent: #6366f1 !important;
+    --neo-accent-light: #8b5cf6 !important;
+    --neo-success: #10b981 !important;
+    --neo-warning: #f59e0b !important;
+    --neo-error: #ef4444 !important;
+    
+    --neo-shadow-light: #ffffff !important;
+    --neo-shadow-dark: #a3a3a3 !important;
+    --neo-shadow-inset-light: rgba(255, 255, 255, 0.5) !important;
+    --neo-shadow-inset-dark: rgba(163, 163, 163, 0.5) !important;
+    
+    --neo-shadow-raised: 
+      6px 6px 16px var(--neo-shadow-dark),
+      -6px -6px 16px var(--neo-shadow-light) !important;
+    --neo-shadow-pressed: 
+      inset 4px 4px 12px var(--neo-shadow-dark),
+      inset -4px -4px 12px var(--neo-shadow-light) !important;
+    --neo-shadow-floating: 
+      8px 8px 20px var(--neo-shadow-dark),
+      -8px -8px 20px var(--neo-shadow-light) !important;
+    --neo-shadow-subtle: 
+      3px 3px 8px var(--neo-shadow-dark),
+      -3px -3px 8px var(--neo-shadow-light) !important;
   }
 
   .dark {
@@ -78,37 +110,119 @@
   }
 
   /* システムテーマ対応 */
+  @media (prefers-color-scheme: light) {
+    :root {
+      --neo-bg: #f0f0f3;
+      --neo-surface: #f0f0f3;
+      --neo-element: #f0f0f3;
+      --neo-text: #333333;
+      --neo-text-secondary: #666666;
+    }
+  }
+
   @media (prefers-color-scheme: dark) {
-    :root:not(.light) {
+    :root {
       --neo-bg: #2d2d30;
       --neo-surface: #2d2d30;
       --neo-element: #2d2d30;
       --neo-text: #e5e5e5;
       --neo-text-secondary: #a3a3a3;
-      --neo-accent: #818cf8;
-      --neo-accent-light: #a78bfa;
-      --neo-success: #34d399;
-      --neo-warning: #fbbf24;
-      --neo-error: #f87171;
-      
-      --neo-shadow-light: #3a3a3d;
-      --neo-shadow-dark: #1f1f22;
-      --neo-shadow-inset-light: rgba(58, 58, 61, 0.5);
-      --neo-shadow-inset-dark: rgba(31, 31, 34, 0.5);
-      
-      --neo-shadow-raised: 
-        6px 6px 16px var(--neo-shadow-dark),
-        -6px -6px 16px var(--neo-shadow-light);
-      --neo-shadow-pressed: 
-        inset 4px 4px 12px var(--neo-shadow-dark),
-        inset -4px -4px 12px var(--neo-shadow-light);
-      --neo-shadow-floating: 
-        8px 8px 20px var(--neo-shadow-dark),
-        -8px -8px 20px var(--neo-shadow-light);
-      --neo-shadow-subtle: 
-        3px 3px 8px var(--neo-shadow-dark),
-        -3px -3px 8px var(--neo-shadow-light);
     }
+  }
+
+  /* アニメーション設定 - ユーザーがアニメーションを無効にしている場合を考慮 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* 逆に、アニメーションを有効にしたい場合 */
+  @media (prefers-reduced-motion: no-preference) {
+    * {
+      animation-play-state: running;
+      transition-property: all;
+    }
+  }
+
+  /* 基本スタイル */
+  * {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background-color: var(--neo-bg);
+    color: var(--neo-text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* HTMLルート要素の背景も設定 */
+  html {
+    background-color: var(--neo-bg);
+    transition: background-color 0.3s ease;
+  }
+
+  /* Tailwind CSSのbase stylesをオーバーライド */
+  html.light {
+    background-color: var(--neo-bg) !important;
+  }
+
+  html.dark {
+    background-color: var(--neo-bg) !important;
+  }
+
+  html.light body {
+    background-color: var(--neo-bg) !important;
+    color: var(--neo-text) !important;
+  }
+
+  html.dark body {
+    background-color: var(--neo-bg) !important;
+    color: var(--neo-text) !important;
+  }
+
+  /* カスタムスクロールバー */
+  .neo-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--neo-shadow-dark) var(--neo-bg);
+  }
+
+  .neo-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .neo-scrollbar::-webkit-scrollbar-track {
+    background: var(--neo-bg);
+  }
+
+  .neo-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--neo-shadow-dark);
+    border-radius: 4px;
+  }
+
+  .neo-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--neo-text-secondary);
+  }
+
+  /* 選択スタイル */
+  ::selection {
+    background-color: var(--neo-accent);
+    color: white;
+  }
+
+  /* フォーカススタイル */
+  :focus-visible {
+    outline: 2px solid var(--neo-accent);
+    outline-offset: 2px;
   }
 }
 

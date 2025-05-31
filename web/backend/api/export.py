@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 from typing import Dict, Any, List
 import yaml
+from web.backend.services.engine_wrapper import EngineWrapper
 
 router = APIRouter()
 
@@ -16,8 +17,6 @@ async def export_simulation():
     """現在のシミュレーション結果をJSON形式でエクスポート"""
     try:
         # シミュレーション状態を取得
-        from web.backend.services.engine_wrapper import EngineWrapper
-
         engine = EngineWrapper()
         status = engine.get_status()
 
@@ -113,8 +112,6 @@ async def export_project():
 async def export_timeline(format: str):
     """タイムラインを指定された形式でエクスポート"""
     try:
-        from web.backend.services.engine_wrapper import EngineWrapper
-
         engine = EngineWrapper()
         status = engine.get_status()
         timeline = status["timeline"]

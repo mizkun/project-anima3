@@ -11,33 +11,6 @@ function App() {
   const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false)
   const simulationStore = useSimulationStore()
 
-  // テーマの初期化
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light'
-    const compactMode = localStorage.getItem('compactMode') === 'true'
-    
-    // テーマ適用
-    if (savedTheme === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark')
-      document.documentElement.classList.add('light')
-    } else if (savedTheme === 'system') {
-      // システムテーマに従う
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      if (prefersDark) {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.add('light')
-      }
-    }
-
-    // コンパクトモード適用
-    if (compactMode) {
-      document.documentElement.classList.add('compact-mode')
-    }
-  }, [])
-
   // 画面サイズに応じてパネルの初期状態を調整
   useEffect(() => {
     const handleResize = () => {
@@ -77,40 +50,8 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--neo-bg)' }}>
-      {/* ヘッダーバー（コンパクト化） */}
-      <motion.header 
-        className="neo-element-subtle px-4 py-2 mx-4 mt-4 rounded-lg"
-        variants={fadeIn}
-        initial="initial"
-        animate="animate"
-        transition={{ delay: 0.1 }}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold" style={{ color: 'var(--neo-text)' }}>
-              Project Anima
-            </h1>
-            <p className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
-              AI Character Simulation Platform
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <motion.div 
-              className="neo-element w-2 h-2 rounded-full"
-              animate={{ 
-                backgroundColor: simulationStore.status === 'running' ? 'var(--neo-success)' : 'var(--neo-text-secondary)'
-              }}
-              transition={{ duration: 0.3 }}
-            />
-            <span className="text-xs font-medium" style={{ color: 'var(--neo-text-secondary)' }}>
-              {simulationStore.status === 'running' ? 'Running' : 'Idle'}
-            </span>
-          </div>
-        </div>
-      </motion.header>
-
       {/* メインコンテンツエリア - 2列分割 */}
-      <div className="flex-1 flex" style={{ height: 'calc(100vh - 80px)' }}>
+      <div className="flex-1 flex" style={{ height: '100vh' }}>
         {/* 左列: タイムライン + ミニマルコントロール */}
         <motion.div
           className="flex-1 flex flex-col transition-all duration-300 ease-in-out"
@@ -121,18 +62,12 @@ function App() {
           transition={{ delay: 0.3 }}
         >
           {/* ミニマルコントロール（コンパクト化） */}
-          <div className="flex-shrink-0 p-3 pb-0">
-            <motion.div 
-              className="neo-card-floating"
-              style={{ padding: '12px' }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              <MinimalControls />
-            </motion.div>
+          <div className="flex-shrink-0 p-3 pb-1">
+            <MinimalControls />
           </div>
 
           {/* タイムライン */}
-          <div className="flex-1 overflow-hidden p-3">
+          <div className="flex-1 overflow-hidden px-3 pb-3">
             <Timeline className="h-full" />
           </div>
         </motion.div>

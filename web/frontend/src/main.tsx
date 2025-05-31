@@ -10,9 +10,10 @@ if (import.meta.env.DEV) {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  // StrictModeを一時的に無効化してアニメーション問題をデバッグ
+  // <StrictMode>
     <ThemeProvider>
       <App />
     </ThemeProvider>
-  </StrictMode>,
+  // </StrictMode>,
 )

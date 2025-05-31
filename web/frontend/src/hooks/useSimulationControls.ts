@@ -38,23 +38,32 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
   // 状態同期用のヘルパー関数
   const syncState = useCallback(async () => {
     try {
+      console.log('状態同期を開始します...')
       const response = await fetch('/api/simulation/status')
       const data = await response.json()
       
+      console.log('バックエンドから取得した状態:', data)
+      
       if (response.ok && data.success !== false) {
-        // バックエンドの状態でストアを更新
-        setStatus(data.status)
+        // ストアの状態を直接更新（依存配列の問題を避けるため）
+        const store = useSimulationStore.getState()
+        console.log('現在のフロントエンド状態:', store.status)
+        console.log('新しい状態に更新:', data.status)
+        
+        store.setStatus(data.status)
         if (data.current_turn !== undefined) {
-          setCurrentTurn(data.current_turn)
+          store.setCurrentTurn(data.current_turn)
         }
         if (data.timeline) {
-          updateTimeline(data.timeline)
+          store.updateTimeline(data.timeline)
         }
+        
+        console.log('状態同期完了')
       }
     } catch (err) {
       console.error('状態同期エラー:', err)
     }
-  }, [setStatus, setCurrentTurn, updateTimeline])
+  }, []) // 依存配列を空にして、関数の再作成を防ぐ
 
   // API呼び出し用のヘルパー関数
   const apiCall = useCallback(async (endpoint: string, method: string = 'POST', body?: any) => {
@@ -62,6 +71,7 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
     storeClearError()
     
     try {
+      console.log(`API呼び出し開始: ${method} ${endpoint}`, body)
       const response = await fetch(`/api${endpoint}`, {
         method,
         headers: {
@@ -71,6 +81,7 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
       })
 
       const responseData = await response.json()
+      console.log(`API応答 (${endpoint}):`, responseData)
 
       if (!response.ok) {
         throw new Error(responseData.detail || responseData.message || `HTTP ${response.status}`)
@@ -100,7 +111,7 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
     } finally {
       setIsLoading(false)
     }
-  }, [setError, storeClearError, syncState])
+  }, [setError, storeClearError]) // syncStateを依存配列から削除
 
   // シミュレーション開始
   const startSimulation = useCallback(async (newConfig?: Partial<SimulationConfig>) => {
@@ -114,15 +125,25 @@ export const useSimulationControls = (): UseSimulationControlsReturn => {
       const finalConfig = { ...config, ...newConfig }
       setConfig(finalConfig)
 
+      console.log('=== Step 1: シミュレーション開始API呼び出し ===')
       // シミュレーション開始API呼び出し（configでラップ）
       const result = await apiCall('/simulation/start', 'POST', { config: finalConfig })
       
-      console.log('シミュレーションを開始しました:', result)
+      console.log('=== Step 2: シミュレーション開始完了 ===', result)
+      
+      // 状態を確認
+      const currentState = useSimulationStore.getState()
+      console.log('現在の状態 (start後):', currentState.status)
       
       // シミュレーション開始後、自動的に最初のターンを実行
-      console.log('最初のターンを自動実行します')
+      console.log('=== Step 3: 最初のターンを自動実行開始 ===')
       await apiCall('/simulation/next-turn', 'POST')
-      console.log('最初のターンを実行しました')
+      console.log('=== Step 4: 最初のターン実行完了 ===')
+      
+      // 最終状態を確認
+      const finalState = useSimulationStore.getState()
+      console.log('最終状態 (next-turn後):', finalState.status)
+      
     } catch (err) {
       console.error('シミュレーション開始エラー:', err)
     }

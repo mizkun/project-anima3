@@ -64,8 +64,9 @@ export const TurnItem: React.FC<TurnItemProps> = ({
           border: '2px solid var(--neo-accent)',
         })
       }}
-      whileHover={{ scale: 1.005 }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      whileHover={{ scale: 1.002 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      layout
     >
       {/* ターン番号とキャラクター名 */}
       <div 
@@ -198,17 +199,47 @@ export const TurnItem: React.FC<TurnItemProps> = ({
       {/* 展開可能な思考・行動詳細 */}
       {isExpanded && (
         <motion.div
-          className="mt-4 pt-3 border-t"
+          className="overflow-hidden mt-4 pt-3 border-t"
           style={{ borderColor: 'var(--neo-text-secondary)' }}
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.3 }}
+          initial={{ 
+            opacity: 0, 
+            maxHeight: 0,
+            paddingTop: 0,
+            marginTop: 0
+          }}
+          animate={{ 
+            opacity: 1, 
+            maxHeight: 500,
+            paddingTop: 12,
+            marginTop: 16
+          }}
+          exit={{ 
+            opacity: 0, 
+            maxHeight: 0,
+            paddingTop: 0,
+            marginTop: 0
+          }}
+          transition={{ 
+            duration: 0.4,
+            ease: [0.04, 0.62, 0.23, 0.98],
+            opacity: { duration: 0.3, delay: 0.1 },
+            maxHeight: { duration: 0.4 }
+          }}
         >
-          <div className="space-y-3">
+          <motion.div 
+            className="space-y-3"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.3 }}
+          >
             {/* 思考 */}
             {thinkLine && (
-              <div className="flex items-start gap-2">
+              <motion.div 
+                className="flex items-start gap-2"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+              >
                 <Brain className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--neo-accent-light)' }} />
                 <div className="flex-1">
                   <div className="text-xs font-semibold mb-1" style={{ color: 'var(--neo-accent-light)' }}>
@@ -218,12 +249,17 @@ export const TurnItem: React.FC<TurnItemProps> = ({
                     {thinkLine.replace('思考: ', '')}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* 行動 */}
             {actLine && (
-              <div className="flex items-start gap-2">
+              <motion.div 
+                className="flex items-start gap-2"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+              >
                 <Activity className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--neo-success)' }} />
                 <div className="flex-1">
                   <div className="text-xs font-semibold mb-1" style={{ color: 'var(--neo-success)' }}>
@@ -233,9 +269,9 @@ export const TurnItem: React.FC<TurnItemProps> = ({
                     {actLine.replace('行動: ', '')}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         </motion.div>
       )}
       

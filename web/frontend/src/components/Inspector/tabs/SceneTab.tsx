@@ -374,46 +374,28 @@ participant_character_ids: []
         )}
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* ファイル一覧 */}
-        <div className="w-1/3 border-r overflow-hidden" style={{ borderColor: 'var(--neo-text-secondary)' }}>
-          <div className="h-full flex flex-col">
-            <div className="flex-1 overflow-y-auto neo-scrollbar">
-              {isLoading ? (
-                <div className="p-4 text-center">
-                  <motion.div
-                    className="w-6 h-6 border-2 border-current border-t-transparent rounded-full mx-auto"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  />
-                  <div className="text-sm mt-2" style={{ color: 'var(--neo-text-secondary)' }}>
-                    読み込み中...
-                  </div>
-                </div>
-              ) : sceneFiles.length === 0 ? (
-                <div className="p-4 text-center text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
-                  シーンファイルがありません
-                </div>
-              ) : (
-                <div className="p-2 space-y-1">
-                  {sceneFiles.map((file) => (
-                    <motion.button
-                      key={file.path}
-                      className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        selectedFile === file.path ? 'neo-button-primary' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                      onClick={() => handleFileSelect(file.path)}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                    >
-                      <div className="text-sm font-medium">{file.name}</div>
-                      <div className="text-xs mt-1" style={{ color: 'var(--neo-text-secondary)' }}>
-                        {file.scene_id || 'ID未設定'}
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-              )}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* シーンセレクタ */}
+        <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium mb-2">
+                <FileText className="w-4 h-4 inline mr-1" />
+                シーンファイル
+              </label>
+              <select
+                className="neo-input w-full"
+                value={selectedFile || ''}
+                onChange={(e) => handleFileSelect(e.target.value)}
+                disabled={isLoading}
+              >
+                <option value="">シーンファイルを選択...</option>
+                {sceneFiles.map((file) => (
+                  <option key={file.path} value={file.path}>
+                    {file.name} {file.scene_id ? `(${file.scene_id})` : '(ID未設定)'}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -653,7 +635,8 @@ participant_character_ids: []
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center" style={{ color: 'var(--neo-text-secondary)' }}>
-                編集するシーンファイルを選択してください
+                <FileText className="w-8 h-8 mx-auto mb-2" />
+                <div className="text-sm">シーンファイルを選択してください</div>
               </div>
             </div>
           )}
