@@ -402,7 +402,7 @@ participant_character_ids: []
           {selectedFileData ? (
             <div className="h-full flex flex-col">
               {/* 編集ヘッダー */}
-              <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+              <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
                 <div className="flex items-center justify-between">
                   <h4 className="text-lg font-medium">{selectedFileData.name}</h4>
                   <div className="flex gap-2">
