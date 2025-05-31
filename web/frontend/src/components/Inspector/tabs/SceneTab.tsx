@@ -380,7 +380,7 @@ participant_character_ids: []
           <div className="h-full flex flex-col">
             <div className="p-3 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
               <h4 className="text-sm font-medium flex items-center gap-2">
-                <Search className="w-4 h-4" />
+                <FileText className="w-4 h-4" />
                 シーンファイル
               </h4>
             </div>

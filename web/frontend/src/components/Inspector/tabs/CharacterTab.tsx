@@ -15,6 +15,7 @@ import {
   ChevronUp,
   FileText,
   Search,
+  Users,
 } from 'lucide-react';
 
 interface CharacterData {
@@ -507,7 +508,7 @@ export const CharacterTab: React.FC = () => {
           <div className="h-full flex flex-col">
             <div className="p-3 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
               <h4 className="text-sm font-medium flex items-center gap-2">
-                <Search className="w-4 h-4" />
+                <Users className="w-4 h-4" />
                 キャラクター一覧
               </h4>
             </div>
