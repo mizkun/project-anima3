@@ -156,15 +156,15 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
             >
-              {/* タブヘッダー - カードを削除してシンプルに */}
-              <div className="p-4 flex-shrink-0">
-                <div className="flex justify-center gap-4">
+              {/* タブヘッダー - より一層コンパクトに */}
+              <div className="px-2 py-1.5 flex-shrink-0 border-b" style={{ borderColor: 'var(--neo-border)' }}>
+                <div className="flex justify-center gap-1">
                   {tabs.map((tab, index) => {
                     const IconComponent = tab.icon;
                     return (
                       <button
                         key={index}
-                        className={`p-3 rounded-xl transition-all duration-300 ${
+                        className={`p-1.5 rounded-md transition-all duration-300 ${
                           activeTab === index 
                             ? 'neo-element-pressed' 
                             : 'hover:neo-element-subtle'
@@ -177,7 +177,7 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
                         {...a11yProps(index)}
                       >
                         <IconComponent 
-                          className={activeTab === index ? 'w-6 h-6' : 'w-5 h-5'} 
+                          className="w-4 h-4" 
                         />
                       </button>
                     );
