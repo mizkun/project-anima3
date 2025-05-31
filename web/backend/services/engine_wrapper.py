@@ -220,6 +220,20 @@ class EngineWrapper:
                     f"シミュレーションが実行可能な状態ではありません: {self.status}"
                 )
 
+            # 現在の状況をログ出力
+            engine_status = self.engine.get_simulation_status()
+            logger.info(f"ターン実行前の状況:")
+            logger.info(
+                f"  - 現在のターンインデックス: {engine_status.get('current_turn', '不明')}"
+            )
+            logger.info(
+                f"  - 参加キャラクター: {engine_status.get('participants', [])}"
+            )
+            logger.info(
+                f"  - 次のキャラクター: {engine_status.get('next_character', '不明')}"
+            )
+            logger.info(f"  - 完了ターン数: {engine_status.get('turns_completed', 0)}")
+
             logger.info(f"ターン実行開始: 現在の状態={self.status}")
 
             # ターン実行中はRUNNING状態にする
@@ -233,11 +247,26 @@ class EngineWrapper:
                 # 最新のターンデータを取得
                 turn_data = self.engine._current_scene_log.turns[-1]
 
+                # ターン実行後の状況もログ出力
+                engine_status_after = self.engine.get_simulation_status()
+                logger.info(f"ターン実行後の状況:")
+                logger.info(
+                    f"  - 実行されたキャラクター: {turn_data.character_name} (ID: {turn_data.character_id})"
+                )
+                logger.info(f"  - ターン番号: {turn_data.turn_number}")
+                logger.info(
+                    f"  - 次のターンインデックス: {engine_status_after.get('current_turn', '不明')}"
+                )
+                logger.info(
+                    f"  - 次のキャラクター: {engine_status_after.get('next_character', '不明')}"
+                )
+
                 return {
                     "success": True,
                     "message": "ターンを実行しました",
                     "turn_data": {
                         "turn_number": turn_data.turn_number,
+                        "character_id": turn_data.character_id,
                         "character_name": turn_data.character_name,
                         "think": turn_data.think,
                         "act": turn_data.act,
@@ -247,6 +276,7 @@ class EngineWrapper:
             else:
                 # シミュレーション終了
                 self.status = SimulationStatus.COMPLETED
+                logger.info("シミュレーションが完了しました")
 
                 return {
                     "success": True,
@@ -257,7 +287,7 @@ class EngineWrapper:
         except Exception as e:
             self.status = SimulationStatus.ERROR
             error_msg = f"ターン実行エラー: {str(e)}"
-            logger.error(error_msg)
+            logger.error(error_msg, exc_info=True)
 
             return {"success": False, "message": error_msg}
 
