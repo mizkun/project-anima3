@@ -239,7 +239,7 @@ export const SimulationTab: React.FC = () => {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* シミュレーション履歴セレクタ */}
-        <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+        <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <select
@@ -274,7 +274,7 @@ export const SimulationTab: React.FC = () => {
           {view === 'detail' && historyDetail ? (
             <div className="h-full flex flex-col">
               {/* 詳細ヘッダー */}
-              <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+              <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-lg font-medium">シミュレーション詳細</h4>
                   
