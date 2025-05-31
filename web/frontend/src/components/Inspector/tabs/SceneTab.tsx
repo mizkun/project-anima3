@@ -333,21 +333,39 @@ participant_character_ids: []
           <h2 className="text-lg font-semibold" style={{ color: 'var(--neo-text)' }}>
             シーン選択
           </h2>
-          <motion.button
-            className="neo-button p-2"
-            onClick={fetchSceneFiles}
-            disabled={isLoading}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            title="リロード"
-          >
-            <motion.div
-              animate={{ rotate: isLoading ? 360 : 0 }}
-              transition={{ duration: 1, repeat: isLoading ? Infinity : 0, ease: "linear" }}
+          <div className="flex gap-2">
+            <motion.button
+              className="neo-button p-2"
+              onClick={fetchSceneFiles}
+              disabled={isLoading}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="リロード"
             >
-              <RotateCcw className="w-4 h-4" />
-            </motion.div>
-          </motion.button>
+              <motion.div
+                animate={{ rotate: isLoading ? 360 : 0 }}
+                transition={{ duration: 1, repeat: isLoading ? Infinity : 0, ease: "linear" }}
+              >
+                <RotateCcw className="w-4 h-4" />
+              </motion.div>
+            </motion.button>
+            <motion.button
+              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+              onClick={createNewFile}
+              disabled={isSaving}
+              style={{
+                background: 'var(--neo-accent)',
+                color: 'white',
+                boxShadow: 'var(--neo-shadow-floating)',
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              title="新規作成"
+            >
+              <Plus className="w-4 h-4" />
+              新規作成
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -398,7 +416,7 @@ participant_character_ids: []
               )}
 
               {/* シーン編集フォーム */}
-              {selectedFile && !isLoading && (
+              {selectedFile && selectedFileData && !isLoading && (
                 <div className="h-full flex flex-col">
                   {/* 編集ヘッダー */}
                   <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
