@@ -6,7 +6,9 @@ import {
   Palette,
   RotateCcw,
   Download,
-  Upload
+  Upload,
+  Edit,
+  FileText
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -21,10 +23,62 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
     theme: theme,
   });
 
+  const [promptContent, setPromptContent] = useState('');
+  const [isPromptLoading, setIsPromptLoading] = useState(false);
+  const [promptError, setPromptError] = useState<string | null>(null);
+
   // テーマが外部から変更された場合に同期
   useEffect(() => {
     setSettings(prev => ({ ...prev, theme }));
   }, [theme]);
+
+  // プロンプト読み込み
+  const loadPrompt = async () => {
+    setIsPromptLoading(true);
+    setPromptError(null);
+    try {
+      const response = await fetch('/api/files/data/prompts/think_generate.txt');
+      if (response.ok) {
+        const data = await response.json();
+        setPromptContent(data.content);
+      } else {
+        throw new Error('プロンプトファイルの読み込みに失敗しました');
+      }
+    } catch (error) {
+      setPromptError(error instanceof Error ? error.message : '不明なエラーが発生しました');
+    } finally {
+      setIsPromptLoading(false);
+    }
+  };
+
+  // プロンプト保存
+  const savePrompt = async () => {
+    setIsPromptLoading(true);
+    setPromptError(null);
+    try {
+      const response = await fetch('/api/files/data/prompts/think_generate.txt', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: promptContent,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('プロンプトファイルの保存に失敗しました');
+      }
+    } catch (error) {
+      setPromptError(error instanceof Error ? error.message : '不明なエラーが発生しました');
+    } finally {
+      setIsPromptLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPrompt();
+  }, []);
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
     setTheme(newTheme);
@@ -142,12 +196,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
               表示設定
             </h3>
             
-            {/* テーマ設定 */}
-            <div className="neo-card-subtle mb-4">
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--neo-text)' }}>
-                  テーマ
-                </label>
+            <div className="neo-card-subtle space-y-4">
+              <div>
+                <div className="text-sm mb-3" style={{ color: 'var(--neo-text-secondary)' }}>
+                  アプリケーションのテーマを選択
+                </div>
                 <div className="flex gap-2">
                   <motion.button
                     className="neo-button flex items-center gap-2 px-4 py-2"
@@ -180,6 +233,73 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                   >
                     <Moon className="w-4 h-4" />
                     ダーク
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* プロンプト編集 */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--neo-text)' }}>
+              <FileText className="w-5 h-5" />
+              メインプロンプト設定
+            </h3>
+            
+            <div className="neo-card-subtle space-y-4">
+              <div className="text-sm mb-3" style={{ color: 'var(--neo-text-secondary)' }}>
+                キャラクターの思考生成に使用するメインプロンプトを編集できます
+              </div>
+              
+              {promptError && (
+                <div className="text-sm p-2 rounded bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+                  {promptError}
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <textarea
+                  className="w-full p-3 text-sm border rounded-lg neo-input"
+                  style={{
+                    background: 'var(--neo-element)',
+                    borderColor: 'var(--neo-text-secondary)',
+                    color: 'var(--neo-text)',
+                    minHeight: '200px',
+                    fontFamily: 'monospace',
+                  }}
+                  value={promptContent}
+                  onChange={(e) => setPromptContent(e.target.value)}
+                  placeholder="プロンプトを読み込み中..."
+                  disabled={isPromptLoading}
+                />
+                
+                <div className="flex gap-2 justify-end">
+                  <motion.button
+                    className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                    onClick={loadPrompt}
+                    disabled={isPromptLoading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    title="リロード"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    リロード
+                  </motion.button>
+                  <motion.button
+                    className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                    onClick={savePrompt}
+                    disabled={isPromptLoading || !promptContent.trim()}
+                    style={{
+                      ...(promptContent.trim() && !isPromptLoading && {
+                        background: 'var(--neo-accent)',
+                        color: 'white',
+                      })
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Edit className="w-4 h-4" />
+                    {isPromptLoading ? '保存中...' : '保存'}
                   </motion.button>
                 </div>
               </div>
