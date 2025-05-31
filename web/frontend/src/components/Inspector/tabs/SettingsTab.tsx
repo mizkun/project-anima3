@@ -5,7 +5,6 @@ import {
   Sun,
   Palette,
   RotateCcw,
-  Monitor,
   Download,
   Upload
 } from 'lucide-react';
@@ -20,7 +19,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
   
   const [settings, setSettings] = useState({
     theme: theme,
-    compactMode: localStorage.getItem('compactMode') === 'true',
   });
 
   // テーマが外部から変更された場合に同期
@@ -38,55 +36,52 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
   const handleSettingChange = (key: string, value: boolean) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
-    localStorage.setItem(key, value.toString());
+    
+    // LocalStorageに保存（テーマ以外）
+    if (key !== 'theme') {
+      localStorage.setItem(key, String(value));
+    }
+    
     onSettingsChange?.(newSettings);
   };
 
-  // 改善されたトグルスイッチコンポーネント
   const ToggleSwitch: React.FC<{ 
     checked: boolean; 
     onChange: (checked: boolean) => void;
     label: string;
     icon: React.ReactNode;
   }> = ({ checked, onChange, label, icon }) => (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
+    <motion.div
+      className="flex items-center justify-between p-3 neo-card-subtle rounded-lg"
+      whileHover={{ scale: 1.02 }}
+    >
+      <div className="flex items-center gap-3">
         {icon}
         <span className="text-sm" style={{ color: 'var(--neo-text)' }}>{label}</span>
       </div>
       <motion.button
-        className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
-        onClick={() => onChange(!checked)}
+        className="relative w-12 h-6 rounded-full transition-colors duration-200"
         style={{
-          backgroundColor: checked ? 'var(--neo-accent)' : 'var(--neo-shadow-dark)',
-          boxShadow: checked ? 'var(--neo-shadow-floating)' : 'var(--neo-shadow-subtle)',
+          backgroundColor: checked ? 'var(--neo-accent)' : 'var(--neo-text-secondary)',
         }}
+        onClick={() => onChange(!checked)}
+        whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
-        <motion.span
-          className="inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out"
-          animate={{
-            x: checked ? 20 : 4,
-          }}
+        <motion.div
+          className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm"
+          animate={{ x: checked ? 24 : 2 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         />
       </motion.button>
-    </div>
+    </motion.div>
   );
 
   const resetSettings = () => {
     const defaultSettings = {
       theme: 'light' as const,
-      compactMode: false,
     };
     setSettings(defaultSettings);
-    
-    // LocalStorageをクリア
-    Object.keys(defaultSettings).forEach(key => {
-      if (key !== 'theme') {
-        localStorage.removeItem(key);
-      }
-    });
     
     // テーマをライトモードに戻す
     setTheme('light');
@@ -186,45 +181,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                     <Moon className="w-4 h-4" />
                     ダーク
                   </motion.button>
-                  <motion.button
-                    className="neo-button flex items-center gap-2 px-4 py-2"
-                    onClick={() => handleThemeChange('system')}
-                    style={{
-                      ...(settings.theme === 'system' && {
-                        background: 'var(--neo-accent)',
-                        color: 'white',
-                        boxShadow: 'var(--neo-shadow-floating)',
-                      })
-                    }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Monitor className="w-4 h-4" />
-                    システム
-                  </motion.button>
                 </div>
-              </div>
-
-              {/* コンパクトモード */}
-              <ToggleSwitch
-                checked={settings.compactMode}
-                onChange={(checked) => handleSettingChange('compactMode', checked)}
-                label="コンパクトモード"
-                icon={<RotateCcw className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
-              />
-            </div>
-          </div>
-
-          {/* タイムライン設定 */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--neo-text)' }}>
-              <Monitor className="w-5 h-5" />
-              機能開発状況
-            </h3>
-            
-            <div className="neo-card-subtle space-y-4">
-              <div className="text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
-                タイムライン関連の設定機能や通知機能は現在開発中です。
               </div>
             </div>
           </div>

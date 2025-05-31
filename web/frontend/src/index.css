@@ -678,38 +678,6 @@
     }
   }
 
-  /* コンパクトモードのスタイル調整 */
-  .compact-mode .neo-card-subtle {
-    padding: 8px;
-    margin: 4px 0;
-  }
-
-  .compact-mode .timeline-item {
-    margin: 4px 0;
-    padding: 8px;
-  }
-
-  .compact-mode .text-sm {
-    font-size: 0.75rem;
-  }
-
-  .compact-mode .text-xs {
-    font-size: 0.625rem;
-  }
-
-  .compact-mode .neo-button {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-  }
-
-  .compact-mode .inspection-panel-card {
-    padding: 8px;
-  }
-
-  .compact-mode .inspector-tab-content {
-    padding: 8px;
-  }
-
   /* タイムライン最適化 */
   .timeline-item-compact {
     padding: 6px 8px;

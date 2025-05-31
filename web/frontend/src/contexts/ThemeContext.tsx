@@ -70,12 +70,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     console.log('ThemeProvider mounted, applying theme:', theme)
     applyTheme(theme)
-    
-    // コンパクトモードの設定も復元
-    const compactMode = localStorage.getItem('compactMode') === 'true'
-    if (compactMode) {
-      document.documentElement.classList.add('compact-mode')
-    }
   }, [])
 
   // テーマが変更された時の処理
