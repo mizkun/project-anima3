@@ -377,7 +377,7 @@ participant_character_ids: []
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* シーンセレクタ */}
-        <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+        <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <select
