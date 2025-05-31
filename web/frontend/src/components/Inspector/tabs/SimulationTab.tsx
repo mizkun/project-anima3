@@ -219,9 +219,9 @@ export const SimulationTab: React.FC = () => {
             className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
             onClick={fetchSimulationHistory}
             disabled={isLoading}
+            title="更新"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            更新
           </button>
         </div>
         

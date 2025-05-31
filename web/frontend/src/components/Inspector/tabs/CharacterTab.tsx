@@ -466,9 +466,9 @@ export const CharacterTab: React.FC = () => {
               disabled={isLoading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              title="更新"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              更新
             </motion.button>
             <motion.button
               className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
@@ -481,9 +481,9 @@ export const CharacterTab: React.FC = () => {
               }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              title="新規作成"
             >
               <Plus className="w-4 h-4" />
-              新規作成
             </motion.button>
           </div>
         </div>

@@ -91,8 +91,8 @@ export const PromptTab: React.FC = () => {
               onClick={fetchPromptFiles}
               disabled={isLoading}
               size="small"
+              title="更新"
             >
-              更新
             </Button>
           </Box>
         </Box>
