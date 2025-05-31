@@ -378,12 +378,6 @@ participant_character_ids: []
         {/* ファイル一覧 */}
         <div className="w-1/3 border-r overflow-hidden" style={{ borderColor: 'var(--neo-text-secondary)' }}>
           <div className="h-full flex flex-col">
-            <div className="p-3 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
-              <h4 className="text-sm font-medium flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                シーンファイル
-              </h4>
-            </div>
             <div className="flex-1 overflow-y-auto neo-scrollbar">
               {isLoading ? (
                 <div className="p-4 text-center">
