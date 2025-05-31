@@ -471,24 +471,24 @@ participant_character_ids: []
               </div>
 
               {/* 編集フォーム */}
-              <div className="flex-1 overflow-y-auto neo-scrollbar p-4">
-                <div className="space-y-6">
+              <div className="flex-1 overflow-y-auto neo-scrollbar p-3">
+                <div className="space-y-4">
                   {/* シーンID */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      <MapPin className="w-4 h-4 inline mr-1" />
+                    <label className="block text-xs font-medium mb-1">
+                      <MapPin className="w-3 h-3 inline mr-1" />
                       シーンID
                     </label>
                     {isEditing ? (
                       <input
                         type="text"
-                        className="neo-input w-full"
+                        className="neo-input w-full text-sm py-2"
                         value={editData.scene_id || ''}
                         onChange={(e) => setEditData({ ...editData, scene_id: e.target.value })}
                         placeholder="scene_001"
                       />
                     ) : (
-                      <div className="neo-element-subtle p-3 rounded-lg">
+                      <div className="neo-element-subtle p-2 rounded-lg text-sm">
                         {selectedFileData.scene_id || '未設定'}
                       </div>
                     )}
@@ -496,20 +496,20 @@ participant_character_ids: []
 
                   {/* 場所 */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      <MapPin className="w-4 h-4 inline mr-1" />
+                    <label className="block text-xs font-medium mb-1">
+                      <MapPin className="w-3 h-3 inline mr-1" />
                       場所
                     </label>
                     {isEditing ? (
                       <input
                         type="text"
-                        className="neo-input w-full"
+                        className="neo-input w-full text-sm py-2"
                         value={editData.location || ''}
                         onChange={(e) => setEditData({ ...editData, location: e.target.value })}
                         placeholder="学校の屋上"
                       />
                     ) : (
-                      <div className="neo-element-subtle p-3 rounded-lg">
+                      <div className="neo-element-subtle p-2 rounded-lg text-sm">
                         {selectedFileData.location || '未設定'}
                       </div>
                     )}
@@ -517,20 +517,20 @@ participant_character_ids: []
 
                   {/* 時間 */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      <Clock className="w-4 h-4 inline mr-1" />
+                    <label className="block text-xs font-medium mb-1">
+                      <Clock className="w-3 h-3 inline mr-1" />
                       時間
                     </label>
                     {isEditing ? (
                       <input
                         type="text"
-                        className="neo-input w-full"
+                        className="neo-input w-full text-sm py-2"
                         value={editData.time || ''}
                         onChange={(e) => setEditData({ ...editData, time: e.target.value })}
                         placeholder="放課後の夕方"
                       />
                     ) : (
-                      <div className="neo-element-subtle p-3 rounded-lg">
+                      <div className="neo-element-subtle p-2 rounded-lg text-sm">
                         {selectedFileData.time || '未設定'}
                       </div>
                     )}
@@ -538,19 +538,19 @@ participant_character_ids: []
 
                   {/* 状況 */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-xs font-medium mb-1">
                       状況
                     </label>
                     {isEditing ? (
                       <textarea
-                        className="neo-input w-full"
-                        rows={4}
+                        className="neo-input w-full text-sm py-2"
+                        rows={3}
                         value={editData.situation || ''}
                         onChange={(e) => setEditData({ ...editData, situation: e.target.value })}
                         placeholder="シーンの状況を説明してください..."
                       />
                     ) : (
-                      <div className="neo-element-subtle p-3 rounded-lg">
+                      <div className="neo-element-subtle p-2 rounded-lg text-sm">
                         {selectedFileData.situation || '未設定'}
                       </div>
                     )}
@@ -558,25 +558,25 @@ participant_character_ids: []
 
                   {/* 参加キャラクター */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      <Users className="w-4 h-4 inline mr-1" />
+                    <label className="block text-xs font-medium mb-1">
+                      <Users className="w-3 h-3 inline mr-1" />
                       参加キャラクター
                     </label>
                     
                     {/* キャラクター一覧表示 */}
-                    <div className="neo-element-subtle p-3 rounded-lg mb-3">
+                    <div className="neo-element-subtle p-2 rounded-lg mb-2">
                       {(editData.participant_character_ids || []).length === 0 ? (
-                        <div className="text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
+                        <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
                           参加キャラクターはいません
                         </div>
                       ) : (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1">
                           {(editData.participant_character_ids || []).map((characterId, index) => {
                             const character = characters.find(c => c.character_id === characterId);
                             return (
                               <div
                                 key={index}
-                                className="neo-element flex items-center gap-2 px-3 py-1 rounded-full text-sm"
+                                className="neo-element flex items-center gap-1 px-2 py-1 rounded-full text-xs"
                               >
                                 <span>{character?.name || characterId}</span>
                                 {isEditing && (
@@ -601,7 +601,7 @@ participant_character_ids: []
                       <div className="flex gap-2">
                         <div className="flex-1 relative">
                           <select
-                            className="neo-input w-full appearance-none cursor-pointer"
+                            className="neo-input w-full appearance-none cursor-pointer text-sm py-2"
                             value={selectedCharacterId}
                             onChange={(e) => setSelectedCharacterId(e.target.value)}
                           >
@@ -614,7 +614,7 @@ participant_character_ids: []
                           </select>
                         </div>
                         <motion.button
-                          className="neo-button neo-button-primary px-4 py-2"
+                          className="neo-button neo-button-primary px-3 py-2 text-sm"
                           onClick={handleAddCharacter}
                           disabled={!selectedCharacterId.trim()}
                           whileHover={{ scale: 1.02 }}

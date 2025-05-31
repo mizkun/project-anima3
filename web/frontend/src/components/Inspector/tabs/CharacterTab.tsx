@@ -631,7 +631,7 @@ export const CharacterTab: React.FC = () => {
               </div>
 
               {/* 編集フォーム */}
-              <div className="flex-1 overflow-y-auto neo-scrollbar p-4">
+              <div className="flex-1 overflow-y-auto neo-scrollbar p-3">
                 <AnimatePresence mode="wait">
                   {activeTab === 0 && (
                     <motion.div
@@ -640,76 +640,76 @@ export const CharacterTab: React.FC = () => {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20 }}
                       transition={{ duration: 0.2 }}
-                      className="space-y-6"
+                      className="space-y-4"
                     >
                       {/* 基本情報フォーム */}
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-sm font-medium mb-2">キャラクターID</label>
+                            <label className="block text-xs font-medium mb-1">キャラクターID</label>
                             {isEditing ? (
                               <input
                                 type="text"
-                                className="neo-input w-full"
+                                className="neo-input w-full text-sm py-2"
                                 value={editData.character_id || ''}
                                 onChange={(e) => setEditData(prev => ({ ...prev, character_id: e.target.value }))}
                                 placeholder="character_001"
                               />
                             ) : (
-                              <div className="neo-element-subtle p-3 rounded-lg">
+                              <div className="neo-element-subtle p-2 rounded-lg text-sm">
                                 {editData.character_id || '未設定'}
                               </div>
                             )}
                           </div>
                           
                           <div>
-                            <label className="block text-sm font-medium mb-2">名前</label>
+                            <label className="block text-xs font-medium mb-1">名前</label>
                             {isEditing ? (
                               <input
                                 type="text"
-                                className="neo-input w-full"
+                                className="neo-input w-full text-sm py-2"
                                 value={editData.name || ''}
                                 onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
                                 placeholder="キャラクター名"
                               />
                             ) : (
-                              <div className="neo-element-subtle p-3 rounded-lg">
+                              <div className="neo-element-subtle p-2 rounded-lg text-sm">
                                 {editData.name || '未設定'}
                               </div>
                             )}
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-sm font-medium mb-2">年齢</label>
+                            <label className="block text-xs font-medium mb-1">年齢</label>
                             {isEditing ? (
                               <input
                                 type="number"
-                                className="neo-input w-full"
+                                className="neo-input w-full text-sm py-2"
                                 value={editData.age || ''}
                                 onChange={(e) => setEditData(prev => ({ ...prev, age: parseInt(e.target.value) || 0 }))}
                                 placeholder="16"
                               />
                             ) : (
-                              <div className="neo-element-subtle p-3 rounded-lg">
+                              <div className="neo-element-subtle p-2 rounded-lg text-sm">
                                 {editData.age || '未設定'}
                               </div>
                             )}
                           </div>
                           
                           <div>
-                            <label className="block text-sm font-medium mb-2">職業・役職</label>
+                            <label className="block text-xs font-medium mb-1">職業・役職</label>
                             {isEditing ? (
                               <input
                                 type="text"
-                                className="neo-input w-full"
+                                className="neo-input w-full text-sm py-2"
                                 value={editData.occupation || ''}
                                 onChange={(e) => setEditData(prev => ({ ...prev, occupation: e.target.value }))}
                                 placeholder="高校生"
                               />
                             ) : (
-                              <div className="neo-element-subtle p-3 rounded-lg">
+                              <div className="neo-element-subtle p-2 rounded-lg text-sm">
                                 {editData.occupation || '未設定'}
                               </div>
                             )}
@@ -717,51 +717,51 @@ export const CharacterTab: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium mb-2">基本性格</label>
+                          <label className="block text-xs font-medium mb-1">基本性格</label>
                           {isEditing ? (
                             <textarea
-                              className="neo-input w-full"
-                              rows={4}
+                              className="neo-input w-full text-sm py-2"
+                              rows={3}
                               value={editData.base_personality || ''}
                               onChange={(e) => setEditData(prev => ({ ...prev, base_personality: e.target.value }))}
                               placeholder="キャラクターの基本的な性格を説明してください..."
                             />
                           ) : (
-                            <div className="neo-element-subtle p-3 rounded-lg">
+                            <div className="neo-element-subtle p-2 rounded-lg text-sm">
                               {editData.base_personality || '未設定'}
                             </div>
                           )}
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium mb-2">話し方</label>
+                          <label className="block text-xs font-medium mb-1">話し方</label>
                           {isEditing ? (
                             <textarea
-                              className="neo-input w-full"
-                              rows={3}
+                              className="neo-input w-full text-sm py-2"
+                              rows={2}
                               value={editData.speech_pattern || ''}
                               onChange={(e) => setEditData(prev => ({ ...prev, speech_pattern: e.target.value }))}
                               placeholder="話し方の特徴を説明してください..."
                             />
                           ) : (
-                            <div className="neo-element-subtle p-3 rounded-lg">
+                            <div className="neo-element-subtle p-2 rounded-lg text-sm">
                               {editData.speech_pattern || '未設定'}
                             </div>
                           )}
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium mb-2">外見</label>
+                          <label className="block text-xs font-medium mb-1">外見</label>
                           {isEditing ? (
                             <textarea
-                              className="neo-input w-full"
+                              className="neo-input w-full text-sm py-2"
                               rows={3}
                               value={editData.appearance || ''}
                               onChange={(e) => setEditData(prev => ({ ...prev, appearance: e.target.value }))}
                               placeholder="外見の特徴を説明してください..."
                             />
                           ) : (
-                            <div className="neo-element-subtle p-3 rounded-lg">
+                            <div className="neo-element-subtle p-2 rounded-lg text-sm">
                               {editData.appearance || '未設定'}
                             </div>
                           )}
@@ -781,9 +781,9 @@ export const CharacterTab: React.FC = () => {
                     >
                       {/* 経験セクション */}
                       <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <h5 className="text-md font-medium flex items-center gap-2">
-                            <Archive className="w-4 h-4" />
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="text-sm font-medium flex items-center gap-1">
+                            <Archive className="w-3 h-3" />
                             経験
                           </h5>
                           {isEditing && (
@@ -798,15 +798,15 @@ export const CharacterTab: React.FC = () => {
                             </motion.button>
                           )}
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           {(editData.experiences || []).map((exp, index) => (
-                            <div key={index} className="neo-element-subtle p-3 rounded-lg">
+                            <div key={index} className="neo-element-subtle p-2 rounded-lg">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                   {isEditing ? (
                                     <input
                                       type="text"
-                                      className="neo-input w-full mb-2"
+                                      className="neo-input w-full mb-1 text-sm py-1"
                                       value={exp.event}
                                       onChange={(e) => {
                                         const newExperiences = [...(editData.experiences || [])];
@@ -816,7 +816,7 @@ export const CharacterTab: React.FC = () => {
                                       placeholder="経験内容"
                                     />
                                   ) : (
-                                    <div className="text-sm mb-1">{exp.event}</div>
+                                    <div className="text-xs mb-1">{exp.event}</div>
                                   )}
                                   <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
                                     重要度: {exp.importance}/10
@@ -843,9 +843,9 @@ export const CharacterTab: React.FC = () => {
 
                       {/* 目標セクション */}
                       <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <h5 className="text-md font-medium flex items-center gap-2">
-                            <Target className="w-4 h-4" />
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="text-sm font-medium flex items-center gap-1">
+                            <Target className="w-3 h-3" />
                             目標
                           </h5>
                           {isEditing && (
@@ -860,15 +860,15 @@ export const CharacterTab: React.FC = () => {
                             </motion.button>
                           )}
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           {(editData.goals || []).map((goal, index) => (
-                            <div key={index} className="neo-element-subtle p-3 rounded-lg">
+                            <div key={index} className="neo-element-subtle p-2 rounded-lg">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                   {isEditing ? (
                                     <input
                                       type="text"
-                                      className="neo-input w-full mb-2"
+                                      className="neo-input w-full mb-1 text-sm py-1"
                                       value={goal.goal}
                                       onChange={(e) => {
                                         const newGoals = [...(editData.goals || [])];
@@ -878,7 +878,7 @@ export const CharacterTab: React.FC = () => {
                                       placeholder="目標内容"
                                     />
                                   ) : (
-                                    <div className="text-sm mb-1">{goal.goal}</div>
+                                    <div className="text-xs mb-1">{goal.goal}</div>
                                   )}
                                   <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
                                     重要度: {goal.importance}/10
@@ -905,9 +905,9 @@ export const CharacterTab: React.FC = () => {
 
                       {/* 記憶セクション */}
                       <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <h5 className="text-md font-medium flex items-center gap-2">
-                            <Brain className="w-4 h-4" />
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="text-sm font-medium flex items-center gap-1">
+                            <Brain className="w-3 h-3" />
                             記憶
                           </h5>
                           {isEditing && (
@@ -922,16 +922,16 @@ export const CharacterTab: React.FC = () => {
                             </motion.button>
                           )}
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           {(editData.memories || []).map((memory, index) => (
-                            <div key={index} className="neo-element-subtle p-3 rounded-lg">
+                            <div key={index} className="neo-element-subtle p-2 rounded-lg">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                   {isEditing ? (
-                                    <div className="space-y-2">
+                                    <div className="space-y-1">
                                       <input
                                         type="text"
-                                        className="neo-input w-full"
+                                        className="neo-input w-full text-sm py-1"
                                         value={memory.memory}
                                         onChange={(e) => {
                                           const newMemories = [...(editData.memories || [])];
@@ -942,7 +942,7 @@ export const CharacterTab: React.FC = () => {
                                       />
                                       <input
                                         type="text"
-                                        className="neo-input w-full"
+                                        className="neo-input w-full text-sm py-1"
                                         value={memory.scene_id_of_memory}
                                         onChange={(e) => {
                                           const newMemories = [...(editData.memories || [])];
@@ -954,7 +954,7 @@ export const CharacterTab: React.FC = () => {
                                     </div>
                                   ) : (
                                     <div>
-                                      <div className="text-sm mb-1">{memory.memory}</div>
+                                      <div className="text-xs mb-1">{memory.memory}</div>
                                       <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
                                         シーン: {memory.scene_id_of_memory}
                                       </div>
