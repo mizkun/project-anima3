@@ -479,7 +479,7 @@ export const CharacterTab: React.FC = () => {
               </motion.div>
             </motion.button>
             <motion.button
-              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+              className="neo-button p-2"
               onClick={createNewCharacter}
               disabled={isSaving}
               style={{
@@ -487,12 +487,11 @@ export const CharacterTab: React.FC = () => {
                 color: 'white',
                 boxShadow: 'var(--neo-shadow-floating)',
               }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               title="新規作成"
             >
               <Plus className="w-4 h-4" />
-              新規作成
             </motion.button>
           </div>
         </div>
