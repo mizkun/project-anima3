@@ -1,27 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Slider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
-  Divider,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Alert,
-  Switch,
-  FormControlLabel,
-} from '@mui/material';
-import {
-  ExpandMore as ExpandMoreIcon,
-  Save,
-} from '@mui/icons-material';
-import { PromptTab } from './PromptTab';
-import { useSimulationStore } from '@/stores/simulationStore';
 import { motion } from 'framer-motion';
 import {
   Moon,
@@ -29,45 +6,10 @@ import {
   Palette,
   RotateCcw,
   Monitor,
-  Volume2,
-  Bell,
-  Eye,
-  Zap,
   Download,
   Upload
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-
-interface SimulationSettings {
-  temperature: number;
-  maxTokens: number;
-  llmProvider: string;
-  modelName: string;
-  logLevel: string;
-  debugMode: boolean;
-}
-
-const defaultSettings: SimulationSettings = {
-  temperature: 0.7,
-  maxTokens: 1000,
-  llmProvider: 'gemini',
-  modelName: 'gemini-1.5-flash',
-  logLevel: 'INFO',
-  debugMode: false,
-};
-
-const geminiModels = [
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
-  'gemini-1.0-pro',
-];
-
-const openaiModels = [
-  'gpt-4o',
-  'gpt-4o-mini',
-  'gpt-4-turbo',
-  'gpt-3.5-turbo',
-];
 
 interface SettingsTabProps {
   onSettingsChange?: (settings: any) => void;
@@ -79,10 +21,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
   const [settings, setSettings] = useState({
     theme: theme,
     compactMode: localStorage.getItem('compactMode') === 'true',
-    showThinking: localStorage.getItem('showThinking') === 'true',
-    autoExpand: localStorage.getItem('autoExpand') === 'true',
-    soundEffects: localStorage.getItem('soundEffects') === 'true',
-    notifications: localStorage.getItem('notifications') === 'true',
   });
 
   // テーマが外部から変更された場合に同期
@@ -140,10 +78,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
     const defaultSettings = {
       theme: 'light' as const,
       compactMode: false,
-      showThinking: false,
-      autoExpand: false,
-      soundEffects: true,
-      notifications: true,
     };
     setSettings(defaultSettings);
     
@@ -276,7 +210,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                 checked={settings.compactMode}
                 onChange={(checked) => handleSettingChange('compactMode', checked)}
                 label="コンパクトモード"
-                icon={<Zap className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
+                icon={<RotateCcw className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
               />
             </div>
           </div>
@@ -284,48 +218,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
           {/* タイムライン設定 */}
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--neo-text)' }}>
-              <Eye className="w-5 h-5" />
-              タイムライン設定
+              <Monitor className="w-5 h-5" />
+              機能開発状況
             </h3>
             
             <div className="neo-card-subtle space-y-4">
-              <ToggleSwitch
-                checked={settings.showThinking}
-                onChange={(checked) => handleSettingChange('showThinking', checked)}
-                label="思考を常時表示"
-                icon={<Eye className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
-              />
-
-              <ToggleSwitch
-                checked={settings.autoExpand}
-                onChange={(checked) => handleSettingChange('autoExpand', checked)}
-                label="自動展開"
-                icon={<Zap className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
-              />
-            </div>
-          </div>
-
-          {/* 通知設定 */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--neo-text)' }}>
-              <Bell className="w-5 h-5" />
-              通知設定
-            </h3>
-            
-            <div className="neo-card-subtle space-y-4">
-              <ToggleSwitch
-                checked={settings.soundEffects}
-                onChange={(checked) => handleSettingChange('soundEffects', checked)}
-                label="サウンドエフェクト"
-                icon={<Volume2 className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
-              />
-
-              <ToggleSwitch
-                checked={settings.notifications}
-                onChange={(checked) => handleSettingChange('notifications', checked)}
-                label="デスクトップ通知"
-                icon={<Bell className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />}
-              />
+              <div className="text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
+                タイムライン関連の設定機能や通知機能は現在開発中です。
+              </div>
             </div>
           </div>
 
