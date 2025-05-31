@@ -379,10 +379,6 @@ participant_character_ids: []
         <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-2">
-                <FileText className="w-4 h-4 inline mr-1" />
-                シーンファイル
-              </label>
               <select
                 className="neo-input w-full"
                 value={selectedFile || ''}
