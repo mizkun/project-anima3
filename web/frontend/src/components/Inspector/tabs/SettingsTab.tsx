@@ -381,7 +381,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                 表示設定
               </h3>
               
-              <div className="neo-card-subtle space-y-4">
+              <div className="space-y-4">
                 <div>
                   <div className="text-sm mb-3" style={{ color: 'var(--neo-text-secondary)' }}>
                     アプリケーションのテーマを選択
@@ -431,7 +431,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                 プロンプト設定
               </h3>
               
-              <div className="neo-card-subtle space-y-4">
+              <div className="space-y-4">
                 <div className="text-sm mb-3" style={{ color: 'var(--neo-text-secondary)' }}>
                   キャラクターの思考生成や長期記憶更新に使用するプロンプトを編集できます
                 </div>
@@ -459,7 +459,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({ onSettingsChange }) =>
                 設定の管理
               </h3>
               
-              <div className="neo-card-subtle space-y-4">
+              <div className="space-y-4">
                 <div className="flex gap-2">
                   <motion.button
                     className="neo-button flex items-center gap-2 px-4 py-2 flex-1"
