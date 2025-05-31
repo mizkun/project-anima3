@@ -16,6 +16,7 @@ import {
   FileText,
   Search,
   Users,
+  X,
 } from 'lucide-react';
 
 interface CharacterData {
@@ -540,8 +541,9 @@ export const CharacterTab: React.FC = () => {
                           onClick={handleCancelEdit}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
+                          title="キャンセル"
                         >
-                          キャンセル
+                          <X className="w-4 h-4" />
                         </motion.button>
                         <motion.button
                           className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
@@ -554,6 +556,7 @@ export const CharacterTab: React.FC = () => {
                           }}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
+                          title="保存"
                         >
                           {isSaving ? (
                             <motion.div
@@ -564,7 +567,6 @@ export const CharacterTab: React.FC = () => {
                           ) : (
                             <Save className="w-4 h-4" />
                           )}
-                          保存
                         </motion.button>
                       </>
                     ) : (
@@ -574,9 +576,9 @@ export const CharacterTab: React.FC = () => {
                           onClick={() => handleShowYaml('immutable')}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
+                          title="YAML表示"
                         >
                           <Code className="w-4 h-4" />
-                          YAML表示
                         </motion.button>
                         <motion.button
                           className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
@@ -588,9 +590,9 @@ export const CharacterTab: React.FC = () => {
                           }}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
+                          title="編集"
                         >
                           <Edit className="w-4 h-4" />
-                          編集
                         </motion.button>
                       </>
                     )}

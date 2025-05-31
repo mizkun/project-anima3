@@ -12,6 +12,7 @@ import {
   Code,
   FileText,
   Search,
+  X,
 } from 'lucide-react';
 
 interface SceneFile {
@@ -412,8 +413,9 @@ participant_character_ids: []
                           onClick={handleCancelEdit}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
+                          title="キャンセル"
                         >
-                          キャンセル
+                          <X className="w-4 h-4" />
                         </motion.button>
                         <motion.button
                           className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
@@ -426,6 +428,7 @@ participant_character_ids: []
                           }}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
+                          title="保存"
                         >
                           {isSaving ? (
                             <motion.div
@@ -436,7 +439,6 @@ participant_character_ids: []
                           ) : (
                             <Save className="w-4 h-4" />
                           )}
-                          保存
                         </motion.button>
                       </>
                     ) : (
@@ -446,9 +448,9 @@ participant_character_ids: []
                           onClick={handleShowYaml}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
+                          title="YAML表示"
                         >
                           <Code className="w-4 h-4" />
-                          YAML表示
                         </motion.button>
                         <motion.button
                           className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
@@ -460,9 +462,9 @@ participant_character_ids: []
                           }}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
+                          title="編集"
                         >
                           <Edit className="w-4 h-4" />
-                          編集
                         </motion.button>
                       </>
                     )}
