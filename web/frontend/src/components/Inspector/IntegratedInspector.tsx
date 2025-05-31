@@ -108,7 +108,6 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
             background: 'var(--neo-element)',
             color: 'var(--neo-text)',
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            border: '1px solid var(--neo-border)',
           }}
           whileHover={{ 
             scale: 1.05,
@@ -156,8 +155,8 @@ export const IntegratedInspector: React.FC<IntegratedInspectorProps> = ({
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
             >
-              {/* タブヘッダー - より一層コンパクトに */}
-              <div className="px-2 py-1.5 flex-shrink-0 border-b" style={{ borderColor: 'var(--neo-border)' }}>
+              {/* タブヘッダー - ボーダーを削除 */}
+              <div className="px-2 py-1.5 flex-shrink-0">
                 <div className="flex justify-center gap-1">
                   {tabs.map((tab, index) => {
                     const IconComponent = tab.icon;

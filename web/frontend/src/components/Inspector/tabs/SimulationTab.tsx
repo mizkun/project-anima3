@@ -12,6 +12,7 @@ import {
   Settings,
   CheckCircle,
   AlertTriangle,
+  RotateCcw,
 } from 'lucide-react';
 
 interface SimulationHistoryItem {
@@ -208,20 +209,26 @@ export const SimulationTab: React.FC = () => {
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{ color: 'var(--neo-text)' }}>
       {/* ヘッダー */}
-      <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+      <div className="flex-shrink-0 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <History className="w-5 h-5" />
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--neo-text)' }}>
             シミュレーション履歴
-          </h3>
-          <button
-            className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+          </h2>
+          <motion.button
+            className="neo-button p-2"
             onClick={fetchSimulationHistory}
             disabled={isLoading}
-            title="更新"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            title="リロード"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
+            <motion.div
+              animate={{ rotate: isLoading ? 360 : 0 }}
+              transition={{ duration: 1, repeat: isLoading ? Infinity : 0, ease: "linear" }}
+            >
+              <RotateCcw className="w-4 h-4" />
+            </motion.div>
+          </motion.button>
         </div>
         
         {/* エラー表示 */}
@@ -239,7 +246,7 @@ export const SimulationTab: React.FC = () => {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* シミュレーション履歴セレクタ */}
-        <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+        <div className="flex-shrink-0 p-4">
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <select
@@ -274,9 +281,9 @@ export const SimulationTab: React.FC = () => {
           {view === 'detail' && historyDetail ? (
             <div className="h-full flex flex-col">
               {/* 詳細ヘッダー */}
-              <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+              <div className="flex-shrink-0 p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-lg font-medium">シミュレーション詳細</h4>
+                  <h4 className="text-lg font-medium" style={{ color: 'var(--neo-text)' }}>シミュレーション詳細</h4>
                   
                   {/* アクションボタン */}
                   <div className="flex gap-2">

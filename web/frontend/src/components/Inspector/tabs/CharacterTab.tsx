@@ -17,6 +17,7 @@ import {
   Search,
   Users,
   X,
+  RotateCcw,
 } from 'lucide-react';
 
 interface CharacterData {
@@ -192,6 +193,7 @@ export const CharacterTab: React.FC = () => {
   const [yamlContent, setYamlContent] = useState<string>('');
   const [yamlType, setYamlType] = useState<'immutable' | 'longterm'>('immutable');
   const [activeTab, setActiveTab] = useState(0);
+  const [characterEditTab, setCharacterEditTab] = useState<'view' | 'edit'>('view');
 
   // 選択されたキャラクターのデータを取得
   const selectedCharacterData = characters.find(c => c.character_id === selectedCharacter);
@@ -455,57 +457,32 @@ export const CharacterTab: React.FC = () => {
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{ color: 'var(--neo-text)' }}>
       {/* ヘッダー */}
-      <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <User className="w-5 h-5" />
-            キャラクター設定
-          </h3>
-          <div className="flex gap-2">
-            <motion.button
-              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
-              onClick={fetchCharacters}
-              disabled={isLoading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              title="更新"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </motion.button>
-            <motion.button
-              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
-              onClick={createNewCharacter}
-              disabled={isSaving}
-              style={{
-                background: 'var(--neo-accent)',
-                color: 'white',
-                boxShadow: 'var(--neo-shadow-floating)',
-              }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              title="新規作成"
-            >
-              <Plus className="w-4 h-4" />
-            </motion.button>
-          </div>
-        </div>
-        
-        {/* エラー表示 */}
-        {error && (
-          <motion.div
-            className="neo-element-pressed p-3 rounded-lg mb-4"
-            style={{ background: 'var(--neo-error)', color: 'white' }}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
+      <div className="flex-shrink-0 p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--neo-text)' }}>
+            キャラクター選択
+          </h2>
+          <motion.button
+            className="neo-button p-2"
+            onClick={fetchCharacters}
+            disabled={isLoading}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            title="リロード"
           >
-            <div className="text-sm">{error}</div>
-          </motion.div>
-        )}
+            <motion.div
+              animate={{ rotate: isLoading ? 360 : 0 }}
+              transition={{ duration: 1, repeat: isLoading ? Infinity : 0, ease: "linear" }}
+            >
+              <RotateCcw className="w-4 h-4" />
+            </motion.div>
+          </motion.button>
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* キャラクターセレクタ */}
-        <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+        <div className="flex-shrink-0 p-4">
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <select

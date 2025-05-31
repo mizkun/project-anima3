@@ -202,7 +202,7 @@ export const InterventionTab: React.FC<InterventionTabProps> = ({
 
           {/* シミュレーション状態の表示 */}
           {!isSimulationRunning && (
-            <div className="neo-card-subtle p-4 mb-4 border-l-4" style={{ borderLeftColor: 'var(--neo-warning)' }}>
+            <div className="neo-card-subtle p-4 mb-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 mt-0.5" style={{ color: 'var(--neo-warning)' }} />
                 <div>
@@ -313,8 +313,7 @@ export const InterventionTab: React.FC<InterventionTabProps> = ({
           {/* エラーメッセージ */}
           {error && (
             <motion.div 
-              className="neo-card-subtle p-3 mb-4 border-l-4"
-              style={{ borderLeftColor: 'var(--neo-error)' }}
+              className="neo-card-subtle p-3 mb-4"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
@@ -330,8 +329,7 @@ export const InterventionTab: React.FC<InterventionTabProps> = ({
           {/* 成功メッセージ */}
           {success && (
             <motion.div 
-              className="neo-card-subtle p-3 mb-4 border-l-4"
-              style={{ borderLeftColor: 'var(--neo-success)' }}
+              className="neo-card-subtle p-3 mb-4"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >

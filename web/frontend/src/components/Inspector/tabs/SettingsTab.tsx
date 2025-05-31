@@ -113,7 +113,7 @@ const PromptEditModal: React.FC<{
             onClick={(e) => e.stopPropagation()}
           >
             {/* ヘッダー */}
-            <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+            <div className="flex items-center justify-between p-6">
               <div className="flex items-center gap-3">
                 <FileText className="w-5 h-5" style={{ color: 'var(--neo-accent)' }} />
                 <h2 className="text-xl font-semibold" style={{ color: 'var(--neo-text)' }}>プロンプト編集</h2>
@@ -154,8 +154,7 @@ const PromptEditModal: React.FC<{
                   <AnimatePresence>
                     {isDropdownOpen && (
                       <motion.div
-                        className="absolute top-full left-0 right-0 mt-1 neo-card border z-10"
-                        style={{ borderColor: 'var(--neo-text-secondary)' }}
+                        className="absolute top-full left-0 right-0 mt-1 neo-card z-10"
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
@@ -197,10 +196,9 @@ const PromptEditModal: React.FC<{
                   プロンプト内容
                 </label>
                 <textarea
-                  className="flex-1 p-4 text-sm border rounded-lg neo-input resize-none"
+                  className="flex-1 p-4 text-sm rounded-lg neo-input resize-none"
                   style={{
                     background: 'var(--neo-element)',
-                    borderColor: 'var(--neo-text-secondary)',
                     color: 'var(--neo-text)',
                     fontFamily: 'monospace',
                     minHeight: '400px',
@@ -213,7 +211,7 @@ const PromptEditModal: React.FC<{
               </div>
 
               {/* アクションボタン */}
-              <div className="flex gap-3 justify-end pt-4 border-t" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+              <div className="flex gap-3 justify-end pt-4">
                 <motion.button
                   className="neo-button flex items-center gap-2 px-4 py-2"
                   onClick={() => loadPrompt(selectedPrompt)}

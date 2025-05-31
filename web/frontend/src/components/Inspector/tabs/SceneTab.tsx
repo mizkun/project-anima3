@@ -13,6 +13,7 @@ import {
   FileText,
   Search,
   X,
+  RotateCcw,
 } from 'lucide-react';
 
 interface SceneFile {
@@ -327,57 +328,32 @@ participant_character_ids: []
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{ color: 'var(--neo-text)' }}>
       {/* ヘッダー */}
-      <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--neo-text-secondary)' }}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            シーン設定
-          </h3>
-          <div className="flex gap-2">
-            <motion.button
-              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
-              onClick={fetchSceneFiles}
-              disabled={isLoading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              title="更新"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </motion.button>
-            <motion.button
-              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
-              onClick={createNewFile}
-              disabled={isSaving}
-              style={{
-                background: 'var(--neo-accent)',
-                color: 'white',
-                boxShadow: 'var(--neo-shadow-floating)',
-              }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              title="新規作成"
-            >
-              <Plus className="w-4 h-4" />
-            </motion.button>
-          </div>
-        </div>
-        
-        {/* エラー表示 */}
-        {error && (
-          <motion.div
-            className="neo-element-pressed p-3 rounded-lg mb-4"
-            style={{ background: 'var(--neo-error)', color: 'white' }}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
+      <div className="flex-shrink-0 p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--neo-text)' }}>
+            シーン選択
+          </h2>
+          <motion.button
+            className="neo-button p-2"
+            onClick={fetchSceneFiles}
+            disabled={isLoading}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            title="リロード"
           >
-            <div className="text-sm">{error}</div>
-          </motion.div>
-        )}
+            <motion.div
+              animate={{ rotate: isLoading ? 360 : 0 }}
+              transition={{ duration: 1, repeat: isLoading ? Infinity : 0, ease: "linear" }}
+            >
+              <RotateCcw className="w-4 h-4" />
+            </motion.div>
+          </motion.button>
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* シーンセレクタ */}
-        <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+        <div className="flex-shrink-0 p-4">
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <select
@@ -399,245 +375,263 @@ participant_character_ids: []
 
         {/* 編集エリア */}
         <div className="flex-1 overflow-hidden">
-          {selectedFileData ? (
-            <div className="h-full flex flex-col">
-              {/* 編集ヘッダー */}
-              <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
-                <div className="flex items-center justify-between">
-                  <h4 className="text-lg font-medium">{selectedFileData.name}</h4>
-                  <div className="flex gap-2">
-                    {isEditing ? (
-                      <>
-                        <motion.button
-                          className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
-                          onClick={handleCancelEdit}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          title="キャンセル"
-                        >
-                          <X className="w-4 h-4" />
-                        </motion.button>
-                        <motion.button
-                          className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
-                          onClick={saveSceneData}
-                          disabled={isSaving}
-                          style={{
-                            background: 'var(--neo-accent)',
-                            color: 'white',
-                            boxShadow: 'var(--neo-shadow-floating)',
-                          }}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          title="保存"
-                        >
-                          {isSaving ? (
-                            <motion.div
-                              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            />
-                          ) : (
-                            <Save className="w-4 h-4" />
-                          )}
-                        </motion.button>
-                      </>
-                    ) : (
-                      <>
-                        <motion.button
-                          className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
-                          onClick={handleShowYaml}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          title="YAML表示"
-                        >
-                          <Code className="w-4 h-4" />
-                        </motion.button>
-                        <motion.button
-                          className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
-                          onClick={handleStartEdit}
-                          style={{
-                            background: 'var(--neo-accent)',
-                            color: 'white',
-                            boxShadow: 'var(--neo-shadow-floating)',
-                          }}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          title="編集"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </motion.button>
-                      </>
-                    )}
+          {/* シーン詳細表示 */}
+          <div className="flex-shrink-0 p-4">
+            <div className="neo-card p-4">
+              {isLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                      style={{
+                        animation: 'spin 1s linear infinite',
+                        borderBottomColor: 'var(--neo-accent)',
+                        borderLeftColor: 'var(--neo-accent)',
+                        borderRightColor: 'var(--neo-accent)',
+                      }}
+                    />
+                    <span className="text-sm" style={{ color: 'var(--neo-text-secondary)' }}>
+                      シーンを読み込み中...
+                    </span>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* 編集フォーム */}
-              <div className="flex-1 overflow-y-auto neo-scrollbar p-3">
-                <div className="space-y-4">
-                  {/* シーンID */}
-                  <div>
-                    <label className="block text-xs font-medium mb-1">
-                      <MapPin className="w-3 h-3 inline mr-1" />
-                      シーンID
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="neo-input w-full text-sm py-2"
-                        value={editData.scene_id || ''}
-                        onChange={(e) => setEditData({ ...editData, scene_id: e.target.value })}
-                        placeholder="scene_001"
-                      />
-                    ) : (
-                      <div className="neo-element-subtle p-2 rounded-lg text-sm">
-                        {selectedFileData.scene_id || '未設定'}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 場所 */}
-                  <div>
-                    <label className="block text-xs font-medium mb-1">
-                      <MapPin className="w-3 h-3 inline mr-1" />
-                      場所
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="neo-input w-full text-sm py-2"
-                        value={editData.location || ''}
-                        onChange={(e) => setEditData({ ...editData, location: e.target.value })}
-                        placeholder="学校の屋上"
-                      />
-                    ) : (
-                      <div className="neo-element-subtle p-2 rounded-lg text-sm">
-                        {selectedFileData.location || '未設定'}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 時間 */}
-                  <div>
-                    <label className="block text-xs font-medium mb-1">
-                      <Clock className="w-3 h-3 inline mr-1" />
-                      時間
-                    </label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="neo-input w-full text-sm py-2"
-                        value={editData.time || ''}
-                        onChange={(e) => setEditData({ ...editData, time: e.target.value })}
-                        placeholder="放課後の夕方"
-                      />
-                    ) : (
-                      <div className="neo-element-subtle p-2 rounded-lg text-sm">
-                        {selectedFileData.time || '未設定'}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 状況 */}
-                  <div>
-                    <label className="block text-xs font-medium mb-1">
-                      状況
-                    </label>
-                    {isEditing ? (
-                      <textarea
-                        className="neo-input w-full text-sm py-2"
-                        rows={3}
-                        value={editData.situation || ''}
-                        onChange={(e) => setEditData({ ...editData, situation: e.target.value })}
-                        placeholder="シーンの状況を説明してください..."
-                      />
-                    ) : (
-                      <div className="neo-element-subtle p-2 rounded-lg text-sm">
-                        {selectedFileData.situation || '未設定'}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 参加キャラクター */}
-                  <div>
-                    <label className="block text-xs font-medium mb-1">
-                      <Users className="w-3 h-3 inline mr-1" />
-                      参加キャラクター
-                    </label>
-                    
-                    {/* キャラクター一覧表示 */}
-                    <div className="neo-element-subtle p-2 rounded-lg mb-2">
-                      {(editData.participant_character_ids || []).length === 0 ? (
-                        <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
-                          参加キャラクターはいません
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {(editData.participant_character_ids || []).map((characterId, index) => {
-                            const character = characters.find(c => c.character_id === characterId);
-                            return (
-                              <div
-                                key={index}
-                                className="neo-element flex items-center gap-1 px-2 py-1 rounded-full text-xs"
-                              >
-                                <span>{character?.name || characterId}</span>
-                                {isEditing && (
-                                  <motion.button
-                                    className="text-red-500 hover:text-red-700"
-                                    onClick={() => handleRemoveCharacter(index)}
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </motion.button>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* キャラクター追加フォーム */}
-                    {isEditing && (
+              {/* シーン編集フォーム */}
+              {selectedFile && !isLoading && (
+                <div className="h-full flex flex-col">
+                  {/* 編集ヘッダー */}
+                  <div className="flex-shrink-0 p-4" style={{ borderColor: 'var(--neo-text-secondary)' }}>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-medium">{selectedFileData.name}</h4>
                       <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                          <select
-                            className="neo-input w-full appearance-none cursor-pointer text-sm py-2"
-                            value={selectedCharacterId}
-                            onChange={(e) => setSelectedCharacterId(e.target.value)}
-                          >
-                            <option value="">キャラクターを選択</option>
-                            {characters.map((character) => (
-                              <option key={character.character_id} value={character.character_id}>
-                                {character.name || character.character_id}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <motion.button
-                          className="neo-button neo-button-primary px-3 py-2 text-sm"
-                          onClick={handleAddCharacter}
-                          disabled={!selectedCharacterId.trim()}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          追加
-                        </motion.button>
+                        {isEditing ? (
+                          <>
+                            <motion.button
+                              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                              onClick={handleCancelEdit}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              title="キャンセル"
+                            >
+                              <X className="w-4 h-4" />
+                            </motion.button>
+                            <motion.button
+                              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                              onClick={saveSceneData}
+                              disabled={isSaving}
+                              style={{
+                                background: 'var(--neo-accent)',
+                                color: 'white',
+                                boxShadow: 'var(--neo-shadow-floating)',
+                              }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              title="保存"
+                            >
+                              {isSaving ? (
+                                <motion.div
+                                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                                  animate={{ rotate: 360 }}
+                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                />
+                              ) : (
+                                <Save className="w-4 h-4" />
+                              )}
+                            </motion.button>
+                          </>
+                        ) : (
+                          <>
+                            <motion.button
+                              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                              onClick={handleShowYaml}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              title="YAML表示"
+                            >
+                              <Code className="w-4 h-4" />
+                            </motion.button>
+                            <motion.button
+                              className="neo-button flex items-center gap-2 px-3 py-2 text-sm"
+                              onClick={handleStartEdit}
+                              style={{
+                                background: 'var(--neo-accent)',
+                                color: 'white',
+                                boxShadow: 'var(--neo-shadow-floating)',
+                              }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              title="編集"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </motion.button>
+                          </>
+                        )}
                       </div>
-                    )}
+                    </div>
+                  </div>
+
+                  {/* 編集フォーム */}
+                  <div className="flex-1 overflow-y-auto neo-scrollbar p-3">
+                    <div className="space-y-4">
+                      {/* シーンID */}
+                      <div>
+                        <label className="block text-xs font-medium mb-1">
+                          <MapPin className="w-3 h-3 inline mr-1" />
+                          シーンID
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            className="neo-input w-full text-sm py-2"
+                            value={editData.scene_id || ''}
+                            onChange={(e) => setEditData({ ...editData, scene_id: e.target.value })}
+                            placeholder="scene_001"
+                          />
+                        ) : (
+                          <div className="neo-element-subtle p-2 rounded-lg text-sm">
+                            {selectedFileData.scene_id || '未設定'}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 場所 */}
+                      <div>
+                        <label className="block text-xs font-medium mb-1">
+                          <MapPin className="w-3 h-3 inline mr-1" />
+                          場所
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            className="neo-input w-full text-sm py-2"
+                            value={editData.location || ''}
+                            onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                            placeholder="学校の屋上"
+                          />
+                        ) : (
+                          <div className="neo-element-subtle p-2 rounded-lg text-sm">
+                            {selectedFileData.location || '未設定'}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 時間 */}
+                      <div>
+                        <label className="block text-xs font-medium mb-1">
+                          <Clock className="w-3 h-3 inline mr-1" />
+                          時間
+                        </label>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            className="neo-input w-full text-sm py-2"
+                            value={editData.time || ''}
+                            onChange={(e) => setEditData({ ...editData, time: e.target.value })}
+                            placeholder="放課後の夕方"
+                          />
+                        ) : (
+                          <div className="neo-element-subtle p-2 rounded-lg text-sm">
+                            {selectedFileData.time || '未設定'}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 状況 */}
+                      <div>
+                        <label className="block text-xs font-medium mb-1">
+                          状況
+                        </label>
+                        {isEditing ? (
+                          <textarea
+                            className="neo-input w-full text-sm py-2"
+                            rows={3}
+                            value={editData.situation || ''}
+                            onChange={(e) => setEditData({ ...editData, situation: e.target.value })}
+                            placeholder="シーンの状況を説明してください..."
+                          />
+                        ) : (
+                          <div className="neo-element-subtle p-2 rounded-lg text-sm">
+                            {selectedFileData.situation || '未設定'}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 参加キャラクター */}
+                      <div>
+                        <label className="block text-xs font-medium mb-1">
+                          <Users className="w-3 h-3 inline mr-1" />
+                          参加キャラクター
+                        </label>
+                        
+                        {/* キャラクター一覧表示 */}
+                        <div className="neo-element-subtle p-2 rounded-lg mb-2">
+                          {(editData.participant_character_ids || []).length === 0 ? (
+                            <div className="text-xs" style={{ color: 'var(--neo-text-secondary)' }}>
+                              参加キャラクターはいません
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap gap-1">
+                              {(editData.participant_character_ids || []).map((characterId, index) => {
+                                const character = characters.find(c => c.character_id === characterId);
+                                return (
+                                  <div
+                                    key={index}
+                                    className="neo-element flex items-center gap-1 px-2 py-1 rounded-full text-xs"
+                                  >
+                                    <span>{character?.name || characterId}</span>
+                                    {isEditing && (
+                                      <motion.button
+                                        className="text-red-500 hover:text-red-700"
+                                        onClick={() => handleRemoveCharacter(index)}
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.9 }}
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </motion.button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* キャラクター追加フォーム */}
+                        {isEditing && (
+                          <div className="flex gap-2">
+                            <div className="flex-1 relative">
+                              <select
+                                className="neo-input w-full appearance-none cursor-pointer text-sm py-2"
+                                value={selectedCharacterId}
+                                onChange={(e) => setSelectedCharacterId(e.target.value)}
+                              >
+                                <option value="">キャラクターを選択</option>
+                                {characters.map((character) => (
+                                  <option key={character.character_id} value={character.character_id}>
+                                    {character.name || character.character_id}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <motion.button
+                              className="neo-button neo-button-primary px-3 py-2 text-sm"
+                              onClick={handleAddCharacter}
+                              disabled={!selectedCharacterId.trim()}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              追加
+                            </motion.button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
-          ) : (
-            <div className="h-full flex items-center justify-center">
-              <div className="text-center" style={{ color: 'var(--neo-text-secondary)' }}>
-                <FileText className="w-8 h-8 mx-auto mb-2" />
-                <div className="text-sm">シーンファイルを選択してください</div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 

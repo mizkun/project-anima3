@@ -82,7 +82,7 @@ export const PromptTab: React.FC = () => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* ヘッダー */}
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">プロンプト管理</Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
