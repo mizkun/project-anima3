@@ -284,7 +284,6 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
               onChange={(e) => handleSceneChange(e.target.value)}
               disabled={status === 'running' || status === 'idle'}
               style={{
-                paddingRight: '32px',
                 opacity: (status === 'running' || status === 'idle') ? 0.6 : 1,
                 cursor: (status === 'running' || status === 'idle') ? 'not-allowed' : 'pointer',
               }}
@@ -296,9 +295,6 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
                 </option>
               ))}
             </select>
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <ChevronDown className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
-            </div>
           </div>
 
           {/* メインコントロールボタン - 横並び */}
@@ -437,16 +433,12 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
                     value={interventionType}
                     onChange={(e) => setInterventionType(e.target.value as 'global' | 'character')}
                     style={{
-                      paddingRight: '32px',
                       minWidth: '120px',
                     }}
                   >
                     <option value="global">Global</option>
                     <option value="character">Character</option>
                   </select>
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <ChevronDown className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
-                  </div>
                 </div>
 
                 {interventionType === 'character' && (
@@ -456,7 +448,6 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
                       value={selectedCharacterId}
                       onChange={(e) => setSelectedCharacterId(e.target.value)}
                       style={{
-                        paddingRight: '32px',
                         minWidth: '140px',
                       }}
                     >
@@ -467,9 +458,6 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
                         </option>
                       ))}
                     </select>
-                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                      <ChevronDown className="w-4 h-4" style={{ color: 'var(--neo-text-secondary)' }} />
-                    </div>
                   </div>
                 )}
               </div>

@@ -1,0 +1,12 @@
+character_id: ieyasu
+experiences:
+- event: 重要な経験1
+  importance: 8
+goals:
+- goal: 目標1
+  importance: 9
+memories:
+- memory: 重要な記憶1
+  scene_id_of_memory: scene_001
+  related_character_ids:
+  []
