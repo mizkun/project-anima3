@@ -101,9 +101,16 @@ export const InterventionTab: React.FC<InterventionTabProps> = ({
     fetchCharacters();
   }, [selectedCharacter]);
 
-  const isSimulationRunning = simulationStatus === 'running' || simulationStatus === 'waiting_for_intervention';
+  const isSimulationRunning = simulationStatus === 'running' || simulationStatus === 'waiting_for_intervention' || simulationStatus === 'idle';
 
   const handleSubmit = async () => {
+    console.log('=== 介入送信開始 ===');
+    console.log('シミュレーション状態:', simulationStatus);
+    console.log('選択されたタイプ:', selectedType);
+    console.log('入力内容:', content);
+    console.log('選択されたキャラクター:', selectedCharacter);
+    console.log('キャラクター選択が必要?:', needsCharacterSelection);
+    
     if (!content.trim()) {
       setError('介入内容を入力してください');
       return;
@@ -126,6 +133,8 @@ export const InterventionTab: React.FC<InterventionTabProps> = ({
         ...(needsCharacterSelection && { target_character: selectedCharacter })
       };
 
+      console.log('送信するデータ:', interventionData);
+
       const response = await fetch('/api/simulation/intervention', {
         method: 'POST',
         headers: {
@@ -134,14 +143,33 @@ export const InterventionTab: React.FC<InterventionTabProps> = ({
         body: JSON.stringify(interventionData),
       });
 
+      console.log('レスポンス状態:', response.status, response.statusText);
+      
       const result = await response.json();
+      console.log('レスポンス内容:', result);
 
       if (!response.ok || result.success === false) {
         throw new Error(result.message || '介入の実行に失敗しました');
       }
 
+      console.log('介入送信成功!');
       setSuccess('介入を実行しました');
       setContent('');
+      
+      // タイムラインをリフレッシュ
+      try {
+        console.log('タイムラインをリフレッシュ中...');
+        const statusResponse = await fetch('/api/simulation/status');
+        const statusData = await statusResponse.json();
+        
+        if (statusResponse.ok && statusData.timeline) {
+          const store = useSimulationStore.getState();
+          store.updateTimeline(statusData.timeline);
+          console.log('タイムラインリフレッシュ完了:', statusData.timeline.length, '件のエントリ');
+        }
+      } catch (refreshError) {
+        console.error('タイムラインリフレッシュエラー:', refreshError);
+      }
       
       // 親コンポーネントのコールバックを呼び出し
       if (onIntervention) {
@@ -152,10 +180,11 @@ export const InterventionTab: React.FC<InterventionTabProps> = ({
       setTimeout(() => setSuccess(null), 3000);
 
     } catch (error: any) {
-      console.error('介入エラー:', error);
+      console.error('=== 介入エラー ===', error);
       setError(error.message || '介入の実行に失敗しました');
     } finally {
       setIsSubmitting(false);
+      console.log('=== 介入送信終了 ===');
     }
   };
 

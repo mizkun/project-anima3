@@ -123,9 +123,11 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
                   // キャラクターファイルは {character_id}/immutable.yaml の構造になっている
                   const charResponse = await fetch(`/api/files/data/characters/${id}/immutable.yaml`);
                   if (charResponse.ok) {
-                    const charText = await charResponse.text();
+                    const charData = await charResponse.json();
+                    // APIレスポンスのcontentフィールドからYAMLコンテンツを取得
+                    const charText = charData.content;
                     // YAMLパースは簡易的に行う（実際のプロジェクトではyamlライブラリを使用）
-                    const nameMatch = charText.match(/name:\s*(.+)/);
+                    const nameMatch = charText.match(/name:\s*"?([^"\n]+)"?/);
                     return {
                       id,
                       name: nameMatch ? nameMatch[1].trim() : id
@@ -184,7 +186,7 @@ export const MinimalControls: React.FC<MinimalControlsProps> = () => {
         type: backendInterventionType,
         content: interventionText.trim(),
         ...(interventionType === 'character' && selectedCharacterId && {
-          character_id: selectedCharacterId
+          target_character: selectedCharacterId
         })
       };
 
