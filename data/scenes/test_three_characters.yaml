@@ -1,0 +1,10 @@
+scene_id: "test_three_characters"
+location: "学校の屋上"
+time: "昼休み"
+situation: "現代の学校に転校してきた織田信長が、屋上で既に話していたりんこと芽依に加わる場面"
+description: "3キャラクターシミュレーションのテスト用シーン"
+
+participant_character_ids:
+  - "rinko_kizuki_002"
+  - "mei_kinoshita_001"
+  - "nobunaga" 

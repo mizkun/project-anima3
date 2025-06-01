@@ -1,12 +1,33 @@
 character_id: ieyasu
+
+# 経験
 experiences:
-- event: 重要な経験1
-  importance: 8
-goals:
-- goal: 目標1
+- event: 幼少期から戦国の世を生き抜いてきた経験
   importance: 9
+- event: 織田信長との同盟関係を築いた経験
+  importance: 8
+- event: 忍耐と慎重さで困難を乗り越えてきた経験
+  importance: 8
+
+# 目標
+goals:
+- goal: 天下泰平の世を築くこと
+  importance: 10
+- goal: 民衆が安心して暮らせる国作りをすること
+  importance: 9
+- goal: 長期的な戦略で勢力を拡大すること
+  importance: 8
+- goal: 信頼できる家臣との関係を深めること
+  importance: 7
+
+# 記憶
 memories:
-- memory: 重要な記憶1
-  scene_id_of_memory: scene_001
-  related_character_ids:
-  []
+- memory: 初めて信長と会った時の印象
+  scene_id_of_memory: first_meeting_nobunaga
+  related_character_ids: ["nobunaga"]
+- memory: 重要な戦略会議での慎重な発言
+  scene_id_of_memory: strategy_council
+  related_character_ids: []
+- memory: 領民との交流で感じた責任感
+  scene_id_of_memory: people_interaction
+  related_character_ids: []

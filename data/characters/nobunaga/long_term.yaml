@@ -1,6 +1,46 @@
 character_id: nobunaga
 experiences:
-- event: 重要な経験1
+- event: 戦国時代を生き抜いてきた経験
+  importance: 9
+- event: 天下統一への道のりで数々の戦いを経験
   importance: 8
+- event: 家臣との信頼関係を築いてきた経験
+  importance: 7
+- event: 猫と犬のどちらが可愛いのかという話題で、家臣たちと軽妙な議論を交わした
+  importance: 3
+- event: 現代の学校という環境に身を置き、生徒たちとの交流を試みた
+  importance: 6
 goals:
+- goal: 天下統一を成し遂げること
+  importance: 10
+- goal: 強力な軍団を築き上げること
+  importance: 9
+- goal: 領土を拡大し、影響力を広げること
+  importance: 8
+- goal: 家臣たちと強固な絆を築くこと
+  importance: 7
+- goal: 現代社会への適応
+  importance: 5
 memories:
+- memory: 初めて戦場に立った時の緊張と興奮
+  scene_id_of_memory: first_battle
+  related_character_ids: []
+- memory: 重要な戦いで勝利を収めた瞬間
+  scene_id_of_memory: major_victory
+  related_character_ids: []
+- memory: 忠臣との戦略会議での深い議論
+  scene_id_of_memory: strategy_meeting
+  related_character_ids: []
+- memory: 天下統一への野望を初めて口にした日
+  scene_id_of_memory: ambition_declaration
+  related_character_ids: []
+- memory: 家臣である城月燐子と木下芽依が猫と犬について異なる意見を持っていることを知った。燐子はどちらでも良いと考えており、芽依は猫と犬それぞれに魅力を感じていると熱心に語っていた。
+  scene_id_of_memory: cat_dog_discussion
+  related_character_ids:
+  - 城月燐子
+  - 木下芽依
+- memory: 現代の学校で、城月燐子と木下芽依と屋上で出会い、会話に参加した経験。二人の様子や、猫と犬についての会話の内容を記憶した。
+  scene_id_of_memory: school_rooftop_encounter
+  related_character_ids:
+  - 城月燐子
+  - 木下芽依

@@ -207,6 +207,8 @@ class SimulationEngine:
 
         現在のターンインデックスに基づいて次のキャラクターを決定し、
         そのキャラクターのターンを実行します。
+        キャラクターのロードエラーが発生した場合は、そのキャラクターを
+        参加者リストから除外し、残りのキャラクターで続行します。
 
         Returns:
             bool: シミュレーションが続行可能かどうか（Falseの場合は終了）
@@ -246,13 +248,47 @@ class SimulationEngine:
 
         # キャラクターのターンを実行
         try:
+            logger.info(f"キャラクター '{character_id}' のターンを実行します")
             self.next_turn(character_id)
+            # 成功した場合のみターンを進める
             self._current_turn += 1
+            logger.info(f"キャラクター '{character_id}' のターンが正常に完了しました")
             return True
         except Exception as e:
-            logger.error(f"ターン実行中にエラーが発生しました: {str(e)}")
-            # エラーが発生しても次のキャラクターに進む
-            self._current_turn += 1
+            logger.error(
+                f"キャラクター '{character_id}' のターン実行中にエラーが発生しました: {str(e)}"
+            )
+            logger.error(f"エラーの詳細: {type(e).__name__}: {str(e)}")
+
+            # キャラクターのロードエラーなど、回復不可能なエラーの場合は
+            # 該当キャラクターを参加者リストから除外する
+            participants = list(
+                self._current_scene_log.scene_info.participant_character_ids
+            )
+            if character_id in participants:
+                participants.remove(character_id)
+                self._current_scene_log.scene_info.participant_character_ids = (
+                    participants
+                )
+                logger.warning(
+                    f"エラーのため、キャラクター '{character_id}' を参加者リストから除外しました"
+                )
+
+                # 除外後、参加者が残っていない場合はシミュレーション終了
+                if not participants:
+                    logger.error(
+                        "全てのキャラクターがエラーのため除外されました。シミュレーションを終了します。"
+                    )
+                    self._save_scene_log()
+                    self._is_running = False
+                    return False
+
+                # 現在のターンインデックスが参加者数以上になった場合は調整
+                if self._current_turn >= len(participants):
+                    self._current_turn = 0
+                    logger.info("ターンインデックスをリセットしました")
+
+            # エラーが発生したが、他のキャラクターで続行可能
             return True
 
     def start_simulation(self, max_turns: Optional[int] = None) -> None:
@@ -447,17 +483,25 @@ class SimulationEngine:
 
         logger.info(f"キャラクター '{character_id}' のターンを開始します")
 
+        # デバッグ: ターン実行前の状態
+        turns_before = len(self._current_scene_log.turns)
+        logger.info(f"DEBUG: ターン実行前のturns数: {turns_before}")
+
         try:
             # キャラクター情報の取得
             character_name = character_id  # デフォルト値（情報取得に失敗した場合）
             try:
                 char_info = self.character_manager.get_immutable_context(character_id)
                 character_name = char_info.name
+                logger.info(f"DEBUG: キャラクター情報取得成功: {character_name}")
             except Exception as e:
                 logger.warning(f"キャラクター情報の取得に失敗しました: {str(e)}")
 
             # 短期ログの取得（現在の場面のターンリスト）
             current_scene_short_term_log = self._current_scene_log.turns
+            logger.info(
+                f"DEBUG: 現在のシーン短期ログ数: {len(current_scene_short_term_log)}"
+            )
 
             # キャラクターのコンテクストを構築
             # 天啓情報がある場合は追加情報として渡す
@@ -479,9 +523,11 @@ class SimulationEngine:
                 logger.info(f"キャラクター '{character_id}' に天啓情報を反映します")
 
             # コンテクスト構築
+            logger.info(f"DEBUG: コンテクスト構築開始")
             context_dict = self.context_builder.build_context_for_character(
                 character_id, current_scene_short_term_log, previous_scene_summary
             )
+            logger.info(f"DEBUG: コンテクスト構築完了")
 
             # プロンプトテンプレートのパスを設定
             prompt_file_path = os.path.join(self.prompts_dir_path, "think_generate.txt")
@@ -512,6 +558,7 @@ class SimulationEngine:
                 logger.warning(f"プロンプト表示エラー: {str(e)}")
 
             # LLM思考生成
+            logger.info(f"DEBUG: LLM思考生成開始")
             try:
                 # LLMAdapterを使って思考を生成
                 from .llm_adapter import (
@@ -531,6 +578,8 @@ class SimulationEngine:
                     "act", ""
                 )  # エラー時やキーがない場合は空文字
                 talk_content = llm_response.get("talk", "")  # 同上
+
+                logger.info(f"DEBUG: LLM思考生成完了")
 
             except (
                 LLMGenerationError,
@@ -555,6 +604,7 @@ class SimulationEngine:
                 talk_content = ""
 
             # 短期ログへの記録
+            logger.info(f"DEBUG: 短期ログ記録開始")
             self.information_updater.record_turn_to_short_term_log(
                 self._current_scene_log,
                 character_id,
@@ -563,6 +613,11 @@ class SimulationEngine:
                 act_content,
                 talk_content,
             )
+            logger.info(f"DEBUG: 短期ログ記録完了")
+
+            # デバッグ: ターン実行後の状態
+            turns_after = len(self._current_scene_log.turns)
+            logger.info(f"DEBUG: ターン実行後のturns数: {turns_after}")
 
             # 現在のターンの情報をログに出力
             turn_number = len(self._current_scene_log.turns)
@@ -578,11 +633,14 @@ class SimulationEngine:
                 logger.info(f"  (何も行動せず、何も話さなかった)")
 
             # ターン実行後に即座にログを保存
+            logger.info(f"DEBUG: ログ保存開始")
             self._save_scene_log_realtime()
+            logger.info(f"DEBUG: ログ保存完了")
 
         except Exception as e:
             error_msg = f"ターン実行中にエラーが発生しました: {str(e)}"
             logger.error(error_msg)
+            logger.error(f"DEBUG: next_turnメソッドでエラー発生: {e}", exc_info=True)
             # SimulationEngineErrorとしてラップせず、そのままログに出力して継続する
             # これにより、start_simulationのループ内でキャッチされて処理が継続する
             pass  # ターン全体のエラーがあっても次のキャラクターのターンに進む
